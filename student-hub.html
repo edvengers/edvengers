@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvengers Student Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="student-body">
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-mark">E</span>
+        <span class="logo-text">Edvengers Student Hub</span>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Back to Site</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- LOGIN SCREEN -->
+    <section id="login-section" class="section section-center">
+      <div class="container narrow">
+        <h1 class="section-title">Student Login</h1>
+        <p class="section-intro">
+          Welcome, Edvenger! Enter your details to access your missions.
+        </p>
+
+        <div class="card">
+          <form id="login-form" class="form">
+            <label>
+              Student Name / ID
+              <input type="text" id="student-name" required placeholder="e.g. Ethan Tan" />
+            </label>
+            <label>
+              Portal Password
+              <input type="password" id="portal-password" required placeholder="Ask your teacher" />
+            </label>
+            <p class="helper-text">
+              For this prototype, use password: <strong>heroes2026</strong>
+            </p>
+            <button type="submit" class="btn">Enter Student Hub</button>
+            <p id="login-error" class="error-text" style="display:none;">
+              Incorrect password. Please try again.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard-section" class="section" style="display:none;">
+      <div class="container">
+        <h1 class="section-title">Welcome, <span id="student-name-display"></span> 🦸‍♂️</h1>
+        <p class="section-intro">
+          This is your one-stop hub for lessons, worksheets, announcements, and questions.
+        </p>
+
+        <div class="grid-3">
+          <!-- Live Lesson -->
+          <div class="card">
+            <h2>Today’s Live Lesson</h2>
+            <p>
+              When it’s time for class, click the button below to join your Zoom lesson.
+            </p>
+            <p class="helper-text">
+              Make sure Zoom is installed on your device.
+            </p>
+            <!-- Replace this Zoom link with your actual one -->
+            <a href="https://us06web.zoom.us/j/your-meeting-id" class="btn" target="_blank">
+              Join Zoom Lesson
+            </a>
+            <p class="helper-text">
+              <strong>Note:</strong> Replace the Zoom URL in the code with your real meeting link.
+            </p>
+          </div>
+
+          <!-- Worksheets -->
+          <!-- Homework (Firebase Live Data) -->
+<div class="card">
+  <h2>Worksheets &amp; Homework</h2>
+  <div id="student-homework"></div>
+</div>
+
+          <!-- Announcements (Firebase Live Data) -->
+<div class="card">
+  <h2>Announcements</h2>
+  <div id="student-announcements"></div>
+</div>
+        </div>
+
+        <!-- Chat / Question Box -->
+        <div class="card chat-card">
+          <h2>Ask a Question</h2>
+          <p class="helper-text">
+            Use this box to type your academic questions. In the full version, your teacher will see
+            these and reply. For now, this saves in your browser so you can practise asking clearly.
+          </p>
+
+          <div id="chat-window" class="chat-window">
+            <!-- Messages will be added here -->
+          </div>
+
+          <form id="chat-form" class="chat-form">
+            <label class="chat-label">
+              Your question
+              <textarea id="chat-input" rows="2" placeholder="Type your question here..." required></textarea>
+            </label>
+
+            <div class="chat-actions">
+              <label class="file-label">
+                📎 Attach photo (not functional in prototype)
+                <input type="file" id="chat-file" accept="image/*" disabled />
+              </label>
+              <button type="submit" class="btn btn-small">Send</button>
+            </div>
+          </form>
+
+          <p class="helper-text">
+            <strong>Important:</strong> To make this a real chat where you see student questions,
+            a developer can connect this to a backend (e.g. Firebase or Supabase). The UI is already prepared.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> Edvengers Student Hub.</p>
+      <a href="index.html">Back to main site</a>
+    </div>
+  </footer>
+
+  <script>
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Simple login logic for prototype
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const loginSection = document.getElementById('login-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    const studentNameInput = document.getElementById('student-name');
+    const portalPasswordInput = document.getElementById('portal-password');
+    const studentNameDisplay = document.getElementById('student-name-display');
+
+    const PORTAL_PASSWORD = 'heroes2026';
+
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const name = studentNameInput.value.trim();
+      const pwd = portalPasswordInput.value.trim();
+
+      if (!name) return;
+      if (pwd !== PORTAL_PASSWORD) {
+        loginError.style.display = 'block';
+        return;
+      }
+
+      loginError.style.display = 'none';
+      studentNameDisplay.textContent = name;
+      loginSection.style.display = 'none';
+      dashboardSection.style.display = 'block';
+
+      // Load any stored messages for this student
+      loadChatMessages(name);
+    });
+
+     </script>
+<script type="module" src="app-student.js"></script>
+</body>
+</html>

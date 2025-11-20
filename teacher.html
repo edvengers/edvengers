@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvengers Teacher Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="student-body">
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-mark">E</span>
+        <span class="logo-text">Edvengers Teacher Dashboard</span>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Back to Site</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- TEACHER LOGIN -->
+    <section id="teacher-login-section" class="section section-center">
+      <div class="container narrow">
+        <h1 class="section-title">Teacher Login</h1>
+        <p class="section-intro">
+          Log in to manage announcements, homework, and student questions.
+        </p>
+
+        <div class="card">
+          <form id="teacher-login-form" class="form">
+            <label>
+              Email
+              <input type="email" id="teacher-email" required placeholder="you@example.com" />
+            </label>
+            <label>
+              Password
+              <input type="password" id="teacher-password" required />
+            </label>
+            <button type="submit" class="btn">Log in</button>
+            <p id="teacher-login-error" class="error-text" style="display:none;"></p>
+          </form>
+          <p class="helper-text">
+            Login is handled by Firebase Auth. Only registered teacher accounts can log in.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="teacher-dashboard-section" class="section" style="display:none;">
+      <div class="container">
+        <div class="dashboard-header">
+          <h1 class="section-title">Teacher Dashboard</h1>
+          <button id="teacher-logout-btn" class="btn btn-small btn-outline">Log out</button>
+        </div>
+
+        <p class="section-intro">
+          Post announcements, add homework, and reply to student questions – all from one place.
+        </p>
+
+        <div class="grid-3">
+          <!-- Announcements -->
+          <div class="card">
+            <h2>Announcements</h2>
+            <form id="announcement-form" class="form">
+              <label>
+                Title
+                <input type="text" id="announcement-title" required />
+              </label>
+              <label>
+                Message
+                <textarea id="announcement-message" rows="3" required></textarea>
+              </label>
+              <button type="submit" class="btn btn-small">Post Announcement</button>
+            </form>
+            <p class="helper-text">
+              These will appear in the Student Hub under “Announcements”.
+            </p>
+            <div id="announcement-list" class="announcement-list"></div>
+          </div>
+
+          <!-- Homework -->
+          <div class="card">
+            <h2>Homework &amp; Worksheets</h2>
+            <form id="homework-form" class="form">
+              <label>
+                Title
+                <input type="text" id="homework-title" required placeholder="P5 English – Week 1 Comprehension" />
+              </label>
+              <label>
+                Link (PDF / Google Form / Google Classroom)
+                <input type="url" id="homework-link" required placeholder="https://..." />
+              </label>
+              <label>
+                Level / Class
+                <input type="text" id="homework-level" placeholder="P5, P6, P5 English, etc." />
+              </label>
+              <button type="submit" class="btn btn-small">Add Homework</button>
+            </form>
+            <p class="helper-text">
+              These links will show up in the Student Hub under “Worksheets & Homework”.
+            </p>
+            <div id="homework-list" class="homework-list"></div>
+          </div>
+
+          <!-- Student Questions -->
+          <div class="card">
+            <h2>Student Questions</h2>
+            <p class="helper-text">
+              Questions submitted from the Student Hub will appear here. You can reply and your answer will
+              be shown to the student.
+            </p>
+            <div id="questions-list" class="questions-list">
+              <!-- Questions will be loaded here from Firebase -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> Edvengers.</p>
+      <a href="index.html">Back to main site</a>
+    </div>
+  </footer>
+
+  <!-- Firebase SDKs (loaded from CDN) -->
+  <!-- TODO: Only works after you create a Firebase project and fill in config in app-teacher.js -->
+  <script type="module" src="app-teacher.js"></script>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
