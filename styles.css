@@ -1167,3 +1167,9 @@ body.site {
     padding: 3rem 0;
   }
 }
+
+.btn-nav {
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  margin-left: 0.4rem;
+}
