@@ -118,28 +118,41 @@ function initStudentPortal() {
   }
 
   if (homeworkList) {
-    const hwQuery = query(
-      collection(db, "homework"),
-      orderBy("createdAt", "desc")
-    );
-    onSnapshot(hwQuery, (snapshot) => {
-      homeworkList.innerHTML = "";
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const item = document.createElement("div");
-        item.className = "announcement";
-        item.innerHTML = `
-          <h4>${data.title || "Untitled"}</h4>
-          <p><a href="${data.link}" target="_blank">Open link</a></p>
-          <p class="helper-text">
-            ${data.level ? "Level: " + data.level + " • " : ""}Posted:
-            ${new Date(data.createdAt || Date.now()).toLocaleString()}
-          </p>
-        `;
-        homeworkList.appendChild(item);
-      });
+  const hwQuery = query(
+    collection(db, "homework"),
+    orderBy("createdAt", "desc")
+  );
+  onSnapshot(hwQuery, (snapshot) => {
+    homeworkList.innerHTML = "";
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const item = document.createElement("div");
+      item.className = "ev-card-bubble";
+
+      const links = data.links || (data.link ? [data.link] : []);
+      const linksHtml = links
+        .map(
+          (url, idx) =>
+            `<li><a href="${url}" target="_blank">Link ${idx + 1}</a></li>`
+        )
+        .join("");
+
+      item.innerHTML = `
+        <h4>${data.title || "Untitled"}</h4>
+        ${
+          linksHtml
+            ? `<ul class="ev-link-list">${linksHtml}</ul>`
+            : "<p>No links provided.</p>"
+        }
+        <p class="helper-text">
+          ${data.level ? "Level: " + data.level + " • " : ""}Posted:
+          ${new Date(data.createdAt || Date.now()).toLocaleString()}
+        </p>
+      `;
+      homeworkList.appendChild(item);
     });
-  }
+  });
+}
 
   // Handle Ask a Question
   const chatForm = document.getElementById("chat-form");

@@ -296,6 +296,23 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+.ev-card-bubble {
+  background: #081324;
+  border-radius: 16px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+
+.ev-card-bubble h4 {
+  margin: 0 0 0.35rem;
+}
+
+.ev-link-list {
+  margin: 0 0 0.35rem;
+  padding-left: 1.1rem;
+}
+
 .ev-schedule-card h3 {
   margin: 0 0 0.3rem;
   font-size: 1rem;
@@ -676,3 +693,47 @@ body {
   float: right;
 }
 
+.teacher-chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.teacher-chat-row {
+  display: flex;
+}
+
+.teacher-chat-row-student {
+  justify-content: flex-start;
+}
+
+.teacher-chat-row-teacher {
+  justify-content: flex-end;
+}
+
+.teacher-chat-bubble {
+  max-width: 80%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.teacher-chat-row-student .teacher-chat-bubble {
+  background: #0c2344;
+  border-bottom-left-radius: 2px;
+}
+
+.teacher-chat-row-teacher .teacher-chat-bubble {
+  background: #12b886;
+  color: #02101f;
+  border-bottom-right-radius: 2px;
+}
+
+.teacher-chat-time {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+  text-align: right;
+}

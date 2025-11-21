@@ -40,37 +40,48 @@
           </p>
 
           <form id="students-form" style="margin-bottom: 1rem;">
-            <div class="form-field">
-              <label for="student-name">Student name</label>
-              <input
-                id="student-name"
-                type="text"
-                placeholder="e.g. Ethan Tan"
-                required
-              />
-            </div>
-            <div class="form-field">
-              <label for="student-level">Level (optional)</label>
-              <input
-                id="student-level"
-                type="text"
-                placeholder="e.g. P5, P6"
-              />
-            </div>
-            <div class="form-field">
-              <label for="student-subjects">Subjects (optional)</label>
-              <input
-                id="student-subjects"
-                type="text"
-                placeholder="e.g. P5 English, P5 Math"
-              />
-            </div>
-            <button type="submit" class="btn btn-primary">
-              Save / Update Student
-            </button>
-          </form>
+  <div class="form-field">
+    <label for="student-select">Select existing student (optional)</label>
+    <select id="student-select">
+      <option value="">-- New or type name below --</option>
+      <!-- Options will be filled from Firestore -->
+    </select>
+  </div>
 
-          <div id="students-list"></div>
+  <div class="form-field">
+    <label for="student-name">Student name</label>
+    <input
+      id="student-name"
+      type="text"
+      placeholder="e.g. Ethan Tan"
+      required
+    />
+  </div>
+
+  <div class="form-field">
+    <label for="student-level">Level (optional)</label>
+    <input
+      id="student-level"
+      type="text"
+      placeholder="e.g. P5, P6"
+    />
+  </div>
+
+  <div class="form-field">
+    <label for="student-subjects">Subjects (optional)</label>
+    <input
+      id="student-subjects"
+      type="text"
+      placeholder="e.g. P5 English, P5 Math"
+    />
+  </div>
+
+  <button type="submit" class="btn btn-primary">
+    Save / Update Student
+  </button>
+</form>
+
+<div id="students-list"></div>
         </section>
 
         <!-- ANNOUNCEMENTS & HOMEWORK -->
@@ -116,36 +127,59 @@
             <div class="card">
               <div class="card-header">Homework</div>
               <form id="homework-form">
-                <div class="form-field">
-                  <label for="homework-title">Title</label>
-                  <input
-                    id="homework-title"
-                    type="text"
-                    placeholder="e.g. P5 English – Week 3 Practice"
-                    required
-                  />
-                </div>
-                <div class="form-field">
-                  <label for="homework-link">Link (Google Form / PDF / etc.)</label>
-                  <input
-                    id="homework-link"
-                    type="url"
-                    placeholder="https://..."
-                    required
-                  />
-                </div>
-                <div class="form-field">
-                  <label for="homework-level">Level / Subject (optional)</label>
-                  <input
-                    id="homework-level"
-                    type="text"
-                    placeholder="e.g. P5 English"
-                  />
-                </div>
-                <button type="submit" class="btn btn-primary">
-                  Add Homework
-                </button>
-              </form>
+  <div class="form-field">
+    <label for="homework-title">Title</label>
+    <input
+      id="homework-title"
+      type="text"
+      placeholder="e.g. P5 English – Week 3 Practice"
+      required
+    />
+  </div>
+
+  <div class="form-field">
+    <label>Links (up to 5)</label>
+    <input
+      id="homework-link-1"
+      type="url"
+      placeholder="Main link (required) – Google Form / PDF / quiz"
+      required
+    />
+    <input
+      id="homework-link-2"
+      type="url"
+      placeholder="Additional link 2 (optional)"
+    />
+    <input
+      id="homework-link-3"
+      type="url"
+      placeholder="Additional link 3 (optional)"
+    />
+    <input
+      id="homework-link-4"
+      type="url"
+      placeholder="Additional link 4 (optional)"
+    />
+    <input
+      id="homework-link-5"
+      type="url"
+      placeholder="Additional link 5 (optional)"
+    />
+  </div>
+
+  <div class="form-field">
+    <label for="homework-level">Level / Subject (optional)</label>
+    <input
+      id="homework-level"
+      type="text"
+      placeholder="e.g. P5 English"
+    />
+  </div>
+
+  <button type="submit" class="btn btn-primary">
+    Add Homework
+  </button>
+</form>
 
               <div id="homework-list" style="margin-top: 1rem;"></div>
             </div>
