@@ -271,7 +271,7 @@
         </div>
       </section>
 
-      <!-- FAQ (Accordion) -->
+      <!-- FAQ (Collapsible) -->
       <section id="faq" class="ev-section ev-section-alt">
         <div class="ev-container">
           <div class="ev-section-header">
@@ -279,10 +279,10 @@
           </div>
 
           <div class="ev-faq">
-            <div class="ev-faq-item">
-              <button class="ev-faq-question">
+            <details class="ev-faq-item">
+              <summary class="ev-faq-summary">
                 Is Edvengers aligned with the MOE syllabus and PSLE?
-              </button>
+              </summary>
               <div class="ev-faq-answer">
                 <p>
                   Yes. Our lessons are designed around the latest
@@ -299,12 +299,12 @@
                   tests and exams.
                 </p>
               </div>
-            </div>
+            </details>
 
-            <div class="ev-faq-item">
-              <button class="ev-faq-question">
+            <details class="ev-faq-item">
+              <summary class="ev-faq-summary">
                 What makes Edvengers different from other tuition?
-              </button>
+              </summary>
               <div class="ev-faq-answer">
                 <p>
                   We focus heavily on <strong>engagement and clarity</strong>. Lessons
@@ -321,12 +321,12 @@
                   in a supportive environment – not just sit and copy notes.
                 </p>
               </div>
-            </div>
+            </details>
 
-            <div class="ev-faq-item">
-              <button class="ev-faq-question">
+            <details class="ev-faq-item">
+              <summary class="ev-faq-summary">
                 Who are the teachers?
-              </button>
+              </summary>
               <div class="ev-faq-answer">
                 <p>
                   Edvengers lessons are designed and taught by
@@ -339,12 +339,12 @@
                   <strong>effective, modern teaching</strong>.
                 </p>
               </div>
-            </div>
+            </details>
 
-            <div class="ev-faq-item">
-              <button class="ev-faq-question">
+            <details class="ev-faq-item">
+              <summary class="ev-faq-summary">
                 Are lesson recordings provided?
-              </button>
+              </summary>
               <div class="ev-faq-answer">
                 <p>
                   For now, we focus on <strong>live participation</strong>, as students
@@ -358,12 +358,12 @@
                   through homework, revision worksheets, and in-class review.
                 </p>
               </div>
-            </div>
+            </details>
 
-            <div class="ev-faq-item">
-              <button class="ev-faq-question">
+            <details class="ev-faq-item">
+              <summary class="ev-faq-summary">
                 How do you support students outside lesson time?
-              </button>
+              </summary>
               <div class="ev-faq-answer">
                 <p>
                   Students receive regular homework through the Edvengers online hub.
@@ -377,7 +377,7 @@
                   the platform.
                 </p>
               </div>
-            </div>
+            </details>
           </div>
         </div>
       </section>
@@ -388,30 +388,6 @@
         <p>© <span id="year"></span> Edvengers. All rights reserved.</p>
       </div>
     </footer>
-
-    <!-- FAQ accordion + year script -->
-    <script>
-      // FAQ accordion
-      document.querySelectorAll(".ev-faq-question").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const item = btn.closest(".ev-faq-item");
-          const answer = item.querySelector(".ev-faq-answer");
-          const isOpen = item.classList.contains("open");
-
-          // close all
-          document.querySelectorAll(".ev-faq-item").forEach((i) => {
-            i.classList.remove("open");
-            const a = i.querySelector(".ev-faq-answer");
-            if (a) a.style.maxHeight = null;
-          });
-
-          // open current
-          if (!isOpen) {
-            item.classList.add("open");
-            answer.style.maxHeight = answer.scrollHeight + "px";
-          }
-        });
-      });
 
       // Footer year
       document.getElementById("year").textContent =
