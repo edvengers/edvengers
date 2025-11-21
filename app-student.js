@@ -89,6 +89,58 @@ function initStudentPortal() {
     }
   });
 
+// --- Announcements & Homework subscriptions for student hub ---
+
+  const announcementList = document.getElementById("announcement-list");
+  const homeworkList = document.getElementById("homework-list");
+
+  if (announcementList) {
+    const annQuery = query(
+      collection(db, "announcements"),
+      orderBy("createdAt", "desc")
+    );
+    onSnapshot(annQuery, (snapshot) => {
+      announcementList.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const item = document.createElement("div");
+        item.className = "announcement";
+        item.innerHTML = `
+          <h4>${data.title || "Untitled"}</h4>
+          <p>${data.message || ""}</p>
+          <p class="helper-text">Posted: ${new Date(
+            data.createdAt || Date.now()
+          ).toLocaleString()}</p>
+        `;
+        announcementList.appendChild(item);
+      });
+    });
+  }
+
+  if (homeworkList) {
+    const hwQuery = query(
+      collection(db, "homework"),
+      orderBy("createdAt", "desc")
+    );
+    onSnapshot(hwQuery, (snapshot) => {
+      homeworkList.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const item = document.createElement("div");
+        item.className = "announcement";
+        item.innerHTML = `
+          <h4>${data.title || "Untitled"}</h4>
+          <p><a href="${data.link}" target="_blank">Open link</a></p>
+          <p class="helper-text">
+            ${data.level ? "Level: " + data.level + " • " : ""}Posted:
+            ${new Date(data.createdAt || Date.now()).toLocaleString()}
+          </p>
+        `;
+        homeworkList.appendChild(item);
+      });
+    });
+  }
+
   // Handle Ask a Question
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");

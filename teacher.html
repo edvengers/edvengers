@@ -26,10 +26,133 @@
       <div class="ev-container" style="padding-top: 2rem; padding-bottom: 3rem;">
         <h1>Teacher Dashboard</h1>
         <p class="ev-helper-text">
-          View student questions, reply to them, and manage the Q&amp;A from here.
+          View student profiles, award Hero Stars, post announcements and homework,
+          and reply to student questions from here.
         </p>
 
-        <!-- STUDENT QUESTIONS CARD -->
+        <!-- STUDENTS & HERO STARS -->
+        <section class="dashboard-card">
+          <div class="card-header">Students &amp; Hero Stars</div>
+          <p class="card-subtitle">
+            Add or update students here. You can award Hero Stars for effort,
+            participation, and improvement. Students will see their total in
+            their hub.
+          </p>
+
+          <form id="students-form" style="margin-bottom: 1rem;">
+            <div class="form-field">
+              <label for="student-name">Student name</label>
+              <input
+                id="student-name"
+                type="text"
+                placeholder="e.g. Ethan Tan"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="student-level">Level (optional)</label>
+              <input
+                id="student-level"
+                type="text"
+                placeholder="e.g. P5, P6"
+              />
+            </div>
+            <div class="form-field">
+              <label for="student-subjects">Subjects (optional)</label>
+              <input
+                id="student-subjects"
+                type="text"
+                placeholder="e.g. P5 English, P5 Math"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Save / Update Student
+            </button>
+          </form>
+
+          <div id="students-list"></div>
+        </section>
+
+        <!-- ANNOUNCEMENTS & HOMEWORK -->
+        <section class="dashboard-card">
+          <div class="card-header">Announcements &amp; Homework</div>
+          <p class="card-subtitle">
+            Post weekly announcements and homework links here. Students will see
+            them in their hub.
+          </p>
+
+          <div class="dashboard-grid">
+            <!-- Announcements -->
+            <div class="card">
+              <div class="card-header">Announcements</div>
+              <form id="announcement-form">
+                <div class="form-field">
+                  <label for="announcement-title">Title</label>
+                  <input
+                    id="announcement-title"
+                    type="text"
+                    placeholder="e.g. Week 3 Update"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="announcement-message">Message</label>
+                  <textarea
+                    id="announcement-message"
+                    rows="3"
+                    placeholder="Key reminders, lesson focus, etc."
+                    required
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  Post Announcement
+                </button>
+              </form>
+
+              <div id="announcement-list" style="margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Homework -->
+            <div class="card">
+              <div class="card-header">Homework</div>
+              <form id="homework-form">
+                <div class="form-field">
+                  <label for="homework-title">Title</label>
+                  <input
+                    id="homework-title"
+                    type="text"
+                    placeholder="e.g. P5 English – Week 3 Practice"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="homework-link">Link (Google Form / PDF / etc.)</label>
+                  <input
+                    id="homework-link"
+                    type="url"
+                    placeholder="https://..."
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="homework-level">Level / Subject (optional)</label>
+                  <input
+                    id="homework-level"
+                    type="text"
+                    placeholder="e.g. P5 English"
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  Add Homework
+                </button>
+              </form>
+
+              <div id="homework-list" style="margin-top: 1rem;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STUDENT QUESTIONS (CHAT STYLE) -->
         <section class="dashboard-card">
           <div class="card-header">Student Questions</div>
           <p class="card-subtitle">
@@ -37,47 +160,8 @@
             student to expand their conversation, then type and send your reply.
           </p>
 
-          <!-- This is where your JS should render student groups -->
-          <div id="questions-list" class="dashboard-grid-single">
-            <!--
-              Your app-teacher.js should fill this container with one .question-group
-              per student. Example structure for reference:
-
-              <div class="question-group">
-                <div class="question-group-header">
-                  <span>alex — 4 msgs · 2 pending</span>
-                  <span>▼</span>
-                </div>
-
-                <div class="question-thread">
-                  <div class="msg-student">
-                    why is the sun blue?
-                    <div class="msg-time">04:45 AM</div>
-                  </div>
-                  <div class="msg-teacher">
-                    I'm not sure too!
-                    <div class="msg-time">04:46 AM</div>
-                  </div>
-                </div>
-
-                <div class="reply-box">
-                  <textarea
-                    rows="2"
-                    class="reply-textarea"
-                    placeholder="Type your reply…"
-                  ></textarea>
-                  <button class="btn btn-primary send-reply-btn">
-                    Send reply
-                  </button>
-                </div>
-              </div>
-            -->
-          </div>
-
-          <p class="status-text" id="questions-status"></p>
+          <div id="questions-list" class="dashboard-grid-single"></div>
         </section>
-
-        <!-- OPTIONAL: HOMEWORK / ADMIN CARDS CAN GO HERE IN FUTURE -->
       </div>
     </main>
 
@@ -92,7 +176,7 @@
         new Date().getFullYear();
     </script>
 
-    <!-- Your existing teacher JS (Firebase, rendering, etc.) -->
+    <!-- Teacher Firebase / dashboard logic -->
     <script src="app-teacher.js" type="module"></script>
   </body>
 </html>
