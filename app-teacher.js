@@ -1,23 +1,15 @@
 // app-teacher.js
-// This file handles:
+// Handles:
 // - Firebase initialisation
-// - Teacher login (Firebase Auth)
-// - CRUD for announcements & homework
+// - CRUD for announcements & homework (if elements exist)
 // - Listing student questions + posting replies
 
 // 1. IMPORT FIREBASE MODULES FROM CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import {
   getFirestore,
   collection,
   addDoc,
-  getDocs,
   onSnapshot,
   query,
   orderBy,
@@ -25,8 +17,7 @@ import {
   doc,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// 2. TODO: PASTE YOUR OWN FIREBASE CONFIG HERE
-// Go to Firebase console → Project settings → Web app → Config
+// 2. FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
@@ -38,16 +29,9 @@ const firebaseConfig = {
 
 // 3. INITIALISE FIREBASE
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 4. DOM ELEMENTS
-const loginSection = document.getElementById("teacher-login-section");
-const dashboardSection = document.getElementById("teacher-dashboard-section");
-const loginForm = document.getElementById("teacher-login-form");
-const loginError = document.getElementById("teacher-login-error");
-const logoutBtn = document.getElementById("teacher-logout-btn");
-
+// 4. DOM ELEMENTS (OPTIONAL ONES ARE GUARDED)
 const announcementForm = document.getElementById("announcement-form");
 const announcementList = document.getElementById("announcement-list");
 
@@ -56,49 +40,17 @@ const homeworkList = document.getElementById("homework-list");
 
 const questionsList = document.getElementById("questions-list");
 
-// 5. AUTH: HANDLE LOGIN / LOGOUT / STATE
-
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  loginError.style.display = "none";
-  const email = document.getElementById("teacher-email").value.trim();
-  const pwd = document.getElementById("teacher-password").value.trim();
-
-  try {
-    await signInWithEmailAndPassword(auth, email, pwd);
-    loginForm.reset();
-  } catch (err) {
-    console.error(err);
-    loginError.textContent = "Login failed. Please check your email and password.";
-    loginError.style.display = "block";
-  }
-});
-
-logoutBtn.addEventListener("click", () => {
-  signOut(auth);
-});
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    // Logged in
-    loginSection.style.display = "none";
-    dashboardSection.style.display = "block";
-    startRealtimeSubscriptions();
-  } else {
-    // Logged out
-    dashboardSection.style.display = "none";
-    loginSection.style.display = "flex";
-    clearLists();
-  }
-});
-
-// 6. ANNOUNCEMENTS
+// 5. ANNOUNCEMENTS
 
 if (announcementForm) {
   announcementForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const title = document.getElementById("announcement-title").value.trim();
-    const message = document.getElementById("announcement-message").value.trim();
+    const title = document
+      .getElementById("announcement-title")
+      .value.trim();
+    const message = document
+      .getElementById("announcement-message")
+      .value.trim();
 
     if (!title || !message) return;
 
@@ -116,22 +68,27 @@ if (announcementForm) {
 }
 
 function renderAnnouncement(docSnapshot) {
+  if (!announcementList) return;
   const data = docSnapshot.data();
   const card = document.createElement("div");
   card.className = "announcement";
   card.innerHTML = `
     <h4>${data.title || "Untitled"}</h4>
     <p>${data.message || ""}</p>
-    <p class="helper-text">Posted: ${new Date(data.createdAt || Date.now()).toLocaleString()}</p>
+    <p class="helper-text">Posted: ${new Date(
+      data.createdAt || Date.now()
+    ).toLocaleString()}</p>
   `;
   announcementList.appendChild(card);
 }
 
 function clearAnnouncements() {
-  announcementList.innerHTML = "";
+  if (announcementList) {
+    announcementList.innerHTML = "";
+  }
 }
 
-// 7. HOMEWORK
+// 6. HOMEWORK
 
 if (homeworkForm) {
   homeworkForm.addEventListener("submit", async (e) => {
@@ -157,6 +114,7 @@ if (homeworkForm) {
 }
 
 function renderHomework(docSnapshot) {
+  if (!homeworkList) return;
   const data = docSnapshot.data();
   const item = document.createElement("div");
   item.className = "announcement"; // reuse style
@@ -172,10 +130,12 @@ function renderHomework(docSnapshot) {
 }
 
 function clearHomework() {
-  homeworkList.innerHTML = "";
+  if (homeworkList) {
+    homeworkList.innerHTML = "";
+  }
 }
 
-// 8. STUDENT QUESTIONS + REPLIES
+// 7. STUDENT QUESTIONS + REPLIES
 
 function formatTimeLabel(ts) {
   if (!ts) return "";
@@ -184,6 +144,8 @@ function formatTimeLabel(ts) {
 }
 
 function renderQuestionsGrouped(snapshot) {
+  if (!questionsList) return;
+
   // Clear existing list
   questionsList.innerHTML = "";
 
@@ -234,8 +196,9 @@ function renderQuestionsGrouped(snapshot) {
     summary.innerHTML = `
       <span class="teacher-student-name">${name}</span>
       <span class="teacher-student-meta">
-        ${total} msg${total > 1 ? "s" : ""}
-        ${unanswered > 0 ? ` • ${unanswered} pending` : ""}
+        ${total} msg${total > 1 ? "s" : ""}${
+      unanswered > 0 ? ` • ${unanswered} pending` : ""
+    }
       </span>
     `;
     thread.appendChild(summary);
@@ -341,7 +304,8 @@ function renderQuestionsGrouped(snapshot) {
       });
     });
 }
-// 9. REALTIME SUBSCRIPTIONS
+
+// 8. REALTIME SUBSCRIPTIONS
 
 let unsubAnnouncements = null;
 let unsubHomework = null;
@@ -349,14 +313,20 @@ let unsubQuestions = null;
 
 function startRealtimeSubscriptions() {
   // Announcements
-  const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
+  const annQuery = query(
+    collection(db, "announcements"),
+    orderBy("createdAt", "desc")
+  );
   unsubAnnouncements = onSnapshot(annQuery, (snapshot) => {
     clearAnnouncements();
     snapshot.forEach(renderAnnouncement);
   });
 
   // Homework
-  const hwQuery = query(collection(db, "homework"), orderBy("createdAt", "desc"));
+  const hwQuery = query(
+    collection(db, "homework"),
+    orderBy("createdAt", "desc")
+  );
   unsubHomework = onSnapshot(hwQuery, (snapshot) => {
     clearHomework();
     snapshot.forEach(renderHomework);
@@ -372,14 +342,5 @@ function startRealtimeSubscriptions() {
   });
 }
 
-function clearLists() {
-  clearAnnouncements();
-  clearHomework();
-  clearQuestions();
-
-  if (unsubAnnouncements) unsubAnnouncements();
-  if (unsubHomework) unsubHomework();
-  if (unsubQuestions) unsubQuestions();
-
-  unsubAnnouncements = unsubHomework = unsubQuestions = null;
-}
+// Start immediately (no teacher login for now)
+startRealtimeSubscriptions();
