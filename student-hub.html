@@ -172,25 +172,27 @@
   id="chat-form"
   class="reply-box"
   style="margin-top: 0.9rem;"
-  onsubmit="return false;"
 >
-              <label for="chat-input">Your question</label>
-              <textarea
-                id="chat-input"
-                rows="2"
-                placeholder="Type your question clearly…"
-                required
-              ></textarea>
+  <div id="chat-window" class="chat-window"></div>
 
-              <p class="helper-text">
-                In future, you may be able to attach a photo of your work here.
-                For now, just describe your question clearly.
-              </p>
+  <label class="chat-label">
+    Your question
+    <textarea
+      id="chat-input"
+      rows="2"
+      placeholder="Type your question here..."
+      required
+    ></textarea>
+  </label>
 
-              <button type="submit" class="btn btn-primary">
-                Send question
-              </button>
-            </form>
+  <p id="chat-status" class="helper-text"></p>
+
+  <div class="chat-actions">
+    <button type="submit" class="btn btn-primary">
+      Send question
+    </button>
+  </div>
+</form>
 
             <p class="status-text" id="chat-status"></p>
           </section>

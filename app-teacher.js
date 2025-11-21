@@ -1,8 +1,8 @@
 // app-teacher.js
-// Handles teacher side:
-// - Realtime announcements + homework (if elements exist)
-// - Student profiles (students collection) + Hero Stars
-// - Grouped student questions + replies (questions collection)
+// Teacher side:
+// - Students & Hero Stars
+// - Announcements & Homework
+// - Student Questions (chat-style)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
@@ -18,7 +18,6 @@ import {
   increment,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
@@ -31,29 +30,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// DOM refs (some may be null depending on which sections exist)
+// DOM
+const studentsForm = document.getElementById("students-form");
+const studentsList = document.getElementById("students-list");
+const studentsSelect = document.getElementById("student-select");
+
 const announcementForm = document.getElementById("announcement-form");
 const announcementList = document.getElementById("announcement-list");
 
 const homeworkForm = document.getElementById("homework-form");
 const homeworkList = document.getElementById("homework-list");
 
-const studentsForm = document.getElementById("students-form");
-const studentsList = document.getElementById("students-list");
-const studentsSelect = document.getElementById("student-select");
-
 const questionsList = document.getElementById("questions-list");
 
-if (studentsSelect && document.getElementById("student-name")) {
-  const nameInput = document.getElementById("student-name");
-  studentsSelect.addEventListener("change", () => {
-    if (studentsSelect.value) {
-      nameInput.value = studentsSelect.value;
-    }
-  });
-}
-
-// Helpers
 function slugifyName(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 }
@@ -64,7 +53,134 @@ function formatTimeLabel(ts) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// 1. ANNOUNCEMENTS (optional)
+// ---------- STUDENTS & HERO STARS ----------
+
+if (studentsSelect && document.getElementById("student-name")) {
+  const nameInput = document.getElementById("student-name");
+  studentsSelect.addEventListener("change", () => {
+    if (studentsSelect.value) {
+      nameInput.value = studentsSelect.value;
+    }
+  });
+}
+
+if (studentsForm) {
+  studentsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const selectVal = studentsSelect ? studentsSelect.value.trim() : "";
+    let name = selectVal;
+
+    if (!name) {
+      const nameInput = document.getElementById("student-name");
+      name = nameInput ? nameInput.value.trim() : "";
+    }
+
+    const levelInput = document.getElementById("student-level");
+    const subjectsInput = document.getElementById("student-subjects");
+
+    const level = levelInput ? levelInput.value.trim() : "";
+    const subjectsRaw = subjectsInput ? subjectsInput.value.trim() : "";
+
+    if (!name) {
+      console.warn("[Teacher] No student name provided");
+      return;
+    }
+
+    const id = slugifyName(name);
+    const subjects = subjectsRaw
+      ? subjectsRaw.split(",").map((s) => s.trim())
+      : [];
+
+    try {
+      await setDoc(
+        doc(db, "students", id),
+        {
+          name,
+          level,
+          subjects,
+          stars: 0,
+          updatedAt: Date.now(),
+        },
+        { merge: true }
+      );
+      studentsForm.reset();
+      if (studentsSelect) {
+        studentsSelect.value = "";
+      }
+    } catch (err) {
+      console.error("Error saving student:", err);
+    }
+  });
+}
+
+function renderStudents(snapshot) {
+  // dropdown
+  if (studentsSelect) {
+    studentsSelect.innerHTML =
+      '<option value="">-- New or type name below --</option>';
+  }
+  if (!studentsList) return;
+  studentsList.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+    const stars = data.stars || 0;
+    const level = data.level || "-";
+    const subjects = (data.subjects || []).join(", ");
+
+    // dropdown option
+    if (studentsSelect && data.name) {
+      const opt = document.createElement("option");
+      opt.value = data.name;
+      opt.textContent = data.name;
+      studentsSelect.appendChild(opt);
+    }
+
+    const row = document.createElement("div");
+    row.className = "student-row ev-card-bubble";
+    row.innerHTML = `
+      <div class="student-main">
+        <div><strong>${data.name || "Unnamed"}</strong></div>
+        <div class="helper-text">
+          Level: ${level} ${
+      subjects ? "• Subjects: " + subjects : ""
+    } • Hero Stars: <strong>${stars}</strong>
+        </div>
+      </div>
+      <div class="student-actions">
+        <button class="btn btn-small" data-action="add1" data-id="${id}">+1</button>
+        <button class="btn btn-small" data-action="add5" data-id="${id}">+5</button>
+        <button class="btn btn-ghost btn-small" data-action="reset" data-id="${id}">Reset</button>
+      </div>
+    `;
+    studentsList.appendChild(row);
+  });
+
+  // star buttons
+  studentsList.querySelectorAll("button[data-action]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const ref = doc(db, "students", id);
+
+      try {
+        if (action === "add1") {
+          await updateDoc(ref, { stars: increment(1), updatedAt: Date.now() });
+        } else if (action === "add5") {
+          await updateDoc(ref, { stars: increment(5), updatedAt: Date.now() });
+        } else if (action === "reset") {
+          await updateDoc(ref, { stars: 0, updatedAt: Date.now() });
+        }
+      } catch (err) {
+        console.error("Error updating stars:", err);
+      }
+    });
+  });
+}
+
+// ---------- ANNOUNCEMENTS ----------
 
 if (announcementForm) {
   announcementForm.addEventListener("submit", async (e) => {
@@ -110,7 +226,7 @@ function clearAnnouncements() {
   if (announcementList) announcementList.innerHTML = "";
 }
 
-// 2. HOMEWORK (optional)
+// ---------- HOMEWORK ----------
 
 if (homeworkForm) {
   homeworkForm.addEventListener("submit", async (e) => {
@@ -145,11 +261,10 @@ if (homeworkForm) {
 function renderHomework(docSnap) {
   if (!homeworkList) return;
   const data = docSnap.data();
-  const item = document.createElement("div");
-  item.className = "ev-card-bubble";
+  const card = document.createElement("div");
+  card.className = "ev-card-bubble";
 
   const links = data.links || (data.link ? [data.link] : []);
-
   const linksHtml = links
     .map(
       (url, idx) =>
@@ -157,7 +272,7 @@ function renderHomework(docSnap) {
     )
     .join("");
 
-  item.innerHTML = `
+  card.innerHTML = `
     <h4>${data.title || "Untitled"}</h4>
     ${
       linksHtml
@@ -169,99 +284,14 @@ function renderHomework(docSnap) {
       ${new Date(data.createdAt || Date.now()).toLocaleString()}
     </p>
   `;
-  homeworkList.appendChild(item);
+  homeworkList.appendChild(card);
 }
 
 function clearHomework() {
   if (homeworkList) homeworkList.innerHTML = "";
 }
 
-// 3. STUDENTS & HERO STARS
-
-if (studentsForm) {
-  studentsForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("student-name").value.trim();
-    const level = document.getElementById("student-level").value.trim();
-    const subjectsInput =
-      document.getElementById("student-subjects").value.trim(); // e.g. "P5 Eng, P5 Math"
-
-    if (!name) return;
-
-    const id = slugifyName(name);
-    const subjects = subjectsInput
-      ? subjectsInput.split(",").map((s) => s.trim())
-      : [];
-
-    try {
-      await setDoc(
-        doc(db, "students", id),
-        {
-          name,
-          level,
-          subjects,
-          stars: 0,
-          updatedAt: Date.now(),
-        },
-        { merge: true }
-      );
-      studentsForm.reset();
-    } catch (err) {
-      console.error("Error saving student:", err);
-    }
-  });
-}
-
-function renderStudents(snapshot) {
-  if (studentsSelect) {
-    studentsSelect.innerHTML =
-      '<option value="">-- New or type name below --</option>';
-  }
-  if (!studentsList) return;
-  studentsList.innerHTML = "";
-
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const id = docSnap.id;
-
-    // Fill dropdown
-    if (studentsSelect && data.name) {
-      const opt = document.createElement("option");
-      opt.value = data.name;
-      opt.textContent = data.name;
-      studentsSelect.appendChild(opt);
-    }
-
-    // Existing row rendering (hero stars etc.) stays as I gave earlier…
-    // (keep your current student-row creation + star buttons)
-    // ...
-  });
-
-  // existing button listeners etc...
-}
-
-  // Attach star buttons
-  studentsList.querySelectorAll("button[data-action]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      const ref = doc(db, "students", id);
-      try {
-        if (action === "add1") {
-          await updateDoc(ref, { stars: increment(1), updatedAt: Date.now() });
-        } else if (action === "add5") {
-          await updateDoc(ref, { stars: increment(5), updatedAt: Date.now() });
-        } else if (action === "reset") {
-          await updateDoc(ref, { stars: 0, updatedAt: Date.now() });
-        }
-      } catch (err) {
-        console.error("Error updating stars:", err);
-      }
-    });
-  });
-}
-
-// 4. STUDENT QUESTIONS + REPLIES
+// ---------- STUDENT QUESTIONS ----------
 
 function renderQuestionsGrouped(snapshot) {
   if (!questionsList) return;
@@ -273,10 +303,7 @@ function renderQuestionsGrouped(snapshot) {
     const data = docSnap.data();
     const studentName = data.studentName || "Unknown student";
 
-    if (!byStudent[studentName]) {
-      byStudent[studentName] = [];
-    }
-
+    if (!byStudent[studentName]) byStudent[studentName] = [];
     byStudent[studentName].push({
       id: docSnap.id,
       text: data.text || "",
@@ -299,7 +326,9 @@ function renderQuestionsGrouped(snapshot) {
 
     const thread = document.createElement("details");
     thread.className = "teacher-student-thread";
-   
+    // default collapsed; if you want auto-open when pending, uncomment:
+    // if (unanswered > 0) thread.open = true;
+
     const summary = document.createElement("summary");
     summary.className = "teacher-student-summary";
     summary.innerHTML = `
@@ -378,7 +407,6 @@ function renderQuestionsGrouped(snapshot) {
     questionsList.appendChild(thread);
   });
 
-  // Attach reply handlers
   questionsList
     .querySelectorAll(".teacher-chat-reply-form")
     .forEach((form) => {
@@ -402,10 +430,16 @@ function renderQuestionsGrouped(snapshot) {
     });
 }
 
-// 5. REALTIME SUBSCRIPTIONS
+// ---------- REALTIME SUBSCRIPTIONS ----------
 
 function startRealtimeSubscriptions() {
-  // Announcements
+  if (studentsList || studentsSelect) {
+    const stQuery = query(collection(db, "students"), orderBy("name", "asc"));
+    onSnapshot(stQuery, (snapshot) => {
+      renderStudents(snapshot);
+    });
+  }
+
   if (announcementList) {
     const annQuery = query(
       collection(db, "announcements"),
@@ -417,7 +451,6 @@ function startRealtimeSubscriptions() {
     });
   }
 
-  // Homework
   if (homeworkList) {
     const hwQuery = query(
       collection(db, "homework"),
@@ -429,18 +462,6 @@ function startRealtimeSubscriptions() {
     });
   }
 
-  // Students
-  if (studentsList) {
-    const stQuery = query(
-      collection(db, "students"),
-      orderBy("name", "asc")
-    );
-    onSnapshot(stQuery, (snapshot) => {
-      renderStudents(snapshot);
-    });
-  }
-
-  // Questions
   if (questionsList) {
     const qQuery = query(
       collection(db, "questions"),
@@ -453,3 +474,4 @@ function startRealtimeSubscriptions() {
 }
 
 startRealtimeSubscriptions();
+console.log("[Teacher] Dashboard initialised");

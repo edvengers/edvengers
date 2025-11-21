@@ -1,9 +1,9 @@
 // app-student.js
-// Handles the student side:
-// - Creates/updates a simple "student profile" document (by name)
-// - Shows Hero Stars from Firestore
-// - Sends questions to Firestore
-// - Shows a chat-style view of own questions + teacher replies
+// Student side:
+// - Create/update simple profile (students collection)
+// - Show Hero Stars
+// - Show announcements & homework
+// - Let student send questions & see replies
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
@@ -18,7 +18,6 @@ import {
   setDoc,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Firebase config (same as teacher)
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
@@ -31,7 +30,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Helper to make a safe doc id from name
 function slugifyName(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 }
@@ -43,33 +41,29 @@ function formatTimeLabel(ts) {
 }
 
 function initStudentPortal() {
-  // Get student name (from login script)
+  console.log("[Student] initStudentPortal start");
+
   let studentName = window.currentStudentName;
   if (!studentName) {
-    // fallback to local storage (if they refresh)
     studentName = localStorage.getItem("currentStudentName");
   } else {
     localStorage.setItem("currentStudentName", studentName);
   }
 
   if (!studentName) {
-    // If somehow reached here without login, show a message
+    console.warn("[Student] No name found, cannot init portal");
     const hubTitle = document.getElementById("hub-title");
-    if (hubTitle) {
-      hubTitle.textContent = "Please go back and log in again.";
-    }
+    if (hubTitle) hubTitle.textContent = "Please go back and log in again.";
     return;
   }
 
   const nameDisplay = document.getElementById("student-name-display");
-  if (nameDisplay) {
-    nameDisplay.textContent = studentName;
-  }
+  if (nameDisplay) nameDisplay.textContent = studentName;
 
   const studentId = slugifyName(studentName);
   const studentRef = doc(db, "students", studentId);
 
-  // Ensure profile exists (at least name + stars)
+  // Ensure profile exists
   setDoc(
     studentRef,
     {
@@ -80,7 +74,7 @@ function initStudentPortal() {
     { merge: true }
   ).catch((err) => console.error("Error creating student profile", err));
 
-  // Subscribe to stars
+  // Hero Stars subscription
   const starsEl = document.getElementById("hero-stars-count");
   onSnapshot(studentRef, (snap) => {
     const data = snap.data();
@@ -89,8 +83,7 @@ function initStudentPortal() {
     }
   });
 
-// --- Announcements & Homework subscriptions for student hub ---
-
+  // Announcements & Homework lists
   const announcementList = document.getElementById("announcement-list");
   const homeworkList = document.getElementById("homework-list");
 
@@ -103,58 +96,58 @@ function initStudentPortal() {
       announcementList.innerHTML = "";
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const item = document.createElement("div");
-        item.className = "announcement";
-        item.innerHTML = `
+        const card = document.createElement("div");
+        card.className = "ev-card-bubble";
+        card.innerHTML = `
           <h4>${data.title || "Untitled"}</h4>
           <p>${data.message || ""}</p>
           <p class="helper-text">Posted: ${new Date(
             data.createdAt || Date.now()
           ).toLocaleString()}</p>
         `;
-        announcementList.appendChild(item);
+        announcementList.appendChild(card);
       });
     });
   }
 
   if (homeworkList) {
-  const hwQuery = query(
-    collection(db, "homework"),
-    orderBy("createdAt", "desc")
-  );
-  onSnapshot(hwQuery, (snapshot) => {
-    homeworkList.innerHTML = "";
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const item = document.createElement("div");
-      item.className = "ev-card-bubble";
+    const hwQuery = query(
+      collection(db, "homework"),
+      orderBy("createdAt", "desc")
+    );
+    onSnapshot(hwQuery, (snapshot) => {
+      homeworkList.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const card = document.createElement("div");
+        card.className = "ev-card-bubble";
 
-      const links = data.links || (data.link ? [data.link] : []);
-      const linksHtml = links
-        .map(
-          (url, idx) =>
-            `<li><a href="${url}" target="_blank">Link ${idx + 1}</a></li>`
-        )
-        .join("");
+        const links = data.links || (data.link ? [data.link] : []);
+        const linksHtml = links
+          .map(
+            (url, idx) =>
+              `<li><a href="${url}" target="_blank">Link ${idx + 1}</a></li>`
+          )
+          .join("");
 
-      item.innerHTML = `
-        <h4>${data.title || "Untitled"}</h4>
-        ${
-          linksHtml
-            ? `<ul class="ev-link-list">${linksHtml}</ul>`
-            : "<p>No links provided.</p>"
-        }
-        <p class="helper-text">
-          ${data.level ? "Level: " + data.level + " • " : ""}Posted:
-          ${new Date(data.createdAt || Date.now()).toLocaleString()}
-        </p>
-      `;
-      homeworkList.appendChild(item);
+        card.innerHTML = `
+          <h4>${data.title || "Untitled"}</h4>
+          ${
+            linksHtml
+              ? `<ul class="ev-link-list">${linksHtml}</ul>`
+              : "<p>No links provided.</p>"
+          }
+          <p class="helper-text">
+            ${data.level ? "Level: " + data.level + " • " : ""}Posted:
+            ${new Date(data.createdAt || Date.now()).toLocaleString()}
+          </p>
+        `;
+        homeworkList.appendChild(card);
+      });
     });
-  });
-}
+  }
 
-  // Handle Ask a Question
+  // Ask a Question
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   const chatWindow = document.getElementById("chat-window");
@@ -166,7 +159,7 @@ function initStudentPortal() {
       const text = chatInput.value.trim();
       if (!text) return;
 
-      chatStatus.textContent = "Sending question...";
+      if (chatStatus) chatStatus.textContent = "Sending question...";
 
       try {
         await addDoc(collection(db, "questions"), {
@@ -177,15 +170,19 @@ function initStudentPortal() {
           repliedAt: null,
         });
         chatInput.value = "";
-        chatStatus.textContent = "Question sent! Your teacher will reply soon.";
-        setTimeout(() => (chatStatus.textContent = ""), 2500);
+        if (chatStatus) {
+          chatStatus.textContent = "Question sent! Your teacher will reply soon.";
+          setTimeout(() => (chatStatus.textContent = ""), 2500);
+        }
       } catch (err) {
         console.error("Error sending question:", err);
-        chatStatus.textContent = "Error sending question. Please try again.";
+        if (chatStatus) {
+          chatStatus.textContent = "Error sending question. Please try again.";
+        }
       }
     });
 
-    // Subscribe to this student's questions
+    // Subscribe to THIS student's questions
     const qQuery = query(
       collection(db, "questions"),
       where("studentName", "==", studentName),
@@ -194,23 +191,25 @@ function initStudentPortal() {
 
     onSnapshot(qQuery, (snapshot) => {
       chatWindow.innerHTML = "";
-
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const rowStudent = document.createElement("div");
-        rowStudent.className = "chat-row chat-row-student";
-        rowStudent.innerHTML = `
+
+        // Student bubble
+        const rowS = document.createElement("div");
+        rowS.className = "chat-row chat-row-student";
+        rowS.innerHTML = `
           <div class="chat-bubble chat-bubble-student">
             <div class="chat-text">${data.text || ""}</div>
             <div class="chat-time">${formatTimeLabel(data.createdAt)}</div>
           </div>
         `;
-        chatWindow.appendChild(rowStudent);
+        chatWindow.appendChild(rowS);
 
+        // Teacher reply bubble
         if (data.reply) {
-          const rowTeacher = document.createElement("div");
-          rowTeacher.className = "chat-row chat-row-teacher";
-          rowTeacher.innerHTML = `
+          const rowT = document.createElement("div");
+          rowT.className = "chat-row chat-row-teacher";
+          rowT.innerHTML = `
             <div class="chat-bubble chat-bubble-teacher">
               <div class="chat-text">${data.reply}</div>
               <div class="chat-time">${formatTimeLabel(
@@ -218,7 +217,7 @@ function initStudentPortal() {
               )}</div>
             </div>
           `;
-          chatWindow.appendChild(rowTeacher);
+          chatWindow.appendChild(rowT);
         }
       });
 
@@ -227,5 +226,4 @@ function initStudentPortal() {
   }
 }
 
-// Initialise when DOM is ready
 document.addEventListener("DOMContentLoaded", initStudentPortal);
