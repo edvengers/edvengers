@@ -1,10 +1,9 @@
 // app-teacher.js
-// Handles:
-// - Firebase initialisation
-// - CRUD for announcements & homework (if elements exist)
-// - Listing student questions + posting replies
+// Handles teacher side:
+// - Realtime announcements + homework (if elements exist)
+// - Student profiles (students collection) + Hero Stars
+// - Grouped student questions + replies (questions collection)
 
-// 1. IMPORT FIREBASE MODULES FROM CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -15,9 +14,11 @@ import {
   orderBy,
   updateDoc,
   doc,
+  setDoc,
+  increment,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// 2. FIREBASE CONFIG
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
@@ -27,20 +28,33 @@ const firebaseConfig = {
   appId: "1:825538244708:web:5eb57d970a65433190ef71",
 };
 
-// 3. INITIALISE FIREBASE
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 4. DOM ELEMENTS (OPTIONAL ONES ARE GUARDED)
+// DOM refs (some may be null depending on which sections exist)
 const announcementForm = document.getElementById("announcement-form");
 const announcementList = document.getElementById("announcement-list");
 
 const homeworkForm = document.getElementById("homework-form");
 const homeworkList = document.getElementById("homework-list");
 
+const studentsForm = document.getElementById("students-form");
+const studentsList = document.getElementById("students-list");
+
 const questionsList = document.getElementById("questions-list");
 
-// 5. ANNOUNCEMENTS
+// Helpers
+function slugifyName(name) {
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+}
+
+function formatTimeLabel(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// 1. ANNOUNCEMENTS (optional)
 
 if (announcementForm) {
   announcementForm.addEventListener("submit", async (e) => {
@@ -67,9 +81,9 @@ if (announcementForm) {
   });
 }
 
-function renderAnnouncement(docSnapshot) {
+function renderAnnouncement(docSnap) {
   if (!announcementList) return;
-  const data = docSnapshot.data();
+  const data = docSnap.data();
   const card = document.createElement("div");
   card.className = "announcement";
   card.innerHTML = `
@@ -83,12 +97,10 @@ function renderAnnouncement(docSnapshot) {
 }
 
 function clearAnnouncements() {
-  if (announcementList) {
-    announcementList.innerHTML = "";
-  }
+  if (announcementList) announcementList.innerHTML = "";
 }
 
-// 6. HOMEWORK
+// 2. HOMEWORK (optional)
 
 if (homeworkForm) {
   homeworkForm.addEventListener("submit", async (e) => {
@@ -113,11 +125,11 @@ if (homeworkForm) {
   });
 }
 
-function renderHomework(docSnapshot) {
+function renderHomework(docSnap) {
   if (!homeworkList) return;
-  const data = docSnapshot.data();
+  const data = docSnap.data();
   const item = document.createElement("div");
-  item.className = "announcement"; // reuse style
+  item.className = "announcement";
   item.innerHTML = `
     <h4>${data.title || "Untitled"}</h4>
     <p><a href="${data.link}" target="_blank">Open link</a></p>
@@ -130,26 +142,105 @@ function renderHomework(docSnapshot) {
 }
 
 function clearHomework() {
-  if (homeworkList) {
-    homeworkList.innerHTML = "";
-  }
+  if (homeworkList) homeworkList.innerHTML = "";
 }
 
-// 7. STUDENT QUESTIONS + REPLIES
+// 3. STUDENTS & HERO STARS
 
-function formatTimeLabel(ts) {
-  if (!ts) return "";
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+if (studentsForm) {
+  studentsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("student-name").value.trim();
+    const level = document.getElementById("student-level").value.trim();
+    const subjectsInput =
+      document.getElementById("student-subjects").value.trim(); // e.g. "P5 Eng, P5 Math"
+
+    if (!name) return;
+
+    const id = slugifyName(name);
+    const subjects = subjectsInput
+      ? subjectsInput.split(",").map((s) => s.trim())
+      : [];
+
+    try {
+      await setDoc(
+        doc(db, "students", id),
+        {
+          name,
+          level,
+          subjects,
+          stars: 0,
+          updatedAt: Date.now(),
+        },
+        { merge: true }
+      );
+      studentsForm.reset();
+    } catch (err) {
+      console.error("Error saving student:", err);
+    }
+  });
 }
+
+function renderStudents(snapshot) {
+  if (!studentsList) return;
+  studentsList.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "student-row announcement";
+    const stars = data.stars || 0;
+    const level = data.level || "-";
+    const subjects = (data.subjects || []).join(", ");
+
+    wrapper.innerHTML = `
+      <div class="student-main">
+        <div><strong>${data.name || "Unnamed"}</strong></div>
+        <div class="helper-text">
+          Level: ${level} ${
+      subjects ? "• Subjects: " + subjects : ""
+    } • Hero Stars: <strong>${stars}</strong>
+        </div>
+      </div>
+      <div class="student-actions">
+        <button class="btn btn-small" data-action="add1" data-id="${id}">+1</button>
+        <button class="btn btn-small" data-action="add5" data-id="${id}">+5</button>
+        <button class="btn btn-ghost btn-small" data-action="reset" data-id="${id}">Reset</button>
+      </div>
+    `;
+
+    studentsList.appendChild(wrapper);
+  });
+
+  // Attach star buttons
+  studentsList.querySelectorAll("button[data-action]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const ref = doc(db, "students", id);
+      try {
+        if (action === "add1") {
+          await updateDoc(ref, { stars: increment(1), updatedAt: Date.now() });
+        } else if (action === "add5") {
+          await updateDoc(ref, { stars: increment(5), updatedAt: Date.now() });
+        } else if (action === "reset") {
+          await updateDoc(ref, { stars: 0, updatedAt: Date.now() });
+        }
+      } catch (err) {
+        console.error("Error updating stars:", err);
+      }
+    });
+  });
+}
+
+// 4. STUDENT QUESTIONS + REPLIES
 
 function renderQuestionsGrouped(snapshot) {
   if (!questionsList) return;
-
-  // Clear existing list
   questionsList.innerHTML = "";
 
-  // Group questions by studentName
   const byStudent = {};
 
   snapshot.forEach((docSnap) => {
@@ -169,7 +260,6 @@ function renderQuestionsGrouped(snapshot) {
     });
   });
 
-  // Sort students alphabetically
   const studentNames = Object.keys(byStudent).sort((a, b) =>
     a.localeCompare(b)
   );
@@ -181,16 +271,10 @@ function renderQuestionsGrouped(snapshot) {
     const total = questions.length;
     const unanswered = questions.filter((q) => !q.reply).length;
 
-    // <details> wrapper per student (collapsible)
     const thread = document.createElement("details");
     thread.className = "teacher-student-thread";
+    if (unanswered > 0) thread.open = true;
 
-    // Auto-open if there are pending questions
-    if (unanswered > 0) {
-      thread.open = true;
-    }
-
-    // Summary row (student name + stats)
     const summary = document.createElement("summary");
     summary.className = "teacher-student-summary";
     summary.innerHTML = `
@@ -203,27 +287,22 @@ function renderQuestionsGrouped(snapshot) {
     `;
     thread.appendChild(summary);
 
-    // Chat-style container inside
     const card = document.createElement("div");
     card.className = "announcement teacher-thread-card";
 
     const chat = document.createElement("div");
     chat.className = "teacher-chat-thread";
 
-    // Build flat message list: student + teacher messages
     const messages = [];
 
     questions.forEach((q) => {
-      // Student message
       messages.push({
         sender: "student",
         text: q.text,
         ts: q.createdAt,
         docId: q.id,
       });
-
       if (q.reply) {
-        // Teacher reply message
         messages.push({
           sender: "teacher",
           text: q.reply,
@@ -233,15 +312,12 @@ function renderQuestionsGrouped(snapshot) {
       }
     });
 
-    // Sort by time so it flows like a chat
     messages.sort((a, b) => a.ts - b.ts);
 
-    // Find the last student message – we always reply to this one
     const studentMessages = messages.filter((m) => m.sender === "student");
     const lastStudent = studentMessages[studentMessages.length - 1] || null;
     const replyTargetDocId = lastStudent ? lastStudent.docId : null;
 
-    // Render messages with timestamps
     messages.forEach((m) => {
       const row = document.createElement("div");
       row.className =
@@ -249,19 +325,15 @@ function renderQuestionsGrouped(snapshot) {
         (m.sender === "student"
           ? "teacher-chat-row-student"
           : "teacher-chat-row-teacher");
-
-      const timeLabel = formatTimeLabel(m.ts);
-
       row.innerHTML = `
         <div class="teacher-chat-bubble">
           <div class="teacher-chat-text">${m.text}</div>
-          <div class="teacher-chat-time">${timeLabel}</div>
+          <div class="teacher-chat-time">${formatTimeLabel(m.ts)}</div>
         </div>
       `;
       chat.appendChild(row);
     });
 
-    // ✅ Reply box ALWAYS visible (as long as there is at least one student message)
     if (replyTargetDocId) {
       const form = document.createElement("form");
       form.className = "teacher-chat-reply-form";
@@ -281,7 +353,7 @@ function renderQuestionsGrouped(snapshot) {
     questionsList.appendChild(thread);
   });
 
-  // Attach reply listeners for the inline forms
+  // Attach reply handlers
   questionsList
     .querySelectorAll(".teacher-chat-reply-form")
     .forEach((form) => {
@@ -305,42 +377,54 @@ function renderQuestionsGrouped(snapshot) {
     });
 }
 
-// 8. REALTIME SUBSCRIPTIONS
-
-let unsubAnnouncements = null;
-let unsubHomework = null;
-let unsubQuestions = null;
+// 5. REALTIME SUBSCRIPTIONS
 
 function startRealtimeSubscriptions() {
   // Announcements
-  const annQuery = query(
-    collection(db, "announcements"),
-    orderBy("createdAt", "desc")
-  );
-  unsubAnnouncements = onSnapshot(annQuery, (snapshot) => {
-    clearAnnouncements();
-    snapshot.forEach(renderAnnouncement);
-  });
+  if (announcementList) {
+    const annQuery = query(
+      collection(db, "announcements"),
+      orderBy("createdAt", "desc")
+    );
+    onSnapshot(annQuery, (snapshot) => {
+      clearAnnouncements();
+      snapshot.forEach(renderAnnouncement);
+    });
+  }
 
   // Homework
-  const hwQuery = query(
-    collection(db, "homework"),
-    orderBy("createdAt", "desc")
-  );
-  unsubHomework = onSnapshot(hwQuery, (snapshot) => {
-    clearHomework();
-    snapshot.forEach(renderHomework);
-  });
+  if (homeworkList) {
+    const hwQuery = query(
+      collection(db, "homework"),
+      orderBy("createdAt", "desc")
+    );
+    onSnapshot(hwQuery, (snapshot) => {
+      clearHomework();
+      snapshot.forEach(renderHomework);
+    });
+  }
+
+  // Students
+  if (studentsList) {
+    const stQuery = query(
+      collection(db, "students"),
+      orderBy("name", "asc")
+    );
+    onSnapshot(stQuery, (snapshot) => {
+      renderStudents(snapshot);
+    });
+  }
 
   // Questions
-  const qQuery = query(
-    collection(db, "questions"),
-    orderBy("createdAt", "desc")
-  );
-  unsubQuestions = onSnapshot(qQuery, (snapshot) => {
-    renderQuestionsGrouped(snapshot);
-  });
+  if (questionsList) {
+    const qQuery = query(
+      collection(db, "questions"),
+      orderBy("createdAt", "desc")
+    );
+    onSnapshot(qQuery, (snapshot) => {
+      renderQuestionsGrouped(snapshot);
+    });
+  }
 }
 
-// Start immediately (no teacher login for now)
 startRealtimeSubscriptions();
