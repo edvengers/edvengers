@@ -1,175 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Edvengers Student Hub</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body class="portal-body">
-  <header class="site-header">
-    <div class="container header-inner">
-      <div class="logo">
-        <span class="logo-mark">E</span>
-        <span class="logo-text">Edvengers Student Hub</span>
-      </div>
-      <nav class="nav">
-        <a href="index.html" class="btn btn-ghost btn-back">← Back to Main Site</a>
-      </nav>
-    </div>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Edvengers Student Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-  <main>
-    <!-- LOGIN SCREEN -->
-    <section id="login-section" class="section section-center">
-      <div class="container narrow">
-        <h1 class="section-title">Student Login</h1>
-        <p class="section-intro">
-          Welcome, Edvenger! Enter your details to access your missions.
-        </p>
-
-        <div class="card">
-          <form id="login-form" class="form">
-            <label>
-              Student Name / ID
-              <input type="text" id="student-name" required placeholder="e.g. Ethan Tan" />
-            </label>
-            <label>
-              Portal Password
-              <input type="password" id="portal-password" required placeholder="Ask your teacher" />
-            </label>
-            <p class="helper-text">
-              For this prototype, use password: <strong>heroes2026</strong>
-            </p>
-            <button type="submit" class="btn">Enter Student Hub</button>
-            <p id="login-error" class="error-text" style="display:none;">
-              Incorrect password. Please try again.
-            </p>
-          </form>
+  <body class="portal-body">
+    <!-- Top bar with logo + back button -->
+    <header class="ev-header">
+      <div class="ev-container ev-nav">
+        <div class="ev-logo">
+          <span class="ev-logo-mark">E</span>
+          <span class="ev-logo-text">Edvengers</span>
         </div>
+        <nav class="ev-nav-links">
+          <a href="index.html" class="btn btn-ghost btn-back">
+            ← Back to Main Site
+          </a>
+        </nav>
       </div>
-    </section>
+    </header>
 
-    <!-- DASHBOARD -->
-    <section id="dashboard-section" class="section" style="display:none;">
-      <div class="container">
-        <h1 class="section-title">Welcome, <span id="student-name-display"></span> 🦸‍♂️</h1>
-        <p class="section-intro">
-          This is your one-stop hub for lessons, worksheets, announcements, and questions.
-        </p>
-
-        <div class="grid-3">
-          <!-- Live Lesson -->
-          <div class="card">
-            <h2>Today’s Live Lesson</h2>
-            <p>
-              When it’s time for class, click the button below to join your Zoom lesson.
-            </p>
-            <p class="helper-text">
-              Make sure Zoom is installed on your device.
-            </p>
-            <!-- Replace this Zoom link with your actual one -->
-            <a href="https://us06web.zoom.us/j/your-meeting-id" class="btn" target="_blank">
-              Join Zoom Lesson
-            </a>
-            <p class="helper-text">
-              <strong>Note:</strong> Replace the Zoom URL in the code with your real meeting link.
-            </p>
-          </div>
-
-          <!-- Worksheets -->
-          <!-- Homework (Firebase Live Data) -->
-<div class="card">
-  <h2>Worksheets &amp; Homework</h2>
-  <div id="student-homework"></div>
-</div>
-
-          <!-- Announcements (Firebase Live Data) -->
-<div class="card">
-  <h2>Announcements</h2>
-  <div id="student-announcements"></div>
-</div>
-        </div>
-
-        <!-- Chat / Question Box -->
-        <div class="card chat-card">
-          <h2>Ask a Question</h2>
-          <p class="helper-text">
-            Use this box to type your academic questions. In the full version, your teacher will see
-            these and reply. For now, this saves in your browser so you can practise asking clearly.
+    <main>
+      <div class="ev-container" style="padding-top: 2rem; padding-bottom: 3rem;">
+        <!-- LOGIN SECTION -->
+        <section id="login-section" class="dashboard-card">
+          <h1>Student Login</h1>
+          <p class="ev-helper-text">
+            Welcome, Edvenger! Enter your details to access your missions.
           </p>
 
-          <div id="chat-window" class="chat-window">
-            <!-- Messages will be added here -->
-          </div>
-
-          <form id="chat-form" class="chat-form">
-            <label class="chat-label">
-              Your question
-              <textarea id="chat-input" rows="2" placeholder="Type your question here..." required></textarea>
-            </label>
-
-            <div class="chat-actions">
-              <label class="file-label">
-                📎 Attach photo (not functional in prototype)
-                <input type="file" id="chat-file" accept="image/*" disabled />
-              </label>
-              <button type="submit" class="btn btn-small">Send</button>
+          <form id="login-form">
+            <div class="form-field">
+              <label for="studentName">Student Name / ID</label>
+              <input
+                type="text"
+                id="studentName"
+                name="studentName"
+                placeholder="e.g. Ethan Tan"
+                required
+              />
             </div>
+
+            <div class="form-field">
+              <label for="portalPassword">Portal Password</label>
+              <input
+                type="password"
+                id="portalPassword"
+                name="portalPassword"
+                placeholder="Ask your teacher"
+                required
+              />
+            </div>
+
+            <p class="helper-text">
+              For this prototype, use password:
+              <strong>heroes2026</strong>
+            </p>
+
+            <button type="submit" class="btn btn-primary">
+              Enter Student Hub
+            </button>
           </form>
+        </section>
 
-          <p class="helper-text">
-            <strong>Important:</strong> To make this a real chat where you see student questions,
-            a developer can connect this to a backend (e.g. Firebase or Supabase). The UI is already prepared.
+        <!-- MAIN HUB SECTION (hidden until login) -->
+        <section
+          id="hub-section"
+          style="display: none; margin-top: 1rem;"
+        >
+          <h1 id="hub-title">Welcome back!</h1>
+          <p class="ev-helper-text">
+            This is your Edvengers Student Hub. From here you can join live
+            lessons, check announcements, see homework, and ask questions.
           </p>
-        </div>
+
+          <!-- Join lesson + overview -->
+          <section class="dashboard-card">
+            <div class="card-grid">
+              <div>
+                <div class="card-header">Join Live Lesson</div>
+                <p class="card-subtitle">
+                  Click this button a few minutes before your class starts. Make
+                  sure you log in with your real name.
+                </p>
+                <a
+                  href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1"
+                  class="btn btn-primary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Join Zoom Lesson
+                </a>
+                <p class="helper-text" style="margin-top: 0.6rem;">
+                  Tip: Have your notebook, pen, and worksheet ready before you
+                  click Join.
+                </p>
+              </div>
+
+              <div>
+                <div class="card-header">Your Details</div>
+                <p class="card-subtitle">
+                  Logged in as:
+                  <strong><span id="student-name-display">Student</span></strong>
+                </p>
+                <p class="helper-text">
+                  Your level and subjects may be used later to filter homework
+                  and questions just for you.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Announcements & Homework -->
+          <section class="dashboard-card">
+            <div class="dashboard-grid">
+              <!-- Announcements -->
+              <div class="card">
+                <div class="card-header">Announcements</div>
+                <p class="card-subtitle">
+                  Important updates from your teachers will appear here.
+                </p>
+                <div id="announcement-list">
+                  <!-- Filled by app-student.js (Firestore) -->
+                </div>
+                <p class="helper-text">
+                  Check this section every week for lesson reminders or changes.
+                </p>
+              </div>
+
+              <!-- Homework -->
+              <div class="card">
+                <div class="card-header">Homework &amp; Links</div>
+                <p class="card-subtitle">
+                  Homework for your level and subjects will appear here.
+                </p>
+                <div id="homework-list">
+                  <!-- Filled by app-student.js (Firestore) -->
+                </div>
+                <p class="helper-text">
+                  Some homework may be Google Forms, others PDF worksheets or
+                  online quizzes.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Ask a Question -->
+          <section class="dashboard-card">
+            <div class="card-header">Ask a Question</div>
+            <p class="card-subtitle">
+              Use this box to ask academic questions about your homework or
+              lesson. Your teacher will see your question and reply through the
+              teacher dashboard.
+            </p>
+
+            <div id="chat-window" class="chat-window">
+              <!-- Chat bubbles added by JS -->
+            </div>
+
+            <form id="chat-form" class="reply-box" style="margin-top: 0.9rem;">
+              <label for="chat-input">Your question</label>
+              <textarea
+                id="chat-input"
+                rows="2"
+                placeholder="Type your question clearly…"
+                required
+              ></textarea>
+
+              <!-- Attachment placeholder for future -->
+              <p class="helper-text">
+                In future, you may be able to attach a photo of your work here.
+                For now, just describe your question clearly.
+              </p>
+
+              <button type="submit" class="btn btn-primary">
+                Send question
+              </button>
+            </form>
+
+            <p class="status-text" id="chat-status"></p>
+          </section>
+        </section>
       </div>
-    </section>
-  </main>
+    </main>
 
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <p>© <span id="year"></span> Edvengers Student Hub.</p>
-      <a href="index.html">Back to main site</a>
-    </div>
-  </footer>
+    <footer class="ev-footer">
+      <div class="ev-container">
+        <p>© <span id="year"></span> Edvengers Student Hub.</p>
+      </div>
+    </footer>
 
-  <script>
-    // Footer year
-    document.getElementById('year').textContent = new Date().getFullYear();
+    <script>
+      document.getElementById("year").textContent =
+        new Date().getFullYear();
+    </script>
 
-    // Simple login logic for prototype
-    const loginForm = document.getElementById('login-form');
-    const loginError = document.getElementById('login-error');
-    const loginSection = document.getElementById('login-section');
-    const dashboardSection = document.getElementById('dashboard-section');
-    const studentNameInput = document.getElementById('student-name');
-    const portalPasswordInput = document.getElementById('portal-password');
-    const studentNameDisplay = document.getElementById('student-name-display');
-
-    const PORTAL_PASSWORD = 'heroes2026';
-
-    loginForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const name = studentNameInput.value.trim();
-      const pwd = portalPasswordInput.value.trim();
-
-      if (!name) return;
-      if (pwd !== PORTAL_PASSWORD) {
-        loginError.style.display = 'block';
-        return;
-      }
-
-      loginError.style.display = 'none';
-      studentNameDisplay.textContent = name;
-      loginSection.style.display = 'none';
-      dashboardSection.style.display = 'block';
-
-      // Load any stored messages for this student
-      loadChatMessages(name);
-    });
-
-     </script>
-<script type="module" src="app-student.js"></script>
-</body>
+    <!-- Your existing student Firebase / logic -->
+    <script src="app-student.js" type="module"></script>
+  </body>
 </html>
