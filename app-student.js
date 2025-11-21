@@ -1,5 +1,5 @@
 // app-student.js
-// Student side: login + hub + stars + announcements + homework + Q&A
+// Student login + profile + filtered announcements/homework + chat with photo
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
@@ -14,6 +14,12 @@ import {
   setDoc,
   getDoc,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
@@ -26,40 +32,34 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-function slugifyName(name) {
+function slugify(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 }
-
-function formatTimeLabel(ts) {
+function fmtTime(ts) {
   if (!ts) return "";
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-let currentStudentName = null;
-let questionsUnsub = null;
+let currentStudent = null;
+let chatUnsub = null;
 
-async function handleLogin(name, password, showError) {
+async function loginStudent(name, password) {
   const trimmedName = name.trim();
   const trimmedPwd = password.trim();
-  if (!trimmedName || !trimmedPwd) {
-    showError("Please enter both name and password.");
-    return null;
-  }
+  if (!trimmedName || !trimmedPwd) throw new Error("Missing fields.");
 
-  const id = slugifyName(trimmedName);
+  const id = slugify(trimmedName);
   const ref = doc(db, "students", id);
   const snap = await getDoc(ref);
 
-  // If student does not exist yet:
+  // Student does not exist yet: allow creation only with default password
   if (!snap.exists()) {
-    // Only allow creation with default password
     if (trimmedPwd !== "heroes2026") {
-      showError("Account not found. Please check with your teacher.");
-      return null;
+      throw new Error("Account not found. Please check with your teacher.");
     }
-
     await setDoc(ref, {
       name: trimmedName,
       level: "",
@@ -69,70 +69,87 @@ async function handleLogin(name, password, showError) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-
-    return trimmedName;
+    return { id, ...{ name: trimmedName, level: "", subjects: [], stars: 0 } };
   }
 
   const data = snap.data();
   if (!data.password || data.password !== trimmedPwd) {
-    showError("Incorrect password. Please try again or ask your teacher.");
-    return null;
+    throw new Error("Incorrect password.");
   }
 
-  return trimmedName;
+  return { id, ...data };
 }
 
-function enterHub(name) {
-  currentStudentName = name;
-  localStorage.setItem("edvengerStudentName", name);
+function switchToHub(student) {
+  currentStudent = student;
+
+  localStorage.setItem("edvengerStudentName", student.name);
 
   const loginSection = document.getElementById("student-login-section");
   const hubSection = document.getElementById("student-hub-section");
   if (loginSection) loginSection.style.display = "none";
   if (hubSection) hubSection.style.display = "block";
 
-  const nameDisplay = document.getElementById("student-name-display");
-  const detailsName = document.getElementById("details-name");
-  if (nameDisplay) nameDisplay.textContent = name;
-  if (detailsName) detailsName.textContent = name;
-
-  initHubData(name);
-}
-
-function initHubData(name) {
-  const id = slugifyName(name);
-  const studentRef = doc(db, "students", id);
-
-  // Ensure profile exists
-  setDoc(
-    studentRef,
-    {
-      name,
-      updatedAt: Date.now(),
-    },
-    { merge: true }
-  ).catch((err) => console.error("Error creating profile:", err));
-
-  // Hero Stars
+  // Fill profile
+  const displayName = document.getElementById("student-name-display");
+  const profileName = document.getElementById("profile-name");
+  const profileLevel = document.getElementById("profile-level");
+  const profileSubjects = document.getElementById("profile-subjects");
   const starsEl = document.getElementById("hero-stars-count");
-  onSnapshot(studentRef, (snap) => {
+
+  if (displayName) displayName.textContent = student.name;
+  if (profileName) profileName.textContent = student.name;
+  if (profileLevel) profileLevel.textContent = student.level || "-";
+  if (profileSubjects)
+    profileSubjects.textContent =
+      (student.subjects && student.subjects.join(", ")) || "-";
+  if (starsEl) starsEl.textContent = student.stars || 0;
+
+  // Live updates for stars & basic profile
+  const ref = doc(db, "students", student.id);
+  onSnapshot(ref, (snap) => {
     const data = snap.data();
-    if (data && starsEl) {
-      starsEl.textContent = data.stars || 0;
-    }
+    if (!data) return;
+    if (starsEl) starsEl.textContent = data.stars || 0;
+    if (profileLevel) profileLevel.textContent = data.level || "-";
+    if (profileSubjects)
+      profileSubjects.textContent =
+        (data.subjects && data.subjects.join(", ")) || "-";
   });
 
-  // Announcements
+  initAnnouncementsAndHomework(student);
+  initChat(student);
+}
+
+function initAnnouncementsAndHomework(student) {
   const announcementList = document.getElementById("announcement-list");
+  const homeworkList = document.getElementById("homework-list");
+
+  const level = student.level;
+  const subjects = student.subjects || [];
+
+  // announcements
   if (announcementList) {
-    const annQuery = query(
+    const q = query(
       collection(db, "announcements"),
       orderBy("createdAt", "desc")
     );
-    onSnapshot(annQuery, (snapshot) => {
+    onSnapshot(q, (snap) => {
       announcementList.innerHTML = "";
-      snapshot.forEach((docSnap) => {
+      snap.forEach((docSnap) => {
         const data = docSnap.data();
+        const levels = data.levels || [];
+        const subs = data.subjects || [];
+
+        const levelMatch =
+          levels.length === 0 || (level && levels.includes(level));
+        const subjectMatch =
+          subs.length === 0 ||
+          (subjects.length > 0 &&
+            subjects.some((s) => subs.includes(s)));
+
+        if (!levelMatch || !subjectMatch) return;
+
         const card = document.createElement("div");
         card.className = "ev-card-bubble";
         card.innerHTML = `
@@ -147,130 +164,144 @@ function initHubData(name) {
     });
   }
 
-  // Homework
-  const homeworkList = document.getElementById("homework-list");
+  // homework
   if (homeworkList) {
-    const hwQuery = query(
-      collection(db, "homework"),
-      orderBy("createdAt", "desc")
-    );
-    onSnapshot(hwQuery, (snapshot) => {
+    const q = query(collection(db, "homework"), orderBy("postedAt", "desc"));
+    onSnapshot(q, (snap) => {
       homeworkList.innerHTML = "";
-      snapshot.forEach((docSnap) => {
+      snap.forEach((docSnap) => {
         const data = docSnap.data();
-        const card = document.createElement("div");
-        card.className = "ev-card-bubble";
+        const levels = data.levels || [];
+        const subs = data.subjects || [];
 
-        const links = data.links || (data.link ? [data.link] : []);
+        const levelMatch =
+          levels.length === 0 || (level && levels.includes(level));
+        const subjectMatch =
+          subs.length === 0 ||
+          (subjects.length > 0 &&
+            subjects.some((s) => subs.includes(s)));
+
+        if (!levelMatch || !subjectMatch) return;
+
+        const links = data.links || [];
         const linksHtml = links
           .map(
-            (url, idx) =>
-              `<li><a href="${url}" target="_blank">Link ${idx + 1}</a></li>`
+            (url, i) =>
+              `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
           )
           .join("");
 
+        const card = document.createElement("div");
+        card.className = "ev-card-bubble";
         card.innerHTML = `
           <h4>${data.title || "Untitled"}</h4>
+          ${data.description ? `<p>${data.description}</p>` : ""}
           ${
             linksHtml
               ? `<ul class="ev-link-list">${linksHtml}</ul>`
-              : "<p>No links provided.</p>"
+              : "<p>No links attached.</p>"
           }
           <p class="helper-text">
-            ${data.level ? "Level: " + data.level + " • " : ""}Posted:
-            ${new Date(data.createdAt || Date.now()).toLocaleString()}
+            Posted: ${
+              data.postedAt
+                ? new Date(data.postedAt).toLocaleDateString()
+                : "-"
+            }
+            ${
+              data.dueAt
+                ? " • Due: " + new Date(data.dueAt).toLocaleDateString()
+                : ""
+            }
           </p>
         `;
         homeworkList.appendChild(card);
       });
     });
   }
-
-  // Questions (per student)
-  const chatWindow = document.getElementById("chat-window");
-  if (questionsUnsub) questionsUnsub();
-
-  const qQuery = query(
-    collection(db, "questions"),
-    where("studentName", "==", name),
-    orderBy("createdAt", "asc")
-  );
-  questionsUnsub = onSnapshot(qQuery, (snapshot) => {
-    if (!chatWindow) return;
-    chatWindow.innerHTML = "";
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-
-      // Student bubble
-      const rowS = document.createElement("div");
-      rowS.className = "chat-row chat-row-student";
-      rowS.innerHTML = `
-        <div class="chat-bubble chat-bubble-student">
-          <div class="chat-text">${data.text || ""}</div>
-          <div class="chat-time">${formatTimeLabel(data.createdAt)}</div>
-        </div>
-      `;
-      chatWindow.appendChild(rowS);
-
-      if (data.reply) {
-        const rowT = document.createElement("div");
-        rowT.className = "chat-row chat-row-teacher";
-        rowT.innerHTML = `
-          <div class="chat-bubble chat-bubble-teacher">
-            <div class="chat-text">${data.reply}</div>
-            <div class="chat-time">${formatTimeLabel(
-              data.repliedAt || data.createdAt
-            )}</div>
-          </div>
-        `;
-        chatWindow.appendChild(rowT);
-      }
-    });
-
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  });
-
-  // Send question
-  const chatForm = document.getElementById("chat-form");
-  const chatInput = document.getElementById("chat-input");
-  const chatStatus = document.getElementById("chat-status");
-
-  if (chatForm && chatInput) {
-    chatForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      if (chatStatus) chatStatus.textContent = "Sending question...";
-
-      try {
-        await addDoc(collection(db, "questions"), {
-          studentName: name,
-          text,
-          reply: "",
-          createdAt: Date.now(),
-          repliedAt: null,
-        });
-        chatInput.value = "";
-        if (chatStatus) {
-          chatStatus.textContent = "Question sent! Your teacher will reply soon.";
-          setTimeout(() => (chatStatus.textContent = ""), 2500);
-        }
-      } catch (err) {
-        console.error("Error sending question:", err);
-        if (chatStatus) {
-          chatStatus.textContent = "Error sending question. Please try again.";
-        }
-      }
-    });
-  }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const savedName = localStorage.getItem("edvengerStudentName");
-  const loginSection = document.getElementById("student-login-section");
-  const hubSection = document.getElementById("student-hub-section");
+function initChat(student) {
+  const threadEl = document.getElementById("chat-window");
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("chat-input");
+  const imageInput = document.getElementById("chat-image");
+  const statusEl = document.getElementById("chat-status");
 
+  if (!threadEl || !form || !input) return;
+
+  // subscribe to chat messages
+  const msgsRef = collection(db, "chats", student.id, "messages");
+  const q = query(msgsRef, orderBy("createdAt", "asc"));
+
+  if (chatUnsub) chatUnsub();
+  chatUnsub = onSnapshot(q, (snap) => {
+    threadEl.innerHTML = "";
+    snap.forEach((docSnap) => {
+      const m = docSnap.data();
+      const row = document.createElement("div");
+      row.className =
+        "chat-row " +
+        (m.sender === "student" ? "chat-row-student" : "chat-row-teacher");
+
+      let inner = `
+        <div class="chat-bubble ${
+          m.sender === "student"
+            ? "chat-bubble-student"
+            : "chat-bubble-teacher"
+        }">
+          ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
+      `;
+      if (m.imageUrl) {
+        inner += `<div class="chat-image"><img src="${m.imageUrl}" alt="attachment" /></div>`;
+      }
+      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
+
+      row.innerHTML = inner;
+      threadEl.appendChild(row);
+    });
+    threadEl.scrollTop = threadEl.scrollHeight;
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    const file = imageInput.files[0] || null;
+    if (!text && !file) return;
+
+    try {
+      if (statusEl) statusEl.textContent = "Sending...";
+
+      let imageUrl = null;
+      if (file) {
+        const path = `chat-images/${student.id}/${Date.now()}_${file.name}`;
+        const ref = storageRef(storage, path);
+        await uploadBytes(ref, file);
+        imageUrl = await getDownloadURL(ref);
+      }
+
+      await addDoc(msgsRef, {
+        sender: "student",
+        text,
+        imageUrl,
+        createdAt: Date.now(),
+      });
+
+      input.value = "";
+      imageInput.value = "";
+      if (statusEl) {
+        statusEl.textContent = "Sent!";
+        setTimeout(() => (statusEl.textContent = ""), 1500);
+      }
+    } catch (err) {
+      console.error(err);
+      if (statusEl) statusEl.textContent = "Failed to send. Try again.";
+    }
+  });
+}
+
+// ---- Bootstrapping ----
+
+document.addEventListener("DOMContentLoaded", async () => {
   const loginForm = document.getElementById("student-login-form");
   const loginError = document.getElementById("login-error");
 
@@ -283,10 +314,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  if (savedName && hubSection && loginSection) {
-    loginSection.style.display = "none";
-    hubSection.style.display = "block";
-    enterHub(savedName);
+  // Auto-login if name stored
+  const savedName = localStorage.getItem("edvengerStudentName");
+  if (savedName) {
+    // best-effort fetch
+    try {
+      const id = slugify(savedName);
+      const ref = doc(db, "students", id);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        switchToHub({ id, ...snap.data() });
+      }
+    } catch (_) {
+      // ignore
+    }
   }
 
   if (loginForm) {
@@ -298,13 +339,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const pwd = document.getElementById("login-password").value;
 
       try {
-        const resultName = await handleLogin(name, pwd, showError);
-        if (resultName) {
-          enterHub(resultName);
-        }
+        const student = await loginStudent(name, pwd);
+
+        // If password is still default, you *could* prompt for change here.
+        // For now we just log them in. Later we can add a change-password UI.
+
+        switchToHub(student);
       } catch (err) {
         console.error(err);
-        showError("Login failed. Please try again.");
+        showError(err.message || "Login failed. Please try again.");
       }
     });
   }

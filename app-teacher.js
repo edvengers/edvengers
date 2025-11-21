@@ -1,5 +1,5 @@
 // app-teacher.js
-// Teacher side: students + hero stars + announcements + homework + Q&A
+// Teacher login + students/points + announcements/homework + chat with photo
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
@@ -14,6 +14,12 @@ import {
   setDoc,
   increment,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
@@ -26,30 +32,77 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-const studentsForm = document.getElementById("students-form");
-const studentsList = document.getElementById("students-list");
-const studentsSelect = document.getElementById("student-select");
-
-const announcementForm = document.getElementById("announcement-form");
-const announcementList = document.getElementById("announcement-list");
-
-const homeworkForm = document.getElementById("homework-form");
-const homeworkList = document.getElementById("homework-list");
-
-const questionsList = document.getElementById("questions-list");
-
-function slugifyName(name) {
+function slugify(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 }
-
-function formatTimeLabel(ts) {
+function fmtTime(ts) {
   if (!ts) return "";
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// ----- Students & Hero Stars -----
+// ---- Simple teacher login ----
+
+const TEACHER_PASSWORD = "teach-heroes-2026"; // change this to whatever you like
+
+const loginSection = document.getElementById("teacher-login-section");
+const dashSection = document.getElementById("teacher-dashboard-section");
+const loginForm = document.getElementById("teacher-login-form");
+const loginErr = document.getElementById("teacher-login-error");
+const logoutBtn = document.getElementById("teacher-logout-btn");
+
+function showDashboard() {
+  if (loginSection) loginSection.style.display = "none";
+  if (dashSection) dashSection.style.display = "block";
+}
+function showLogin() {
+  if (dashSection) dashSection.style.display = "none";
+  if (loginSection) loginSection.style.display = "block";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("edvengerTeacherLoggedIn");
+  if (saved === "yes") showDashboard();
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (loginErr) loginErr.style.display = "none";
+      const pwd = document.getElementById("teacher-password").value.trim();
+      if (pwd === TEACHER_PASSWORD) {
+        localStorage.setItem("edvengerTeacherLoggedIn", "yes");
+        showDashboard();
+      } else {
+        if (loginErr) {
+          loginErr.textContent = "Wrong password.";
+          loginErr.style.display = "block";
+        }
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("edvengerTeacherLoggedIn");
+      showLogin();
+    });
+  }
+});
+
+// ---- Students & Hero Points ----
+
+const studentsForm = document.getElementById("students-form");
+const studentsList = document.getElementById("students-list");
+const studentsSelect = document.getElementById("student-select");
+
+const filterLevelInput = document.getElementById("filter-level");
+const filterSubjectInput = document.getElementById("filter-subject");
+const filterApplyBtn = document.getElementById("filter-apply");
+const filterClearBtn = document.getElementById("filter-clear");
+
+let studentsCache = []; // keep full list in memory for filtering
 
 if (studentsSelect && document.getElementById("student-name")) {
   const nameInput = document.getElementById("student-name");
@@ -63,28 +116,25 @@ if (studentsSelect && document.getElementById("student-name")) {
 if (studentsForm) {
   studentsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const selectVal = studentsSelect ? studentsSelect.value.trim() : "";
     let name = selectVal;
-
     if (!name) {
       const nameInput = document.getElementById("student-name");
       name = nameInput ? nameInput.value.trim() : "";
     }
+    if (!name) return;
 
     const levelInput = document.getElementById("student-level");
     const subjectsInput = document.getElementById("student-subjects");
-
     const level = levelInput ? levelInput.value.trim() : "";
-    const subjectsRaw = subjectsInput ? subjectsInput.value.trim() : "";
-
-    if (!name) return;
-
-    const id = slugifyName(name);
-    const subjects = subjectsRaw
-      ? subjectsRaw.split(",").map((s) => s.trim())
+    const subjects = subjectsInput.value
+      ? subjectsInput.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
 
+    const id = slugify(name);
     try {
       await setDoc(
         doc(db, "students", id),
@@ -92,61 +142,59 @@ if (studentsForm) {
           name,
           level,
           subjects,
-          // keep existing stars/password if any
+          password: "heroes2026", // default/reset
           stars: 0,
-          password: "heroes2026",
           updatedAt: Date.now(),
         },
         { merge: true }
       );
       studentsForm.reset();
       if (studentsSelect) studentsSelect.value = "";
+      alert(`Saved/updated ${name}. Default password: heroes2026`);
     } catch (err) {
-      console.error("Error saving student:", err);
+      console.error(err);
+      alert("Failed to save student.");
     }
   });
 }
 
-function renderStudents(snapshot) {
-  if (studentsSelect) {
-    studentsSelect.innerHTML =
-      '<option value="">-- New or type name below --</option>';
-  }
+function renderStudentsList() {
   if (!studentsList) return;
   studentsList.innerHTML = "";
 
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const id = docSnap.id;
-    const stars = data.stars || 0;
-    const level = data.level || "-";
-    const subjects = (data.subjects || []).join(", ");
+  const levelFilter = (filterLevelInput?.value || "").trim();
+  const subjectFilter = (filterSubjectInput?.value || "").trim();
 
-    if (studentsSelect && data.name) {
-      const opt = document.createElement("option");
-      opt.value = data.name;
-      opt.textContent = data.name;
-      studentsSelect.appendChild(opt);
-    }
+  let list = [...studentsCache];
+  if (levelFilter) {
+    list = list.filter((s) => s.level === levelFilter);
+  }
+  if (subjectFilter) {
+    list = list.filter((s) =>
+      (s.subjects || []).includes(subjectFilter)
+    );
+  }
 
+  list.forEach((s) => {
     const row = document.createElement("div");
     row.className = "student-row ev-card-bubble";
+    row.dataset.id = s.id;
     row.innerHTML = `
       <div class="student-main">
-        <div><strong>${data.name || "Unnamed"}</strong></div>
+        <div><strong>${s.name}</strong></div>
         <div class="helper-text">
-          Level: ${level} ${
-      subjects ? "• Subjects: " + subjects : ""
-    } • Hero Stars: <strong>${stars}</strong>
+          Level: ${s.level || "-"}${
+      s.subjects?.length ? " • Subjects: " + s.subjects.join(", ") : ""
+    } • Hero Points: <strong>${s.stars || 0}</strong>
         </div>
       </div>
       <div class="student-actions">
-        <button class="btn btn-small" data-action="add1" data-id="${id}">+1</button>
-        <button class="btn btn-small" data-action="add5" data-id="${id}">+5</button>
-        <button class="btn btn-ghost btn-small" data-action="resetStars" data-id="${id}">
-          Reset Stars
+        <button class="btn btn-small" data-action="add1">+1</button>
+        <button class="btn btn-small" data-action="add5">+5</button>
+        <button class="btn btn-ghost btn-small" data-action="resetStars">
+          Reset Points
         </button>
-        <button class="btn btn-ghost btn-small" data-action="resetPwd" data-id="${id}">
+        <button class="btn btn-ghost btn-small" data-action="resetPwd">
           Reset Password
         </button>
       </div>
@@ -154,9 +202,10 @@ function renderStudents(snapshot) {
     studentsList.appendChild(row);
   });
 
-  studentsList.querySelectorAll("button[data-action]").forEach((btn) => {
+  studentsList.querySelectorAll(".student-actions button").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
+      const card = btn.closest(".student-row");
+      const id = card.dataset.id;
       const action = btn.dataset.action;
       const ref = doc(db, "students", id);
 
@@ -172,19 +221,57 @@ function renderStudents(snapshot) {
             password: "heroes2026",
             updatedAt: Date.now(),
           });
-          alert("Password reset to heroes2026");
+          alert("Password reset to heroes2026.");
         }
       } catch (err) {
-        console.error("Error updating student:", err);
+        console.error(err);
+        alert("Failed to update student.");
       }
     });
   });
 }
 
-// ----- Announcements -----
+if (filterApplyBtn) {
+  filterApplyBtn.addEventListener("click", () => renderStudentsList());
+}
+if (filterClearBtn) {
+  filterClearBtn.addEventListener("click", () => {
+    if (filterLevelInput) filterLevelInput.value = "";
+    if (filterSubjectInput) filterSubjectInput.value = "";
+    renderStudentsList();
+  });
+}
 
-if (announcementForm) {
-  announcementForm.addEventListener("submit", async (e) => {
+// live load from Firestore
+const studentsQuery = query(collection(db, "students"), orderBy("name", "asc"));
+onSnapshot(studentsQuery, (snap) => {
+  studentsCache = [];
+  if (studentsSelect) {
+    studentsSelect.innerHTML =
+      '<option value="">-- New or select --</option>';
+  }
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    const entry = { id: docSnap.id, ...data };
+    studentsCache.push(entry);
+
+    if (studentsSelect && data.name) {
+      const opt = document.createElement("option");
+      opt.value = data.name;
+      opt.textContent = data.name;
+      studentsSelect.appendChild(opt);
+    }
+  });
+  renderStudentsList();
+});
+
+// ---- Announcements ----
+
+const annForm = document.getElementById("announcement-form");
+const annList = document.getElementById("announcement-list");
+
+if (annForm) {
+  annForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document
       .getElementById("announcement-title")
@@ -192,44 +279,75 @@ if (announcementForm) {
     const message = document
       .getElementById("announcement-message")
       .value.trim();
+    const levelsRaw = document
+      .getElementById("announcement-levels")
+      .value.trim();
+    const subjectsRaw = document
+      .getElementById("announcement-subjects")
+      .value.trim();
 
     if (!title || !message) return;
+
+    const levels = levelsRaw
+      ? levelsRaw.split(",").map((s) => s.trim())
+      : [];
+    const subjects = subjectsRaw
+      ? subjectsRaw.split(",").map((s) => s.trim())
+      : [];
 
     try {
       await addDoc(collection(db, "announcements"), {
         title,
         message,
+        levels,
+        subjects,
         createdAt: Date.now(),
       });
-      announcementForm.reset();
+      annForm.reset();
     } catch (err) {
-      console.error("Error adding announcement:", err);
+      console.error(err);
+      alert("Failed to post announcement.");
     }
   });
 }
 
-function renderAnnouncement(docSnap) {
-  if (!announcementList) return;
-  const data = docSnap.data();
-  const card = document.createElement("div");
-  card.className = "ev-card-bubble";
-  card.innerHTML = `
-    <h4>${data.title || "Untitled"}</h4>
-    <p>${data.message || ""}</p>
-    <p class="helper-text">Posted: ${new Date(
-      data.createdAt || Date.now()
-    ).toLocaleString()}</p>
-  `;
-  announcementList.appendChild(card);
+if (annList) {
+  const q = query(
+    collection(db, "announcements"),
+    orderBy("createdAt", "desc")
+  );
+  onSnapshot(q, (snap) => {
+    annList.innerHTML = "";
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      const card = document.createElement("div");
+      card.className = "ev-card-bubble";
+      card.innerHTML = `
+        <h4>${d.title || "Untitled"}</h4>
+        <p>${d.message || ""}</p>
+        <p class="helper-text">
+          Levels: ${(d.levels || []).join(", ") || "All"}
+          • Subjects: ${(d.subjects || []).join(", ") || "All"}
+          • Posted: ${new Date(d.createdAt || Date.now()).toLocaleString()}
+        </p>
+      `;
+      annList.appendChild(card);
+    });
+  });
 }
 
-// ----- Homework -----
+// ---- Homework ----
 
-if (homeworkForm) {
-  homeworkForm.addEventListener("submit", async (e) => {
+const hwForm = document.getElementById("homework-form");
+const hwList = document.getElementById("homework-list");
+
+if (hwForm) {
+  hwForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document.getElementById("homework-title").value.trim();
-    const level = document.getElementById("homework-level").value.trim();
+    const description = document
+      .getElementById("homework-description")
+      .value.trim();
 
     const links = [];
     for (let i = 1; i <= 5; i++) {
@@ -239,228 +357,210 @@ if (homeworkForm) {
       }
     }
 
+    const levelsRaw = document
+      .getElementById("homework-levels")
+      .value.trim();
+    const subjectsRaw = document
+      .getElementById("homework-subjects")
+      .value.trim();
+    const postedDate = document.getElementById("homework-posted").value;
+    const dueDate = document.getElementById("homework-due").value;
+
     if (!title || links.length === 0) return;
+
+    const levels = levelsRaw
+      ? levelsRaw.split(",").map((s) => s.trim())
+      : [];
+    const subjects = subjectsRaw
+      ? subjectsRaw.split(",").map((s) => s.trim())
+      : [];
+
+    const postedAt = postedDate ? new Date(postedDate).getTime() : Date.now();
+    const dueAt = dueDate ? new Date(dueDate).getTime() : null;
 
     try {
       await addDoc(collection(db, "homework"), {
         title,
+        description,
         links,
-        level,
-        createdAt: Date.now(),
+        levels,
+        subjects,
+        postedAt,
+        dueAt,
       });
-      homeworkForm.reset();
+      hwForm.reset();
     } catch (err) {
-      console.error("Error adding homework:", err);
+      console.error(err);
+      alert("Failed to add homework.");
     }
   });
 }
 
-function renderHomework(docSnap) {
-  if (!homeworkList) return;
-  const data = docSnap.data();
-  const card = document.createElement("div");
-  card.className = "ev-card-bubble";
+if (hwList) {
+  const q = query(collection(db, "homework"), orderBy("postedAt", "desc"));
+  onSnapshot(q, (snap) => {
+    hwList.innerHTML = "";
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      const links = d.links || [];
+      const linksHtml = links
+        .map(
+          (url, i) =>
+            `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
+        )
+        .join("");
 
-  const links = data.links || (data.link ? [data.link] : []);
-  const linksHtml = links
-    .map(
-      (url, idx) =>
-        `<li><a href="${url}" target="_blank">Link ${idx + 1}</a></li>`
-    )
-    .join("");
-
-  card.innerHTML = `
-    <h4>${data.title || "Untitled"}</h4>
-    ${
-      linksHtml
-        ? `<ul class="ev-link-list">${linksHtml}</ul>`
-        : "<p>No links provided.</p>"
-    }
-    <p class="helper-text">
-      ${data.level ? "Level: " + data.level + " • " : ""}Posted:
-      ${new Date(data.createdAt || Date.now()).toLocaleString()}
-    </p>
-  `;
-  homeworkList.appendChild(card);
-}
-
-// ----- Student Questions -----
-
-function renderQuestionsGrouped(snapshot) {
-  if (!questionsList) return;
-  questionsList.innerHTML = "";
-
-  const byStudent = {};
-
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const studentName = data.studentName || "Unknown student";
-
-    if (!byStudent[studentName]) byStudent[studentName] = [];
-    byStudent[studentName].push({
-      id: docSnap.id,
-      text: data.text || "",
-      reply: data.reply || "",
-      createdAt: data.createdAt || 0,
-      repliedAt: data.repliedAt || 0,
+      const card = document.createElement("div");
+      card.className = "ev-card-bubble";
+      card.innerHTML = `
+        <h4>${d.title || "Untitled"}</h4>
+        ${d.description ? `<p>${d.description}</p>` : ""}
+        ${
+          linksHtml
+            ? `<ul class="ev-link-list">${linksHtml}</ul>`
+            : "<p>No links.</p>"
+        }
+        <p class="helper-text">
+          Levels: ${(d.levels || []).join(", ") || "All"}
+          • Subjects: ${(d.subjects || []).join(", ") || "All"}
+          • Posted: ${
+            d.postedAt
+              ? new Date(d.postedAt).toLocaleDateString()
+              : "-"
+          }
+          ${
+            d.dueAt
+              ? " • Due: " + new Date(d.dueAt).toLocaleDateString()
+              : ""
+          }
+        </p>
+      `;
+      hwList.appendChild(card);
     });
   });
+}
 
-  const studentNames = Object.keys(byStudent).sort((a, b) =>
-    a.localeCompare(b)
-  );
+// ---- Chat ----
 
-  studentNames.forEach((name) => {
-    const questions = byStudent[name].sort(
-      (a, b) => a.createdAt - b.createdAt
-    );
-    const total = questions.length;
-    const unanswered = questions.filter((q) => !q.reply).length;
+const chatStudentList = document.getElementById("chat-student-list");
+const chatThread = document.getElementById("chat-thread");
+const chatForm = document.getElementById("teacher-chat-form");
+const chatInput = document.getElementById("teacher-chat-input");
+const chatImage = document.getElementById("teacher-chat-image");
+const chatStatus = document.getElementById("teacher-chat-status");
+const chatStudentIdHidden = document.getElementById("teacher-chat-student-id");
 
-    const thread = document.createElement("details");
-    thread.className = "teacher-student-thread";
-    // default collapsed
+let chatStudentId = null;
+let chatThreadUnsub = null;
 
-    const summary = document.createElement("summary");
-    summary.className = "teacher-student-summary";
-    summary.innerHTML = `
-      <span class="teacher-student-name">${name}</span>
-      <span class="teacher-student-meta">
-        ${total} msg${total > 1 ? "s" : ""}${
-      unanswered > 0 ? ` • ${unanswered} pending` : ""
-    }
-      </span>
-    `;
-    thread.appendChild(summary);
+// sidebar: students with last message / pending
+if (chatStudentList) {
+  const q = query(collection(db, "students"), orderBy("name", "asc"));
+  onSnapshot(q, async (snap) => {
+    const students = [];
+    chatStudentList.innerHTML = "";
 
-    const card = document.createElement("div");
-    card.className = "announcement teacher-thread-card";
-
-    const chat = document.createElement("div");
-    chat.className = "teacher-chat-thread";
-
-    const messages = [];
-
-    questions.forEach((q) => {
-      messages.push({
-        sender: "student",
-        text: q.text,
-        ts: q.createdAt,
-        docId: q.id,
-      });
-      if (q.reply) {
-        messages.push({
-          sender: "teacher",
-          text: q.reply,
-          ts: q.repliedAt || q.createdAt + 1,
-          docId: q.id,
-        });
-      }
+    snap.forEach((docSnap) => {
+      students.push({ id: docSnap.id, ...docSnap.data() });
     });
 
-    messages.sort((a, b) => a.ts - b.ts);
+    students.forEach((s) => {
+      const item = document.createElement("div");
+      item.className = "chat-student-item";
+      item.dataset.id = s.id;
+      item.innerHTML = `
+        <div class="chat-student-name">${s.name}</div>
+        <div class="chat-student-meta">Level: ${s.level || "-"} • ${
+        (s.subjects || []).join(", ") || "No subjects"
+      }</div>
+      `;
+      item.addEventListener("click", () => openChatForStudent(s.id, s.name));
+      chatStudentList.appendChild(item);
+    });
+  });
+}
 
-    const studentMessages = messages.filter((m) => m.sender === "student");
-    const lastStudent = studentMessages[studentMessages.length - 1] || null;
-    const replyTargetDocId = lastStudent ? lastStudent.docId : null;
+function openChatForStudent(id, name) {
+  chatStudentId = id;
+  if (chatStudentIdHidden) chatStudentIdHidden.value = id;
 
-    messages.forEach((m) => {
+  if (chatThreadUnsub) chatThreadUnsub();
+
+  const msgsRef = collection(db, "chats", id, "messages");
+  const q = query(msgsRef, orderBy("createdAt", "asc"));
+  chatThreadUnsub = onSnapshot(q, (snap) => {
+    if (!chatThread) return;
+    chatThread.innerHTML = "";
+    snap.forEach((docSnap) => {
+      const m = docSnap.data();
       const row = document.createElement("div");
       row.className =
-        "teacher-chat-row " +
+        "chat-row " +
         (m.sender === "student"
-          ? "teacher-chat-row-student"
-          : "teacher-chat-row-teacher");
-      row.innerHTML = `
-        <div class="teacher-chat-bubble">
-          <div class="teacher-chat-text">${m.text}</div>
-          <div class="teacher-chat-time">${formatTimeLabel(m.ts)}</div>
-        </div>
-      `;
-      chat.appendChild(row);
-    });
+          ? "chat-row-student"
+          : "chat-row-teacher");
 
-    if (replyTargetDocId) {
-      const form = document.createElement("form");
-      form.className = "teacher-chat-reply-form";
-      form.dataset.docId = replyTargetDocId;
-      form.innerHTML = `
-        <label>
-          <span class="teacher-reply-label">Reply</span>
-          <textarea rows="2" placeholder="Type your reply..."></textarea>
-        </label>
-        <button type="submit" class="btn btn-small">Send reply</button>
+      let inner = `
+        <div class="chat-bubble ${
+          m.sender === "student"
+            ? "chat-bubble-student"
+            : "chat-bubble-teacher"
+        }">
+          ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
       `;
-      chat.appendChild(form);
+      if (m.imageUrl) {
+        inner += `<div class="chat-image"><img src="${m.imageUrl}" alt="attachment" /></div>`;
+      }
+      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
+      row.innerHTML = inner;
+      chatThread.appendChild(row);
+    });
+    chatThread.scrollTop = chatThread.scrollHeight;
+  });
+}
+
+if (chatForm) {
+  chatForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!chatStudentId) {
+      alert("Select a student chat first.");
+      return;
     }
 
-    card.appendChild(chat);
-    thread.appendChild(card);
-    questionsList.appendChild(thread);
-  });
+    const text = chatInput.value.trim();
+    const file = chatImage.files[0] || null;
+    if (!text && !file) return;
 
-  questionsList
-    .querySelectorAll(".teacher-chat-reply-form")
-    .forEach((form) => {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const docId = form.dataset.docId;
-        const textarea = form.querySelector("textarea");
-        const newReply = textarea.value.trim();
-        if (!newReply) return;
+    try {
+      if (chatStatus) chatStatus.textContent = "Sending...";
+      const msgsRef = collection(db, "chats", chatStudentId, "messages");
 
-        try {
-          await updateDoc(doc(db, "questions", docId), {
-            reply: newReply,
-            repliedAt: Date.now(),
-          });
-          textarea.value = "";
-        } catch (err) {
-          console.error("Error saving reply:", err);
-        }
+      let imageUrl = null;
+      if (file) {
+        const path = `chat-images/${chatStudentId}/${Date.now()}_${file.name}`;
+        const ref = storageRef(storage, path);
+        await uploadBytes(ref, file);
+        imageUrl = await getDownloadURL(ref);
+      }
+
+      await addDoc(msgsRef, {
+        sender: "teacher",
+        text,
+        imageUrl,
+        createdAt: Date.now(),
       });
-    });
-}
 
-// ----- Subscriptions -----
-
-if (studentsList || studentsSelect) {
-  const stQuery = query(collection(db, "students"), orderBy("name", "asc"));
-  onSnapshot(stQuery, (snapshot) => {
-    renderStudents(snapshot);
+      chatInput.value = "";
+      chatImage.value = "";
+      if (chatStatus) {
+        chatStatus.textContent = "Sent!";
+        setTimeout(() => (chatStatus.textContent = ""), 1500);
+      }
+    } catch (err) {
+      console.error(err);
+      if (chatStatus) chatStatus.textContent = "Failed to send.";
+    }
   });
 }
 
-if (announcementList) {
-  const annQuery = query(
-    collection(db, "announcements"),
-    orderBy("createdAt", "desc")
-  );
-  onSnapshot(annQuery, (snapshot) => {
-    announcementList.innerHTML = "";
-    snapshot.forEach(renderAnnouncement);
-  });
-}
-
-if (homeworkList) {
-  const hwQuery = query(
-    collection(db, "homework"),
-    orderBy("createdAt", "desc")
-  );
-  onSnapshot(hwQuery, (snapshot) => {
-    homeworkList.innerHTML = "";
-    snapshot.forEach(renderHomework);
-  });
-}
-
-if (questionsList) {
-  const qQuery = query(
-    collection(db, "questions"),
-    orderBy("createdAt", "desc")
-  );
-  onSnapshot(qQuery, (snapshot) => {
-    renderQuestionsGrouped(snapshot);
-  });
-}
-
-console.log("[Teacher] Dashboard initialised");
+console.log("[Teacher] Dashboard JS loaded");

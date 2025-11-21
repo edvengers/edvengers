@@ -23,18 +23,18 @@
     </header>
 
     <main>
-      <!-- LOGIN SECTION -->
+      <!-- LOGIN -->
       <section id="student-login-section">
         <div class="ev-container" style="padding: 2.5rem 0 3rem;">
           <h1>Student Login</h1>
           <p class="ev-helper-text">
-            Welcome, Edvenger! Enter your details to access your student hub.
+            Welcome, Edvenger! Log in to see your classes, homework, Hero Points and chat.
           </p>
 
           <div class="dashboard-card">
             <form id="student-login-form">
               <div class="form-field">
-                <label for="login-name">Student Name</label>
+                <label for="login-name">Student Name / ID</label>
                 <input
                   id="login-name"
                   type="text"
@@ -42,6 +42,7 @@
                   required
                 />
               </div>
+
               <div class="form-field">
                 <label for="login-password">Portal Password</label>
                 <input
@@ -51,10 +52,18 @@
                   required
                 />
               </div>
+
               <p class="helper-text">
-                Default password for new / reset accounts: <strong>heroes2026</strong>
+                First time login / after reset use default password:
+                <strong>heroes2026</strong>
               </p>
-              <p id="login-error" class="helper-text" style="color: #ff6b6b; display: none;"></p>
+
+              <p
+                id="login-error"
+                class="helper-text"
+                style="color:#ff6b6b; display:none;"
+              ></p>
+
               <button type="submit" class="btn btn-primary">
                 Enter Student Hub
               </button>
@@ -63,24 +72,37 @@
         </div>
       </section>
 
-      <!-- HUB SECTION -->
-      <section id="student-hub-section" style="display: none;">
-        <div class="ev-container" style="padding: 2.5rem 0 3.5rem;">
-          <h1 id="hub-title">
+      <!-- HUB -->
+      <section id="student-hub-section" style="display:none;">
+        <div class="ev-container" style="padding:2.5rem 0 3.5rem;">
+          <h1>
             Hi <span id="student-name-display">hero</span>, welcome to your Student Hub!
           </h1>
           <p class="ev-helper-text">
-            From here you can join live lessons, check announcements, see homework, view
-            your Hero Stars, and ask questions.
+            Join lessons, check announcements, see homework and chat with your teachers.
           </p>
 
-          <!-- TOP ROW: JOIN + DETAILS -->
+          <!-- TOP: profile + zoom -->
           <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">Your Details</div>
+              <p>Name: <strong id="profile-name"></strong></p>
+              <p>Level: <strong id="profile-level"></strong></p>
+              <p>Subjects: <strong id="profile-subjects"></strong></p>
+              <p>
+                Hero Points:
+                <strong id="hero-stars-count">0</strong>
+              </p>
+              <p class="helper-text">
+                Hero Points are awarded for effort, participation and improvement.
+              </p>
+            </div>
+
             <div class="card">
               <div class="card-header">Join Live Lesson</div>
               <p>
-                Click this button a few minutes before your class starts. Make sure you
-                log in with your real name.
+                Tap the button a few minutes before your class. Use your real name in
+                Zoom.
               </p>
               <a
                 href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1"
@@ -90,20 +112,7 @@
                 Join Zoom Lesson
               </a>
               <p class="helper-text">
-                Tip: Have your notebook, pen, and worksheet ready before you click Join.
-              </p>
-            </div>
-
-            <div class="card">
-              <div class="card-header">Your Details</div>
-              <p>Logged in as: <strong id="details-name"></strong></p>
-              <p>
-                Hero Stars:
-                <strong id="hero-stars-count">0</strong>
-              </p>
-              <p class="helper-text">
-                Hero Stars are awarded by your teachers for effort, participation, and
-                improvement. More stars = more recognition as an Edvenger!
+                Prepare your notebook, pen and worksheets before joining.
               </p>
             </div>
           </div>
@@ -113,8 +122,7 @@
             <div class="card">
               <div class="card-header">Announcements</div>
               <p class="helper-text">
-                Important updates from your teachers will appear here. Check each week for
-                lesson reminders or changes.
+                Only announcements for your level & subjects will appear here.
               </p>
               <div id="announcement-list"></div>
             </div>
@@ -122,47 +130,54 @@
             <div class="card">
               <div class="card-header">Homework &amp; Links</div>
               <p class="helper-text">
-                Homework links posted by your teachers will appear here. Some homework may
-                be Google Forms, PDF worksheets, or online quizzes.
+                Homework for your classes will appear here with links and deadlines.
               </p>
               <div id="homework-list"></div>
             </div>
           </div>
 
-          <!-- ASK A QUESTION -->
+          <!-- CHAT -->
           <section class="dashboard-card">
-            <div class="card-header">Ask a Question</div>
+            <div class="card-header">Chat with Your Teacher</div>
             <p class="card-subtitle">
-              Use this box to ask academic questions about your homework or lesson. Your
-              teacher will see your question and reply through the teacher dashboard.
+              Ask questions about homework or lessons. You can also send a photo of your
+              work if needed.
             </p>
 
             <div id="chat-window" class="chat-window"></div>
 
-            <form id="chat-form" class="reply-box" style="margin-top: 0.9rem;">
-              <label class="chat-label">
-                Your question
-                <textarea
-                  id="chat-input"
-                  rows="2"
-                  placeholder="Type your question here..."
-                  required
-                ></textarea>
-              </label>
+            <form id="chat-form" class="chat-form">
+              <div class="chat-row-inputs">
+                <label class="chat-label">
+                  <span>Your message</span>
+                  <textarea
+                    id="chat-input"
+                    rows="2"
+                    placeholder="Type your message..."
+                    required
+                  ></textarea>
+                </label>
+
+                <div class="chat-attachments">
+                  <label class="file-label">
+                    📎 Photo
+                    <input
+                      type="file"
+                      id="chat-image"
+                      accept="image/*"
+                    />
+                  </label>
+                </div>
+              </div>
 
               <p id="chat-status" class="helper-text"></p>
 
               <div class="chat-actions">
                 <button type="submit" class="btn btn-primary">
-                  Send question
+                  Send
                 </button>
               </div>
             </form>
-
-            <p class="helper-text">
-              In future, you may be able to attach a photo of your work here. For now,
-              just describe your question clearly.
-            </p>
           </section>
         </div>
       </section>
