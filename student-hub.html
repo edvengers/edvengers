@@ -170,7 +170,6 @@
                 required
               ></textarea>
 
-              <!-- Attachment placeholder for future -->
               <p class="helper-text">
                 In future, you may be able to attach a photo of your work here.
                 For now, just describe your question clearly.
@@ -194,8 +193,47 @@
     </footer>
 
     <script>
+      // Footer year
       document.getElementById("year").textContent =
         new Date().getFullYear();
+
+      // Simple front-end login logic
+      const loginForm = document.getElementById("login-form");
+      const loginSection = document.getElementById("login-section");
+      const hubSection = document.getElementById("hub-section");
+      const nameInput = document.getElementById("studentName");
+      const passwordInput = document.getElementById("portalPassword");
+      const nameDisplay = document.getElementById("student-name-display");
+      const hubTitle = document.getElementById("hub-title");
+
+      const PORTAL_PASSWORD = "heroes2026";
+
+      if (loginForm) {
+        loginForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const name = nameInput.value.trim();
+          const pw = passwordInput.value.trim();
+
+          if (!name) {
+            alert("Please enter your name.");
+            return;
+          }
+
+          if (pw !== PORTAL_PASSWORD) {
+            alert("Incorrect password. Please check with your teacher.");
+            return;
+          }
+
+          // expose student name for app-student.js (chat, Firestore, etc.)
+          window.currentStudentName = name;
+
+          nameDisplay.textContent = name;
+          hubTitle.textContent = `Hi ${name}, welcome to your Student Hub!`;
+
+          loginSection.style.display = "none";
+          hubSection.style.display = "block";
+        });
+      }
     </script>
 
     <!-- Your existing student Firebase / logic -->
