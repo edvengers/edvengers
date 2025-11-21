@@ -23,11 +23,11 @@
     </header>
 
     <main>
-      <div class="ev-container" style="padding-top: 2rem; padding-bottom: 3rem;">
+      <div class="ev-container" style="padding: 2.5rem 0 3.5rem;">
         <h1>Teacher Dashboard</h1>
         <p class="ev-helper-text">
-          View student profiles, award Hero Stars, post announcements and homework,
-          and reply to student questions from here.
+          View student profiles, award Hero Stars, post announcements and homework, and
+          reply to student questions from here.
         </p>
 
         <!-- STUDENTS & HERO STARS -->
@@ -35,61 +35,59 @@
           <div class="card-header">Students &amp; Hero Stars</div>
           <p class="card-subtitle">
             Add or update students here. You can award Hero Stars for effort,
-            participation, and improvement. Students will see their total in
-            their hub.
+            participation, and improvement. Students will see their total in their hub.
           </p>
 
           <form id="students-form" style="margin-bottom: 1rem;">
-  <div class="form-field">
-    <label for="student-select">Select existing student (optional)</label>
-    <select id="student-select">
-      <option value="">-- New or type name below --</option>
-      <!-- Options will be filled from Firestore -->
-    </select>
-  </div>
+            <div class="form-field">
+              <label for="student-select">Select existing student (optional)</label>
+              <select id="student-select">
+                <option value="">-- New or type name below --</option>
+              </select>
+            </div>
 
-  <div class="form-field">
-    <label for="student-name">Student name</label>
-    <input
-      id="student-name"
-      type="text"
-      placeholder="e.g. Ethan Tan"
-      required
-    />
-  </div>
+            <div class="form-field">
+              <label for="student-name">Student name</label>
+              <input
+                id="student-name"
+                type="text"
+                placeholder="e.g. Ethan Tan"
+                required
+              />
+            </div>
 
-  <div class="form-field">
-    <label for="student-level">Level (optional)</label>
-    <input
-      id="student-level"
-      type="text"
-      placeholder="e.g. P5, P6"
-    />
-  </div>
+            <div class="form-field">
+              <label for="student-level">Level (optional)</label>
+              <input
+                id="student-level"
+                type="text"
+                placeholder="e.g. P5, P6"
+              />
+            </div>
 
-  <div class="form-field">
-    <label for="student-subjects">Subjects (optional)</label>
-    <input
-      id="student-subjects"
-      type="text"
-      placeholder="e.g. P5 English, P5 Math"
-    />
-  </div>
+            <div class="form-field">
+              <label for="student-subjects">Subjects (optional)</label>
+              <input
+                id="student-subjects"
+                type="text"
+                placeholder="e.g. P5 English, P5 Math"
+              />
+            </div>
 
-  <button type="submit" class="btn btn-primary">
-    Save / Update Student
-  </button>
-</form>
+            <button type="submit" class="btn btn-primary">
+              Save / Update Student
+            </button>
+          </form>
 
-<div id="students-list"></div>
+          <div id="students-list"></div>
         </section>
 
         <!-- ANNOUNCEMENTS & HOMEWORK -->
         <section class="dashboard-card">
           <div class="card-header">Announcements &amp; Homework</div>
           <p class="card-subtitle">
-            Post weekly announcements and homework links here. Students will see
-            them in their hub.
+            Post weekly announcements and homework links here. Students will see them in
+            their hub.
           </p>
 
           <div class="dashboard-grid">
@@ -127,71 +125,71 @@
             <div class="card">
               <div class="card-header">Homework</div>
               <form id="homework-form">
-  <div class="form-field">
-    <label for="homework-title">Title</label>
-    <input
-      id="homework-title"
-      type="text"
-      placeholder="e.g. P5 English – Week 3 Practice"
-      required
-    />
-  </div>
+                <div class="form-field">
+                  <label for="homework-title">Title</label>
+                  <input
+                    id="homework-title"
+                    type="text"
+                    placeholder="e.g. P5 English – Week 3 Practice"
+                    required
+                  />
+                </div>
 
-  <div class="form-field">
-    <label>Links (up to 5)</label>
-    <input
-      id="homework-link-1"
-      type="url"
-      placeholder="Main link (required) – Google Form / PDF / quiz"
-      required
-    />
-    <input
-      id="homework-link-2"
-      type="url"
-      placeholder="Additional link 2 (optional)"
-    />
-    <input
-      id="homework-link-3"
-      type="url"
-      placeholder="Additional link 3 (optional)"
-    />
-    <input
-      id="homework-link-4"
-      type="url"
-      placeholder="Additional link 4 (optional)"
-    />
-    <input
-      id="homework-link-5"
-      type="url"
-      placeholder="Additional link 5 (optional)"
-    />
-  </div>
+                <div class="form-field">
+                  <label>Links (up to 5)</label>
+                  <input
+                    id="homework-link-1"
+                    type="url"
+                    placeholder="Main link (required) – Google Form / PDF / quiz"
+                    required
+                  />
+                  <input
+                    id="homework-link-2"
+                    type="url"
+                    placeholder="Additional link 2 (optional)"
+                  />
+                  <input
+                    id="homework-link-3"
+                    type="url"
+                    placeholder="Additional link 3 (optional)"
+                  />
+                  <input
+                    id="homework-link-4"
+                    type="url"
+                    placeholder="Additional link 4 (optional)"
+                  />
+                  <input
+                    id="homework-link-5"
+                    type="url"
+                    placeholder="Additional link 5 (optional)"
+                  />
+                </div>
 
-  <div class="form-field">
-    <label for="homework-level">Level / Subject (optional)</label>
-    <input
-      id="homework-level"
-      type="text"
-      placeholder="e.g. P5 English"
-    />
-  </div>
+                <div class="form-field">
+                  <label for="homework-level">Level / Subject (optional)</label>
+                  <input
+                    id="homework-level"
+                    type="text"
+                    placeholder="e.g. P5 English"
+                  />
+                </div>
 
-  <button type="submit" class="btn btn-primary">
-    Add Homework
-  </button>
-</form>
+                <button type="submit" class="btn btn-primary">
+                  Add Homework
+                </button>
+              </form>
 
               <div id="homework-list" style="margin-top: 1rem;"></div>
             </div>
           </div>
         </section>
 
-        <!-- STUDENT QUESTIONS (CHAT STYLE) -->
+        <!-- STUDENT QUESTIONS -->
         <section class="dashboard-card">
           <div class="card-header">Student Questions</div>
           <p class="card-subtitle">
-            Questions submitted from the Student Hub will appear here. Click a
-            student to expand their conversation, then type and send your reply.
+            Questions submitted from the Student Hub will appear here. Click a student to
+            expand their conversation, then type and send your reply.
           </p>
 
           <div id="questions-list" class="dashboard-grid-single"></div>
@@ -206,11 +204,8 @@
     </footer>
 
     <script>
-      document.getElementById("year").textContent =
-        new Date().getFullYear();
+      document.getElementById("year").textContent = new Date().getFullYear();
     </script>
-
-    <!-- Teacher Firebase / dashboard logic -->
     <script src="app-teacher.js" type="module"></script>
   </body>
 </html>

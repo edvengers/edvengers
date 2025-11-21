@@ -1,8 +1,5 @@
 // app-teacher.js
-// Teacher side:
-// - Students & Hero Stars
-// - Announcements & Homework
-// - Student Questions (chat-style)
+// Teacher side: students + hero stars + announcements + homework + Q&A
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
@@ -30,7 +27,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// DOM
 const studentsForm = document.getElementById("students-form");
 const studentsList = document.getElementById("students-list");
 const studentsSelect = document.getElementById("student-select");
@@ -53,7 +49,7 @@ function formatTimeLabel(ts) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// ---------- STUDENTS & HERO STARS ----------
+// ----- Students & Hero Stars -----
 
 if (studentsSelect && document.getElementById("student-name")) {
   const nameInput = document.getElementById("student-name");
@@ -82,10 +78,7 @@ if (studentsForm) {
     const level = levelInput ? levelInput.value.trim() : "";
     const subjectsRaw = subjectsInput ? subjectsInput.value.trim() : "";
 
-    if (!name) {
-      console.warn("[Teacher] No student name provided");
-      return;
-    }
+    if (!name) return;
 
     const id = slugifyName(name);
     const subjects = subjectsRaw
@@ -99,15 +92,15 @@ if (studentsForm) {
           name,
           level,
           subjects,
+          // keep existing stars/password if any
           stars: 0,
+          password: "heroes2026",
           updatedAt: Date.now(),
         },
         { merge: true }
       );
       studentsForm.reset();
-      if (studentsSelect) {
-        studentsSelect.value = "";
-      }
+      if (studentsSelect) studentsSelect.value = "";
     } catch (err) {
       console.error("Error saving student:", err);
     }
@@ -115,7 +108,6 @@ if (studentsForm) {
 }
 
 function renderStudents(snapshot) {
-  // dropdown
   if (studentsSelect) {
     studentsSelect.innerHTML =
       '<option value="">-- New or type name below --</option>';
@@ -130,7 +122,6 @@ function renderStudents(snapshot) {
     const level = data.level || "-";
     const subjects = (data.subjects || []).join(", ");
 
-    // dropdown option
     if (studentsSelect && data.name) {
       const opt = document.createElement("option");
       opt.value = data.name;
@@ -152,13 +143,17 @@ function renderStudents(snapshot) {
       <div class="student-actions">
         <button class="btn btn-small" data-action="add1" data-id="${id}">+1</button>
         <button class="btn btn-small" data-action="add5" data-id="${id}">+5</button>
-        <button class="btn btn-ghost btn-small" data-action="reset" data-id="${id}">Reset</button>
+        <button class="btn btn-ghost btn-small" data-action="resetStars" data-id="${id}">
+          Reset Stars
+        </button>
+        <button class="btn btn-ghost btn-small" data-action="resetPwd" data-id="${id}">
+          Reset Password
+        </button>
       </div>
     `;
     studentsList.appendChild(row);
   });
 
-  // star buttons
   studentsList.querySelectorAll("button[data-action]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
@@ -170,17 +165,23 @@ function renderStudents(snapshot) {
           await updateDoc(ref, { stars: increment(1), updatedAt: Date.now() });
         } else if (action === "add5") {
           await updateDoc(ref, { stars: increment(5), updatedAt: Date.now() });
-        } else if (action === "reset") {
+        } else if (action === "resetStars") {
           await updateDoc(ref, { stars: 0, updatedAt: Date.now() });
+        } else if (action === "resetPwd") {
+          await updateDoc(ref, {
+            password: "heroes2026",
+            updatedAt: Date.now(),
+          });
+          alert("Password reset to heroes2026");
         }
       } catch (err) {
-        console.error("Error updating stars:", err);
+        console.error("Error updating student:", err);
       }
     });
   });
 }
 
-// ---------- ANNOUNCEMENTS ----------
+// ----- Announcements -----
 
 if (announcementForm) {
   announcementForm.addEventListener("submit", async (e) => {
@@ -222,11 +223,7 @@ function renderAnnouncement(docSnap) {
   announcementList.appendChild(card);
 }
 
-function clearAnnouncements() {
-  if (announcementList) announcementList.innerHTML = "";
-}
-
-// ---------- HOMEWORK ----------
+// ----- Homework -----
 
 if (homeworkForm) {
   homeworkForm.addEventListener("submit", async (e) => {
@@ -287,11 +284,7 @@ function renderHomework(docSnap) {
   homeworkList.appendChild(card);
 }
 
-function clearHomework() {
-  if (homeworkList) homeworkList.innerHTML = "";
-}
-
-// ---------- STUDENT QUESTIONS ----------
+// ----- Student Questions -----
 
 function renderQuestionsGrouped(snapshot) {
   if (!questionsList) return;
@@ -326,8 +319,7 @@ function renderQuestionsGrouped(snapshot) {
 
     const thread = document.createElement("details");
     thread.className = "teacher-student-thread";
-    // default collapsed; if you want auto-open when pending, uncomment:
-    // if (unanswered > 0) thread.open = true;
+    // default collapsed
 
     const summary = document.createElement("summary");
     summary.className = "teacher-student-summary";
@@ -430,48 +422,45 @@ function renderQuestionsGrouped(snapshot) {
     });
 }
 
-// ---------- REALTIME SUBSCRIPTIONS ----------
+// ----- Subscriptions -----
 
-function startRealtimeSubscriptions() {
-  if (studentsList || studentsSelect) {
-    const stQuery = query(collection(db, "students"), orderBy("name", "asc"));
-    onSnapshot(stQuery, (snapshot) => {
-      renderStudents(snapshot);
-    });
-  }
-
-  if (announcementList) {
-    const annQuery = query(
-      collection(db, "announcements"),
-      orderBy("createdAt", "desc")
-    );
-    onSnapshot(annQuery, (snapshot) => {
-      clearAnnouncements();
-      snapshot.forEach(renderAnnouncement);
-    });
-  }
-
-  if (homeworkList) {
-    const hwQuery = query(
-      collection(db, "homework"),
-      orderBy("createdAt", "desc")
-    );
-    onSnapshot(hwQuery, (snapshot) => {
-      clearHomework();
-      snapshot.forEach(renderHomework);
-    });
-  }
-
-  if (questionsList) {
-    const qQuery = query(
-      collection(db, "questions"),
-      orderBy("createdAt", "desc")
-    );
-    onSnapshot(qQuery, (snapshot) => {
-      renderQuestionsGrouped(snapshot);
-    });
-  }
+if (studentsList || studentsSelect) {
+  const stQuery = query(collection(db, "students"), orderBy("name", "asc"));
+  onSnapshot(stQuery, (snapshot) => {
+    renderStudents(snapshot);
+  });
 }
 
-startRealtimeSubscriptions();
+if (announcementList) {
+  const annQuery = query(
+    collection(db, "announcements"),
+    orderBy("createdAt", "desc")
+  );
+  onSnapshot(annQuery, (snapshot) => {
+    announcementList.innerHTML = "";
+    snapshot.forEach(renderAnnouncement);
+  });
+}
+
+if (homeworkList) {
+  const hwQuery = query(
+    collection(db, "homework"),
+    orderBy("createdAt", "desc")
+  );
+  onSnapshot(hwQuery, (snapshot) => {
+    homeworkList.innerHTML = "";
+    snapshot.forEach(renderHomework);
+  });
+}
+
+if (questionsList) {
+  const qQuery = query(
+    collection(db, "questions"),
+    orderBy("createdAt", "desc")
+  );
+  onSnapshot(qQuery, (snapshot) => {
+    renderQuestionsGrouped(snapshot);
+  });
+}
+
 console.log("[Teacher] Dashboard initialised");

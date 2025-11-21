@@ -1,9 +1,5 @@
 // app-student.js
-// Student side:
-// - Create/update simple profile (students collection)
-// - Show Hero Stars
-// - Show announcements & homework
-// - Let student send questions & see replies
+// Student side: login + hub + stars + announcements + homework + Q&A
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
@@ -16,6 +12,7 @@ import {
   onSnapshot,
   doc,
   setDoc,
+  getDoc,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -40,41 +37,83 @@ function formatTimeLabel(ts) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-function initStudentPortal() {
-  console.log("[Student] initStudentPortal start");
+let currentStudentName = null;
+let questionsUnsub = null;
 
-  let studentName = window.currentStudentName;
-  if (!studentName) {
-    studentName = localStorage.getItem("currentStudentName");
-  } else {
-    localStorage.setItem("currentStudentName", studentName);
+async function handleLogin(name, password, showError) {
+  const trimmedName = name.trim();
+  const trimmedPwd = password.trim();
+  if (!trimmedName || !trimmedPwd) {
+    showError("Please enter both name and password.");
+    return null;
   }
 
-  if (!studentName) {
-    console.warn("[Student] No name found, cannot init portal");
-    const hubTitle = document.getElementById("hub-title");
-    if (hubTitle) hubTitle.textContent = "Please go back and log in again.";
-    return;
+  const id = slugifyName(trimmedName);
+  const ref = doc(db, "students", id);
+  const snap = await getDoc(ref);
+
+  // If student does not exist yet:
+  if (!snap.exists()) {
+    // Only allow creation with default password
+    if (trimmedPwd !== "heroes2026") {
+      showError("Account not found. Please check with your teacher.");
+      return null;
+    }
+
+    await setDoc(ref, {
+      name: trimmedName,
+      level: "",
+      subjects: [],
+      stars: 0,
+      password: "heroes2026",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return trimmedName;
   }
+
+  const data = snap.data();
+  if (!data.password || data.password !== trimmedPwd) {
+    showError("Incorrect password. Please try again or ask your teacher.");
+    return null;
+  }
+
+  return trimmedName;
+}
+
+function enterHub(name) {
+  currentStudentName = name;
+  localStorage.setItem("edvengerStudentName", name);
+
+  const loginSection = document.getElementById("student-login-section");
+  const hubSection = document.getElementById("student-hub-section");
+  if (loginSection) loginSection.style.display = "none";
+  if (hubSection) hubSection.style.display = "block";
 
   const nameDisplay = document.getElementById("student-name-display");
-  if (nameDisplay) nameDisplay.textContent = studentName;
+  const detailsName = document.getElementById("details-name");
+  if (nameDisplay) nameDisplay.textContent = name;
+  if (detailsName) detailsName.textContent = name;
 
-  const studentId = slugifyName(studentName);
-  const studentRef = doc(db, "students", studentId);
+  initHubData(name);
+}
+
+function initHubData(name) {
+  const id = slugifyName(name);
+  const studentRef = doc(db, "students", id);
 
   // Ensure profile exists
   setDoc(
     studentRef,
     {
-      name: studentName,
-      stars: 0,
+      name,
       updatedAt: Date.now(),
     },
     { merge: true }
-  ).catch((err) => console.error("Error creating student profile", err));
+  ).catch((err) => console.error("Error creating profile:", err));
 
-  // Hero Stars subscription
+  // Hero Stars
   const starsEl = document.getElementById("hero-stars-count");
   onSnapshot(studentRef, (snap) => {
     const data = snap.data();
@@ -83,10 +122,8 @@ function initStudentPortal() {
     }
   });
 
-  // Announcements & Homework lists
+  // Announcements
   const announcementList = document.getElementById("announcement-list");
-  const homeworkList = document.getElementById("homework-list");
-
   if (announcementList) {
     const annQuery = query(
       collection(db, "announcements"),
@@ -110,6 +147,8 @@ function initStudentPortal() {
     });
   }
 
+  // Homework
+  const homeworkList = document.getElementById("homework-list");
   if (homeworkList) {
     const hwQuery = query(
       collection(db, "homework"),
@@ -147,13 +186,56 @@ function initStudentPortal() {
     });
   }
 
-  // Ask a Question
+  // Questions (per student)
+  const chatWindow = document.getElementById("chat-window");
+  if (questionsUnsub) questionsUnsub();
+
+  const qQuery = query(
+    collection(db, "questions"),
+    where("studentName", "==", name),
+    orderBy("createdAt", "asc")
+  );
+  questionsUnsub = onSnapshot(qQuery, (snapshot) => {
+    if (!chatWindow) return;
+    chatWindow.innerHTML = "";
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      // Student bubble
+      const rowS = document.createElement("div");
+      rowS.className = "chat-row chat-row-student";
+      rowS.innerHTML = `
+        <div class="chat-bubble chat-bubble-student">
+          <div class="chat-text">${data.text || ""}</div>
+          <div class="chat-time">${formatTimeLabel(data.createdAt)}</div>
+        </div>
+      `;
+      chatWindow.appendChild(rowS);
+
+      if (data.reply) {
+        const rowT = document.createElement("div");
+        rowT.className = "chat-row chat-row-teacher";
+        rowT.innerHTML = `
+          <div class="chat-bubble chat-bubble-teacher">
+            <div class="chat-text">${data.reply}</div>
+            <div class="chat-time">${formatTimeLabel(
+              data.repliedAt || data.createdAt
+            )}</div>
+          </div>
+        `;
+        chatWindow.appendChild(rowT);
+      }
+    });
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  });
+
+  // Send question
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
-  const chatWindow = document.getElementById("chat-window");
   const chatStatus = document.getElementById("chat-status");
 
-  if (chatForm && chatInput && chatWindow) {
+  if (chatForm && chatInput) {
     chatForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = chatInput.value.trim();
@@ -163,7 +245,7 @@ function initStudentPortal() {
 
       try {
         await addDoc(collection(db, "questions"), {
-          studentName,
+          studentName: name,
           text,
           reply: "",
           createdAt: Date.now(),
@@ -181,49 +263,49 @@ function initStudentPortal() {
         }
       }
     });
-
-    // Subscribe to THIS student's questions
-    const qQuery = query(
-      collection(db, "questions"),
-      where("studentName", "==", studentName),
-      orderBy("createdAt", "asc")
-    );
-
-    onSnapshot(qQuery, (snapshot) => {
-      chatWindow.innerHTML = "";
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-
-        // Student bubble
-        const rowS = document.createElement("div");
-        rowS.className = "chat-row chat-row-student";
-        rowS.innerHTML = `
-          <div class="chat-bubble chat-bubble-student">
-            <div class="chat-text">${data.text || ""}</div>
-            <div class="chat-time">${formatTimeLabel(data.createdAt)}</div>
-          </div>
-        `;
-        chatWindow.appendChild(rowS);
-
-        // Teacher reply bubble
-        if (data.reply) {
-          const rowT = document.createElement("div");
-          rowT.className = "chat-row chat-row-teacher";
-          rowT.innerHTML = `
-            <div class="chat-bubble chat-bubble-teacher">
-              <div class="chat-text">${data.reply}</div>
-              <div class="chat-time">${formatTimeLabel(
-                data.repliedAt || data.createdAt
-              )}</div>
-            </div>
-          `;
-          chatWindow.appendChild(rowT);
-        }
-      });
-
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    });
   }
 }
 
-document.addEventListener("DOMContentLoaded", initStudentPortal);
+document.addEventListener("DOMContentLoaded", () => {
+  const savedName = localStorage.getItem("edvengerStudentName");
+  const loginSection = document.getElementById("student-login-section");
+  const hubSection = document.getElementById("student-hub-section");
+
+  const loginForm = document.getElementById("student-login-form");
+  const loginError = document.getElementById("login-error");
+
+  const showError = (msg) => {
+    if (loginError) {
+      loginError.textContent = msg;
+      loginError.style.display = "block";
+    } else {
+      alert(msg);
+    }
+  };
+
+  if (savedName && hubSection && loginSection) {
+    loginSection.style.display = "none";
+    hubSection.style.display = "block";
+    enterHub(savedName);
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (loginError) loginError.style.display = "none";
+
+      const name = document.getElementById("login-name").value;
+      const pwd = document.getElementById("login-password").value;
+
+      try {
+        const resultName = await handleLogin(name, pwd, showError);
+        if (resultName) {
+          enterHub(resultName);
+        }
+      } catch (err) {
+        console.error(err);
+        showError("Login failed. Please try again.");
+      }
+    });
+  }
+});

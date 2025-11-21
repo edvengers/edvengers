@@ -8,7 +8,6 @@
   </head>
 
   <body class="portal-body">
-    <!-- Top bar with logo + back button -->
     <header class="ev-header">
       <div class="ev-container ev-nav">
         <div class="ev-logo">
@@ -24,180 +23,149 @@
     </header>
 
     <main>
-      <div class="ev-container" style="padding-top: 2rem; padding-bottom: 3rem;">
-        <!-- LOGIN SECTION -->
-        <section id="login-section" class="dashboard-card">
+      <!-- LOGIN SECTION -->
+      <section id="student-login-section">
+        <div class="ev-container" style="padding: 2.5rem 0 3rem;">
           <h1>Student Login</h1>
           <p class="ev-helper-text">
-            Welcome, Edvenger! Enter your details to access your missions.
+            Welcome, Edvenger! Enter your details to access your student hub.
           </p>
 
-          <!-- onsubmit="return false" prevents page reload if JS fails -->
-          <form id="login-form" onsubmit="return false;">
-            <div class="form-field">
-              <label for="studentName">Student Name / ID</label>
-              <input
-                type="text"
-                id="studentName"
-                name="studentName"
-                placeholder="e.g. Ethan Tan"
-                required
-              />
-            </div>
+          <div class="dashboard-card">
+            <form id="student-login-form">
+              <div class="form-field">
+                <label for="login-name">Student Name</label>
+                <input
+                  id="login-name"
+                  type="text"
+                  placeholder="e.g. Ethan Tan"
+                  required
+                />
+              </div>
+              <div class="form-field">
+                <label for="login-password">Portal Password</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  placeholder="Ask your teacher"
+                  required
+                />
+              </div>
+              <p class="helper-text">
+                Default password for new / reset accounts: <strong>heroes2026</strong>
+              </p>
+              <p id="login-error" class="helper-text" style="color: #ff6b6b; display: none;"></p>
+              <button type="submit" class="btn btn-primary">
+                Enter Student Hub
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
 
-            <div class="form-field">
-              <label for="portalPassword">Portal Password</label>
-              <input
-                type="password"
-                id="portalPassword"
-                name="portalPassword"
-                placeholder="Ask your teacher"
-                required
-              />
-            </div>
-
-            <p class="helper-text">
-              For this prototype, use password:
-              <strong>heroes2026</strong>
-            </p>
-
-            <!-- Button calls handleLogin() directly -->
-            <button type="button" class="btn btn-primary" onclick="handleLogin()">
-              Enter Student Hub
-            </button>
-          </form>
-        </section>
-
-        <!-- MAIN HUB SECTION (hidden until login) -->
-        <section
-          id="hub-section"
-          style="display: none; margin-top: 1rem;"
-        >
-          <h1 id="hub-title">Welcome back!</h1>
+      <!-- HUB SECTION -->
+      <section id="student-hub-section" style="display: none;">
+        <div class="ev-container" style="padding: 2.5rem 0 3.5rem;">
+          <h1 id="hub-title">
+            Hi <span id="student-name-display">hero</span>, welcome to your Student Hub!
+          </h1>
           <p class="ev-helper-text">
-            This is your Edvengers Student Hub. From here you can join live
-            lessons, check announcements, see homework, and ask questions.
+            From here you can join live lessons, check announcements, see homework, view
+            your Hero Stars, and ask questions.
           </p>
 
-          <!-- Join lesson + overview -->
-          <section class="dashboard-card">
-            <div class="card-grid">
-              <div>
-                <div class="card-header">Join Live Lesson</div>
-                <p class="card-subtitle">
-                  Click this button a few minutes before your class starts. Make
-                  sure you log in with your real name.
-                </p>
-                <a
-                  href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1"
-                  class="btn btn-primary"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Join Zoom Lesson
-                </a>
-                <p class="helper-text" style="margin-top: 0.6rem;">
-                  Tip: Have your notebook, pen, and worksheet ready before you
-                  click Join.
-                </p>
-              </div>
-
-              <div>
-                <div class="card-header">Your Details</div>
-  <p class="card-subtitle">
-    Logged in as:
-    <strong><span id="student-name-display">Student</span></strong>
-  </p>
-  <p class="card-subtitle">
-    Hero Stars:
-    <strong><span id="hero-stars-count">0</span></strong>
-  </p>
-  <p class="helper-text">
-    Your level and subjects may be used later to filter homework and
-    questions just for you. Hero Stars are awarded by your teachers
-    for effort, participation, and improvement.
-  </p>
-</div>
+          <!-- TOP ROW: JOIN + DETAILS -->
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">Join Live Lesson</div>
+              <p>
+                Click this button a few minutes before your class starts. Make sure you
+                log in with your real name.
+              </p>
+              <a
+                href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1"
+                target="_blank"
+                class="btn btn-primary"
+              >
+                Join Zoom Lesson
+              </a>
+              <p class="helper-text">
+                Tip: Have your notebook, pen, and worksheet ready before you click Join.
+              </p>
             </div>
-          </section>
 
-          <!-- Announcements & Homework -->
-          <section class="dashboard-card">
-            <div class="dashboard-grid">
-              <!-- Announcements -->
-              <div class="card">
-                <div class="card-header">Announcements</div>
-                <p class="card-subtitle">
-                  Important updates from your teachers will appear here.
-                </p>
-                <div id="announcement-list">
-                  <!-- Filled by app-student.js (Firestore) -->
-                </div>
-                <p class="helper-text">
-                  Check this section every week for lesson reminders or changes.
-                </p>
-              </div>
-
-              <!-- Homework -->
-              <div class="card">
-                <div class="card-header">Homework &amp; Links</div>
-                <p class="card-subtitle">
-                  Homework for your level and subjects will appear here.
-                </p>
-                <div id="homework-list">
-                  <!-- Filled by app-student.js (Firestore) -->
-                </div>
-                <p class="helper-text">
-                  Some homework may be Google Forms, others PDF worksheets or
-                  online quizzes.
-                </p>
-              </div>
+            <div class="card">
+              <div class="card-header">Your Details</div>
+              <p>Logged in as: <strong id="details-name"></strong></p>
+              <p>
+                Hero Stars:
+                <strong id="hero-stars-count">0</strong>
+              </p>
+              <p class="helper-text">
+                Hero Stars are awarded by your teachers for effort, participation, and
+                improvement. More stars = more recognition as an Edvenger!
+              </p>
             </div>
-          </section>
+          </div>
 
-          <!-- Ask a Question -->
+          <!-- ANNOUNCEMENTS + HOMEWORK -->
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">Announcements</div>
+              <p class="helper-text">
+                Important updates from your teachers will appear here. Check each week for
+                lesson reminders or changes.
+              </p>
+              <div id="announcement-list"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">Homework &amp; Links</div>
+              <p class="helper-text">
+                Homework links posted by your teachers will appear here. Some homework may
+                be Google Forms, PDF worksheets, or online quizzes.
+              </p>
+              <div id="homework-list"></div>
+            </div>
+          </div>
+
+          <!-- ASK A QUESTION -->
           <section class="dashboard-card">
             <div class="card-header">Ask a Question</div>
             <p class="card-subtitle">
-              Use this box to ask academic questions about your homework or
-              lesson. Your teacher will see your question and reply through the
-              teacher dashboard.
+              Use this box to ask academic questions about your homework or lesson. Your
+              teacher will see your question and reply through the teacher dashboard.
             </p>
 
-            <div id="chat-window" class="chat-window">
-              <!-- Chat bubbles added by JS -->
-            </div>
+            <div id="chat-window" class="chat-window"></div>
 
-            <form
-  id="chat-form"
-  class="reply-box"
-  style="margin-top: 0.9rem;"
->
-  <div id="chat-window" class="chat-window"></div>
+            <form id="chat-form" class="reply-box" style="margin-top: 0.9rem;">
+              <label class="chat-label">
+                Your question
+                <textarea
+                  id="chat-input"
+                  rows="2"
+                  placeholder="Type your question here..."
+                  required
+                ></textarea>
+              </label>
 
-  <label class="chat-label">
-    Your question
-    <textarea
-      id="chat-input"
-      rows="2"
-      placeholder="Type your question here..."
-      required
-    ></textarea>
-  </label>
+              <p id="chat-status" class="helper-text"></p>
 
-  <p id="chat-status" class="helper-text"></p>
+              <div class="chat-actions">
+                <button type="submit" class="btn btn-primary">
+                  Send question
+                </button>
+              </div>
+            </form>
 
-  <div class="chat-actions">
-    <button type="submit" class="btn btn-primary">
-      Send question
-    </button>
-  </div>
-</form>
-
-            <p class="status-text" id="chat-status"></p>
+            <p class="helper-text">
+              In future, you may be able to attach a photo of your work here. For now,
+              just describe your question clearly.
+            </p>
           </section>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
 
     <footer class="ev-footer">
@@ -207,46 +175,8 @@
     </footer>
 
     <script>
-      // Footer year
-      document.getElementById("year").textContent =
-        new Date().getFullYear();
-
-      const PORTAL_PASSWORD = "heroes2026";
-
-      // called by button onclick
-      function handleLogin() {
-        const nameInput = document.getElementById("studentName");
-        const passwordInput = document.getElementById("portalPassword");
-        const loginSection = document.getElementById("login-section");
-        const hubSection = document.getElementById("hub-section");
-        const nameDisplay = document.getElementById("student-name-display");
-        const hubTitle = document.getElementById("hub-title");
-
-        const name = (nameInput.value || "").trim();
-        const pw = (passwordInput.value || "").trim();
-
-        if (!name) {
-          alert("Please enter your name.");
-          return;
-        }
-
-        if (pw !== PORTAL_PASSWORD) {
-          alert("Incorrect password. Please check with your teacher.");
-          return;
-        }
-
-        // expose student name for app-student.js (chat, Firestore, etc.)
-        window.currentStudentName = name;
-
-        nameDisplay.textContent = name;
-        hubTitle.textContent = `Hi ${name}, welcome to your Student Hub!`;
-
-        loginSection.style.display = "none";
-        hubSection.style.display = "block";
-      }
+      document.getElementById("year").textContent = new Date().getFullYear();
     </script>
-
-    <!-- Your existing student Firebase / logic -->
     <script src="app-student.js" type="module"></script>
   </body>
 </html>
