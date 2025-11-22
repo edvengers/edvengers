@@ -621,15 +621,14 @@ body {
   opacity: 1;
 }
 
-/* ========== TEACHER DASHBOARD – Q&A CARDS (OPTIONAL) ========== */
-/* Keep these in case you use question-group style elsewhere */
+/* Teacher dashboard chat improvements */
 
 .question-group {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 18px;
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .question-group-header {
@@ -683,7 +682,7 @@ body {
 .reply-box textarea {
   width: 100%;
   background: #0b142c;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   padding: 0.7rem;
   color: var(--ev-text);
@@ -694,57 +693,108 @@ body {
   float: right;
 }
 
-/* ========== STUDENT CHAT LAYOUT (TEACHER DASHBOARD) ========== */
+.teacher-chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.teacher-chat-row {
+  display: flex;
+}
+
+.teacher-chat-row-student {
+  justify-content: flex-start;
+}
+
+.teacher-chat-row-teacher {
+  justify-content: flex-end;
+}
+
+.teacher-chat-bubble {
+  max-width: 80%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.teacher-chat-row-teacher .teacher-chat-bubble {
+  background: #12b886;
+  color: #02101f;
+  border-bottom-right-radius: 2px;
+}
+
+.teacher-chat-time {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+  text-align: right;
+}
+
+/* === Chat layout (used by teacher + student) === */
 
 .chat-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 1.1rem;
+  display: flex;
+  gap: 1rem;
 }
 
 .chat-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  width: 260px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
+.chat-main {
+  flex: 1;
+}
+
+/* Student list bubbles in teacher sidebar */
+
 .chat-student-item {
-  background: #081324;
-  border-radius: 16px;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  text-align: left;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--ev-text);
+  border-radius: 14px;
+  padding: 0.55rem 0.8rem;
+  margin-bottom: 0.4rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease,
-    transform 0.08s ease;
+  font: inherit;
+  display: block;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.08s ease,
+    box-shadow 0.12s ease;
 }
 
 .chat-student-item:hover {
-  background: #0b172a;
+  background: rgba(15, 23, 42, 1);
   transform: translateY(-1px);
 }
 
 .chat-student-item.active {
   border-color: var(--ev-accent);
-  box-shadow: 0 0 0 1px rgba(31, 230, 168, 0.4);
+  box-shadow: 0 0 0 1px rgba(31, 230, 168, 0.35);
+  background: rgba(15, 23, 42, 0.98);
 }
 
 .chat-student-name {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .chat-student-meta {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--ev-muted);
   margin-top: 0.1rem;
 }
 
-.chat-main {
-  display: flex;
-  flex-direction: column;
-}
-
-/* ========== SHARED CHAT WINDOW (STUDENT + TEACHER) ========== */
+/* Chat window + bubbles (used by BOTH teacher & student hubs) */
 
 .chat-window,
 #chat-thread {
@@ -753,80 +803,54 @@ body {
   padding: 0.75rem;
   margin-top: 0.5rem;
   border-radius: 1rem;
-  background: #050d20;
-  border: 1px solid var(--ev-border-soft);
+  background: #020617;
+  border: 1px solid rgba(15, 23, 42, 0.85);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-/* Generic chat row container */
+/* rows */
 
 .chat-row {
   display: flex;
   width: 100%;
 }
 
-/* Alignment:
-   - Teacher dashboard:   student left, teacher right
-   - Student hub:         teacher left, student right
-   (JS decides which class to add) */
-
-.chat-row-teacher {
+.chat-row-left {
   justify-content: flex-start;
 }
 
-.chat-row-student {
+.chat-row-right {
   justify-content: flex-end;
 }
 
-/* Base bubble */
+/* bubbles */
 
 .chat-bubble {
-  max-width: 78%;
-  padding: 0.55rem 0.85rem 0.45rem;
+  max-width: 72%;
+  padding: 0.55rem 0.8rem 0.45rem;
   border-radius: 1rem;
   font-size: 0.9rem;
-  line-height: 1.4;
-  position: relative;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.4);
+  line-height: 1.35;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.45);
 }
 
-/* OWN messages (right side, green – WhatsApp style) */
-
-.chat-bubble-student {
-  background: #25d366;   /* WhatsApp green */
-  color: #021309;
+.chat-bubble-me {
+  background: #22c55e; /* green-ish like WhatsApp "me" bubble */
+  color: #022c22;
 }
 
-/* OTHER side messages (left, light grey) */
-
-.chat-bubble-teacher {
-  background: #e5e5ea;   /* WhatsApp light grey */
-  color: #111;
+.chat-bubble-other {
+  background: #0b1120; /* dark grey/blue for the other side */
+  color: #e5e7eb;
 }
 
-/* Optional: slightly different corner radius to hint “tail” */
-
-.chat-row-student .chat-bubble {
-  border-bottom-right-radius: 0.4rem;
+.chat-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
-
-.chat-row-teacher .chat-bubble {
-  border-bottom-left-radius: 0.4rem;
-}
-
-/* Images inside bubbles */
-
-.chat-image img {
-  display: block;
-  max-width: 240px;
-  border-radius: 0.75rem;
-  margin-top: 0.35rem;
-}
-
-/* Time stamp */
 
 .chat-time {
   font-size: 0.7rem;
@@ -835,50 +859,14 @@ body {
   text-align: right;
 }
 
-/* Chat form input area */
-
-.chat-form {
-  margin-top: 0.75rem;
+/* RECEIVED MESSAGES (LEFT SIDE) */
+.chat-bubble-teacher {
+  background: #2f3a4a !important; /* dark grey */
+  color: #f1f5f9 !important;
 }
 
-.chat-row-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.chat-label span {
-  display: block;
-  font-size: 0.85rem;
-  margin-bottom: 0.2rem;
-}
-
-.chat-label textarea {
-  width: 100%;
-  padding: 0.55rem 0.6rem;
-  border-radius: 10px;
-  border: 1px solid var(--ev-border-soft);
-  background: #050d20;
-  color: var(--ev-text);
-  font-size: 0.9rem;
-  resize: vertical;
-}
-
-.chat-attachments {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.8rem;
-  color: var(--ev-muted);
-}
-
-.file-label input[type="file"] {
-  display: inline-block;
-  margin-left: 0.4rem;
-}
-
-.chat-actions {
-  margin-top: 0.5rem;
-  display: flex;
-  justify-content: flex-start;
+/* SENT MESSAGES (RIGHT SIDE) */
+.chat-bubble-student {
+  background: #16c784 !important; /* WhatsApp-like green */
+  color: #021310 !important;
 }
