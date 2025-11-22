@@ -83,12 +83,13 @@
             <div class="card">
   <h2>Students &amp; Hero Points</h2>
   <p class="helper-text">
-    Filter by level and subject, select a student, then award Hero Points or reset password.
-    Use the profile section below only when you need to add or edit a student.
+    Filter by level and subject, select a student, then stage Hero Points changes.
+    Click <strong>Update Points</strong> to save. Use the profile section only when you need
+    to add or edit a student.
   </p>
 
   <form id="students-form">
-    <!-- 1️⃣ Filters: Level then Subject -->
+    <!-- 1️⃣ Filters: Level then Subject, then existing student -->
     <div class="form-row">
       <div class="form-group">
         <label for="filter-level">Level</label>
@@ -116,7 +117,6 @@
         </select>
       </div>
 
-      <!-- 2️⃣ Existing student (filtered by above) -->
       <div class="form-group">
         <label for="student-select">Existing student</label>
         <select id="student-select" class="input">
@@ -125,17 +125,17 @@
       </div>
     </div>
 
-    <!-- 3️⃣ Selected student + +1 / +5 / reset points / reset password -->
+    <!-- 2️⃣ Selected student row: points + buttons + Update -->
     <div id="students-list" class="students-list">
-      <!-- Filled by app-teacher.js (one clean row with buttons) -->
+      <!-- Filled by app-teacher.js for the selected student only -->
     </div>
 
-    <!-- 4️⃣ Optional: profile edit / create (collapsed to keep UI clean) -->
+    <!-- 3️⃣ Optional: profile edit / create (collapsed) -->
     <details class="ev-collapsible" style="margin-top: 1.5rem;">
       <summary>Edit / create student profile (optional)</summary>
 
       <p class="helper-text" style="margin-top: 0.75rem;">
-        Use this only when you need to add a new student or change level / subjects.
+        Use this when you need to add a new student or change level / subjects.
         Hero Points and password are handled by the buttons above.
       </p>
 
@@ -152,22 +152,27 @@
 
         <div class="form-group">
           <label for="student-level">Level</label>
-          <input
-            id="student-level"
-            type="text"
-            class="input"
-            placeholder="e.g. P5"
-          />
+          <select id="student-level" class="input">
+            <option value="">-- Select level --</option>
+            <option value="P3">P3</option>
+            <option value="P4">P4</option>
+            <option value="P5">P5</option>
+            <option value="P6">P6</option>
+          </select>
         </div>
 
         <div class="form-group">
-          <label for="student-subjects">Subjects (comma-separated)</label>
-          <input
-            id="student-subjects"
-            type="text"
-            class="input"
-            placeholder="e.g. P5 English, P5 Math"
-          />
+          <label for="student-subjects">Subjects (hold Ctrl / Cmd to select multiple)</label>
+          <select id="student-subjects" class="input" multiple>
+            <option value="P3 English">P3 English</option>
+            <option value="P3 Math">P3 Math</option>
+            <option value="P4 English">P4 English</option>
+            <option value="P4 Math">P4 Math</option>
+            <option value="P5 English">P5 English</option>
+            <option value="P5 Math">P5 Math</option>
+            <option value="P6 English">P6 English</option>
+            <option value="P6 Math">P6 Math</option>
+          </select>
         </div>
       </div>
 
