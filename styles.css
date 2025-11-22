@@ -737,3 +737,117 @@ body {
   margin-top: 0.15rem;
   text-align: right;
 }
+
+/* === WhatsApp-style chat layout for student & teacher === */
+
+.chat-window,
+#chat-thread {
+  max-height: 360px;
+  min-height: 220px;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.55); /* dark slate, semi-transparent */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Generic row container */
+.chat-row {
+  display: flex;
+  width: 100%;
+}
+
+/* Left vs right alignment */
+.chat-row-teacher {
+  justify-content: flex-start;
+}
+
+.chat-row-student {
+  justify-content: flex-end;
+}
+
+/* Base bubble */
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.6rem 0.85rem 0.45rem;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.4);
+}
+
+/* "Me" bubble (right side) – greenish, like WhatsApp but Edvengers */
+.chat-bubble-student {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #0b1120;
+  border-bottom-right-radius: 0.25rem;
+}
+
+/* "Other" bubble (left side) – dark slate */
+.chat-bubble-teacher {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #e5e7eb;
+  border-bottom-left-radius: 0.25rem;
+}
+
+/* Image inside bubbles */
+.chat-image {
+  margin-top: 0.35rem;
+}
+
+.chat-image img {
+  max-width: 220px;
+  border-radius: 0.75rem;
+  display: block;
+}
+
+/* Time label */
+.chat-time {
+  margin-top: 0.18rem;
+  font-size: 0.7rem;
+  opacity: 0.8;
+  text-align: right;
+}
+
+/* Text wrapper inside bubble */
+.chat-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Chat form (bottom bar) */
+.chat-form,
+#teacher-chat-form {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.chat-form textarea,
+#teacher-chat-input {
+  flex: 1;
+  min-height: 2.4rem;
+  max-height: 5rem;
+  resize: vertical;
+}
+
+.chat-form .file-label,
+#teacher-chat-form .file-label {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+/* Status text under chat form */
+#chat-status,
+#teacher-chat-status {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}

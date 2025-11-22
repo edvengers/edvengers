@@ -677,31 +677,36 @@ function openChatForStudent(id, name) {
     if (!chatThread) return;
     chatThread.innerHTML = "";
     snap.forEach((docSnap) => {
-      const m = docSnap.data();
-      const row = document.createElement("div");
-      row.className =
-        "chat-row " +
-        (m.sender === "student"
-          ? "chat-row-student"
-          : "chat-row-teacher");
+  const m = docSnap.data();
+  const row = document.createElement("div");
 
-      let inner = `
-        <div class="chat-bubble ${
-          m.sender === "student"
-            ? "chat-bubble-student"
-            : "chat-bubble-teacher"
-        }">
-          ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
-      `;
-      if (m.imageUrl) {
-        inner += `<div class="chat-image"><img src="${m.imageUrl}" alt="attachment" /></div>`;
-      }
-      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
-      row.innerHTML = inner;
-      chatThread.appendChild(row);
-    });
-    chatThread.scrollTop = chatThread.scrollHeight;
-  });
+  // On teacher side, teacher's own messages are on the right (green),
+  // student's messages on the left (dark) – like WhatsApp.
+  const isTeacherMsg = m.sender === "teacher";
+
+  row.className =
+    "chat-row " +
+    (isTeacherMsg ? "chat-row-student" : "chat-row-teacher");
+
+  let inner = `
+    <div class="chat-bubble ${
+      isTeacherMsg ? "chat-bubble-student" : "chat-bubble-teacher"
+    }">
+      ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
+  `;
+
+  if (m.imageUrl) {
+    inner += `
+      <div class="chat-image">
+        <img src="${m.imageUrl}" alt="attachment" />
+      </div>
+    `;
+  }
+
+  inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
+  row.innerHTML = inner;
+  chatThread.appendChild(row);
+});
 }
 
 if (chatForm) {
