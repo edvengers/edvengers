@@ -221,22 +221,27 @@
                     ></textarea>
                   </div>
                   <div class="form-field">
-                    <label for="announcement-levels">Levels (comma-separated)</label>
-                    <input
-                      id="announcement-levels"
-                      type="text"
-                      placeholder="e.g. P5, P6"
-                    />
-                  </div>
-                  <div class="form-field">
-                    <label for="announcement-subjects">
-                      Subjects (comma-separated, blank = all)
-                    </label>
-                    <input
-                      id="announcement-subjects"
-                      type="text"
-                      placeholder="e.g. Math"
-                    />
+                    <label for="announcement-level">Level</label>
+<select id="announcement-level" class="input">
+  <option value="">All levels</option>
+  <option value="P3">P3</option>
+  <option value="P4">P4</option>
+  <option value="P5">P5</option>
+  <option value="P6">P6</option>
+</select>
+
+<label for="announcement-subject">Subject</label>
+<select id="announcement-subject" class="input">
+  <option value="">All subjects</option>
+  <option value="P3 English">P3 English</option>
+  <option value="P3 Math">P3 Math</option>
+  <option value="P4 English">P4 English</option>
+  <option value="P4 Math">P4 Math</option>
+  <option value="P5 English">P5 English</option>
+  <option value="P5 Math">P5 Math</option>
+  <option value="P6 English">P6 English</option>
+  <option value="P6 Math">P6 Math</option>
+</select>
                   </div>
                   <button type="submit" class="btn btn-primary">
                     Post Announcement
@@ -300,20 +305,27 @@
 
                   <div class="dashboard-grid">
                     <div class="form-field">
-                      <label for="homework-levels">Levels (comma-separated)</label>
-                      <input
-                        id="homework-levels"
-                        type="text"
-                        placeholder="e.g. P5"
-                      />
-                    </div>
-                    <div class="form-field">
-                      <label for="homework-subjects">Subjects</label>
-                      <input
-                        id="homework-subjects"
-                        type="text"
-                        placeholder="e.g. English"
-                      />
+                      <label for="homework-level">Level</label>
+<select id="homework-level" class="input">
+  <option value="">All levels</option>
+  <option value="P3">P3</option>
+  <option value="P4">P4</option>
+  <option value="P5">P5</option>
+  <option value="P6">P6</option>
+</select>
+
+<label for="homework-subject">Subject</label>
+<select id="homework-subject" class="input">
+  <option value="">All subjects</option>
+  <option value="P3 English">P3 English</option>
+  <option value="P3 Math">P3 Math</option>
+  <option value="P4 English">P4 English</option>
+  <option value="P4 Math">P4 Math</option>
+  <option value="P5 English">P5 English</option>
+  <option value="P5 Math">P5 Math</option>
+  <option value="P6 English">P6 English</option>
+  <option value="P6 Math">P6 Math</option>
+</select>
                     </div>
                   </div>
 
