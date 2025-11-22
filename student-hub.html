@@ -118,23 +118,57 @@
           </div>
 
           <!-- ANNOUNCEMENTS + HOMEWORK -->
-          <div class="dashboard-grid">
-            <div class="card">
-              <div class="card-header">Announcements</div>
-              <p class="helper-text">
-                Only announcements for your level & subjects will appear here.
-              </p>
-              <div id="announcement-list"></div>
-            </div>
+<div class="dashboard-grid">
 
-            <div class="card">
-              <div class="card-header">Homework &amp; Links</div>
-              <p class="helper-text">
-                Homework for your classes will appear here with links and deadlines.
-              </p>
-              <div id="homework-list"></div>
-            </div>
-          </div>
+  <!-- 📢 Announcements -->
+  <div class="card">
+    <div class="card-header">Announcements</div>
+    <p class="helper-text">
+      Important updates from your teachers. Newest first.
+    </p>
+
+    <div id="student-announcements"></div>
+
+    <!-- Toggle & count -->
+    <div class="student-section-footer">
+      <button
+        id="student-ann-toggle"
+        type="button"
+        class="btn btn-ghost btn-small"
+        style="display:none;"
+      >
+        Show older announcements
+      </button>
+
+      <span id="student-ann-count" class="helper-text"></span>
+    </div>
+  </div>
+
+  <!-- 📝 Homework -->
+  <div class="card">
+    <div class="card-header">Homework &amp; Links</div>
+    <p class="helper-text">
+      Homework for your level & subjects. Newest first.
+    </p>
+
+    <div id="student-homework-list"></div>
+
+    <!-- Toggle & count -->
+    <div class="student-section-footer">
+      <button
+        id="student-hw-toggle"
+        type="button"
+        class="btn btn-ghost btn-small"
+        style="display:none;"
+      >
+        Show older homework
+      </button>
+
+      <span id="student-hw-count" class="helper-text"></span>
+    </div>
+  </div>
+
+</div>
 
           <!-- CHAT -->
           <section class="dashboard-card">

@@ -346,6 +346,11 @@ onSnapshot(studentsQuery, (snap) => {
 
 const annForm = document.getElementById("announcement-form");
 const annList = document.getElementById("announcement-list");
+const annToggleBtn = document.getElementById("teacher-ann-toggle");
+const annCountLabel = document.getElementById("teacher-ann-count");
+
+let teacherAnnouncementsAll = [];
+let teacherShowAllAnnouncements = false;
 
 if (annForm) {
   annForm.addEventListener("submit", async (e) => {
@@ -391,22 +396,77 @@ if (annList) {
     orderBy("createdAt", "desc")
   );
   onSnapshot(qAnn, (snap) => {
-    annList.innerHTML = "";
+    teacherAnnouncementsAll = [];
     snap.forEach((docSnap) => {
-      const d = docSnap.data();
-      const card = document.createElement("div");
-      card.className = "ev-card-bubble";
-      card.innerHTML = `
-        <h4>${d.title || "Untitled"}</h4>
-        <p>${d.message || ""}</p>
-        <p class="helper-text">
-          Levels: ${(d.levels || []).join(", ") || "All"}
-          • Subjects: ${(d.subjects || []).join(", ") || "All"}
-          • Posted: ${new Date(d.createdAt || Date.now()).toLocaleString()}
-        </p>
-      `;
-      annList.appendChild(card);
+      teacherAnnouncementsAll.push({
+        id: docSnap.id,
+        ...docSnap.data(),
+      });
     });
+    renderTeacherAnnouncements();
+  });
+}
+
+function renderTeacherAnnouncements() {
+  if (!annList) return;
+
+  annList.innerHTML = "";
+
+  const total = teacherAnnouncementsAll.length;
+  if (!total) {
+    annList.innerHTML =
+      '<p class="helper-text">No announcements yet.</p>';
+    if (annToggleBtn) annToggleBtn.style.display = "none";
+    if (annCountLabel) annCountLabel.textContent = "";
+    return;
+  }
+
+  const LIMIT = 5;
+  const itemsToShow = teacherShowAllAnnouncements
+    ? teacherAnnouncementsAll
+    : teacherAnnouncementsAll.slice(0, LIMIT);
+
+  itemsToShow.forEach((d) => {
+    const card = document.createElement("div");
+    card.className = "ev-card-bubble";
+    card.innerHTML = `
+      <h4>${d.title || "Untitled"}</h4>
+      <p>${d.message || ""}</p>
+      <p class="helper-text">
+        Levels: ${(d.levels || []).join(", ") || "All"}
+        • Subjects: ${(d.subjects || []).join(", ") || "All"}
+        • Posted: ${
+          d.createdAt
+            ? new Date(d.createdAt).toLocaleString()
+            : "-"
+        }
+      </p>
+    `;
+    annList.appendChild(card);
+  });
+
+  if (annToggleBtn) {
+    if (total > LIMIT) {
+      annToggleBtn.style.display = "inline-block";
+      annToggleBtn.textContent = teacherShowAllAnnouncements
+        ? "Show fewer announcements"
+        : `Show older announcements (${total - LIMIT} more)`;
+    } else {
+      annToggleBtn.style.display = "none";
+    }
+  }
+
+  if (annCountLabel) {
+    annCountLabel.textContent = teacherShowAllAnnouncements
+      ? `Showing all ${total} announcements`
+      : `Showing latest ${Math.min(LIMIT, total)} of ${total} announcements`;
+  }
+}
+
+if (annToggleBtn) {
+  annToggleBtn.addEventListener("click", () => {
+    teacherShowAllAnnouncements = !teacherShowAllAnnouncements;
+    renderTeacherAnnouncements();
   });
 }
 
@@ -416,6 +476,11 @@ if (annList) {
 
 const hwForm = document.getElementById("homework-form");
 const hwList = document.getElementById("homework-list");
+const hwToggleBtn = document.getElementById("teacher-hw-toggle");
+const hwCountLabel = document.getElementById("teacher-hw-count");
+
+let teacherHomeworkAll = [];
+let teacherShowAllHomework = false;
 
 if (hwForm) {
   hwForm.addEventListener("submit", async (e) => {
@@ -467,44 +532,95 @@ if (hwForm) {
 if (hwList) {
   const qHw = query(collection(db, "homework"), orderBy("postedAt", "desc"));
   onSnapshot(qHw, (snap) => {
-    hwList.innerHTML = "";
+    teacherHomeworkAll = [];
     snap.forEach((docSnap) => {
-      const d = docSnap.data();
-      const links = d.links || [];
-      const linksHtml = links
-        .map(
-          (url, i) =>
-            `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
-        )
-        .join("");
-
-      const card = document.createElement("div");
-      card.className = "ev-card-bubble";
-      card.innerHTML = `
-        <h4>${d.title || "Untitled"}</h4>
-        ${d.description ? `<p>${d.description}</p>` : ""}
-        ${
-          linksHtml
-            ? `<ul class="ev-link-list">${linksHtml}</ul>`
-            : "<p>No links.</p>"
-        }
-        <p class="helper-text">
-          Levels: ${(d.levels || []).join(", ") || "All"}
-          • Subjects: ${(d.subjects || []).join(", ") || "All"}
-          • Posted: ${
-            d.postedAt
-              ? new Date(d.postedAt).toLocaleDateString()
-              : "-"
-          }
-          ${
-            d.dueAt
-              ? " • Due: " + new Date(d.dueAt).toLocaleDateString()
-              : ""
-          }
-        </p>
-      `;
-      hwList.appendChild(card);
+      teacherHomeworkAll.push({
+        id: docSnap.id,
+        ...docSnap.data(),
+      });
     });
+    renderTeacherHomework();
+  });
+}
+
+function renderTeacherHomework() {
+  if (!hwList) return;
+
+  hwList.innerHTML = "";
+
+  const total = teacherHomeworkAll.length;
+  if (!total) {
+    hwList.innerHTML =
+      '<p class="helper-text">No homework assigned yet.</p>';
+    if (hwToggleBtn) hwToggleBtn.style.display = "none";
+    if (hwCountLabel) hwCountLabel.textContent = "";
+    return;
+  }
+
+  const LIMIT = 5;
+  const itemsToShow = teacherShowAllHomework
+    ? teacherHomeworkAll
+    : teacherHomeworkAll.slice(0, LIMIT);
+
+  itemsToShow.forEach((d) => {
+    const links = d.links || [];
+    const linksHtml = links
+      .map(
+        (url, i) =>
+          `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
+      )
+      .join("");
+
+    const card = document.createElement("div");
+    card.className = "ev-card-bubble";
+    card.innerHTML = `
+      <h4>${d.title || "Untitled"}</h4>
+      ${d.description ? `<p>${d.description}</p>` : ""}
+      ${
+        linksHtml
+          ? `<ul class="ev-link-list">${linksHtml}</ul>`
+          : '<p class="helper-text">No links.</p>'
+      }
+      <p class="helper-text">
+        Levels: ${(d.levels || []).join(", ") || "All"}
+        • Subjects: ${(d.subjects || []).join(", ") || "All"}
+        • Posted: ${
+          d.postedAt
+            ? new Date(d.postedAt).toLocaleDateString()
+            : "-"
+        }
+        ${
+          d.dueAt
+            ? " • Due: " + new Date(d.dueAt).toLocaleDateString()
+            : ""
+        }
+      </p>
+    `;
+    hwList.appendChild(card);
+  });
+
+  if (hwToggleBtn) {
+    if (total > LIMIT) {
+      hwToggleBtn.style.display = "inline-block";
+      hwToggleBtn.textContent = teacherShowAllHomework
+        ? "Show fewer homework items"
+        : `Show older homework (${total - LIMIT} more)`;
+    } else {
+      hwToggleBtn.style.display = "none";
+    }
+  }
+
+  if (hwCountLabel) {
+    hwCountLabel.textContent = teacherShowAllHomework
+      ? `Showing all ${total} homework items`
+      : `Showing latest ${Math.min(LIMIT, total)} of ${total} homework items`;
+  }
+}
+
+if (hwToggleBtn) {
+  hwToggleBtn.addEventListener("click", () => {
+    teacherShowAllHomework = !teacherShowAllHomework;
+    renderTeacherHomework();
   });
 }
 

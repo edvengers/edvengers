@@ -46,6 +46,23 @@ function fmtTime(ts) {
 let currentStudent = null;
 let chatUnsub = null;
 
+// ---- Student announcements & homework limiting ----
+const annContainer = document.getElementById("student-announcements");
+const annToggleBtn = document.getElementById("student-ann-toggle");
+const annCountLabel = document.getElementById("student-ann-count");
+
+const hwContainer = document.getElementById("student-homework-list");
+const hwToggleBtn = document.getElementById("student-hw-toggle");
+const hwCountLabel = document.getElementById("student-hw-count");
+
+// store filtered lists for this student
+let allAnnouncementsForStudent = [];
+let allHomeworkForStudent = [];
+
+// whether we're showing all or just latest few
+let showAllAnnouncements = false;
+let showAllHomework = false;
+
 async function loginStudent(name, password) {
   const trimmedName = name.trim();
   const trimmedPwd = password.trim();
@@ -122,102 +139,219 @@ function switchToHub(student) {
 }
 
 function initAnnouncementsAndHomework(student) {
-  const announcementList = document.getElementById("announcement-list");
-  const homeworkList = document.getElementById("homework-list");
-
   const level = student.level;
   const subjects = student.subjects || [];
 
-  // announcements
-  if (announcementList) {
-    const q = query(
-      collection(db, "announcements"),
-      orderBy("createdAt", "desc")
+  // --- Announcements: listen + filter + store list ---
+  const annQuery = query(
+    collection(db, "announcements"),
+    orderBy("createdAt", "desc")
+  );
+
+  onSnapshot(annQuery, (snap) => {
+    if (!annContainer) return;
+
+    const list = [];
+
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      const levels = d.levels || [];
+      const subs = d.subjects || [];
+
+      const levelMatch =
+        levels.length === 0 || (level && levels.includes(level));
+      const subjectMatch =
+        subs.length === 0 ||
+        (subjects.length > 0 &&
+          subjects.some((s) => subs.includes(s)));
+
+      if (!levelMatch || !subjectMatch) return;
+
+      list.push({
+        id: docSnap.id,
+        ...d,
+      });
+    });
+
+    allAnnouncementsForStudent = list;
+    renderStudentAnnouncements();
+  });
+
+  // --- Homework: listen + filter + store list ---
+  const hwQuery = query(
+    collection(db, "homework"),
+    orderBy("postedAt", "desc")
+  );
+
+  onSnapshot(hwQuery, (snap) => {
+    if (!hwContainer) return;
+
+    const list = [];
+
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      const levels = d.levels || [];
+      const subs = d.subjects || [];
+
+      const levelMatch =
+        levels.length === 0 || (level && levels.includes(level));
+      const subjectMatch =
+        subs.length === 0 ||
+        (subjects.length > 0 &&
+          subjects.some((s) => subs.includes(s)));
+
+      if (!levelMatch || !subjectMatch) return;
+
+      list.push({
+        id: docSnap.id,
+        ...d,
+      });
+    });
+
+    allHomeworkForStudent = list;
+    renderStudentHomework();
+  });
+}
+
+// ---- Rendering helpers for announcements + homework ----
+
+function renderStudentAnnouncements() {
+  if (!annContainer) return;
+
+  annContainer.innerHTML = "";
+
+  const total = allAnnouncementsForStudent.length;
+  if (!total) {
+    annContainer.innerHTML =
+      '<p class="helper-text">No announcements yet.</p>';
+    if (annToggleBtn) annToggleBtn.style.display = "none";
+    if (annCountLabel) annCountLabel.textContent = "";
+    return;
+  }
+
+  const LIMIT = 5;
+  const itemsToShow = showAllAnnouncements
+    ? allAnnouncementsForStudent
+    : allAnnouncementsForStudent.slice(0, LIMIT);
+
+  itemsToShow.forEach((d) => {
+    const card = document.createElement("div");
+    card.className = "ev-card-bubble";
+    card.innerHTML = `
+      <h4>${d.title || "Untitled"}</h4>
+      <p>${d.message || ""}</p>
+      <p class="helper-text">
+        Posted: ${
+          d.createdAt
+            ? new Date(d.createdAt).toLocaleString()
+            : "-"
+        }
+      </p>
+    `;
+    annContainer.appendChild(card);
+  });
+
+  if (annToggleBtn) {
+    if (total > LIMIT) {
+      annToggleBtn.style.display = "inline-block";
+      annToggleBtn.textContent = showAllAnnouncements
+        ? "Show fewer announcements"
+        : `Show older announcements (${total - LIMIT} more)`;
+    } else {
+      annToggleBtn.style.display = "none";
+    }
+  }
+
+  if (annCountLabel) {
+    annCountLabel.textContent = showAllAnnouncements
+      ? `Showing all ${total} announcements`
+      : `Showing latest ${Math.min(LIMIT, total)} of ${total} announcements`;
+  }
+}
+
+function renderStudentHomework() {
+  if (!hwContainer) return;
+
+  hwContainer.innerHTML = "";
+
+  const total = allHomeworkForStudent.length;
+  if (!total) {
+    hwContainer.innerHTML =
+      '<p class="helper-text">No homework assigned yet.</p>';
+    if (hwToggleBtn) hwToggleBtn.style.display = "none";
+    if (hwCountLabel) hwCountLabel.textContent = "";
+    return;
+  }
+
+  const LIMIT = 5;
+  const itemsToShow = showAllHomework
+    ? allHomeworkForStudent
+    : allHomeworkForStudent.slice(0, LIMIT);
+
+  itemsToShow.forEach((d) => {
+    const links = (d.links || []).map(
+      (url, i) =>
+        `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
     );
-    onSnapshot(q, (snap) => {
-      announcementList.innerHTML = "";
-      snap.forEach((docSnap) => {
-        const data = docSnap.data();
-        const levels = data.levels || [];
-        const subs = data.subjects || [];
 
-        const levelMatch =
-          levels.length === 0 || (level && levels.includes(level));
-        const subjectMatch =
-          subs.length === 0 ||
-          (subjects.length > 0 &&
-            subjects.some((s) => subs.includes(s)));
+    const card = document.createElement("div");
+    card.className = "ev-card-bubble";
+    card.innerHTML = `
+      <h4>${d.title || "Untitled"}</h4>
+      ${d.description ? `<p>${d.description}</p>` : ""}
+      ${
+        links.length
+          ? `<ul class="ev-link-list">${links.join("")}</ul>`
+          : '<p class="helper-text">No links provided.</p>'
+      }
+      <p class="helper-text">
+        Posted: ${
+          d.postedAt
+            ? new Date(d.postedAt).toLocaleDateString()
+            : "-"
+        }
+        ${
+          d.dueAt
+            ? " • Due: " +
+              new Date(d.dueAt).toLocaleDateString()
+            : ""
+        }
+      </p>
+    `;
+    hwContainer.appendChild(card);
+  });
 
-        if (!levelMatch || !subjectMatch) return;
-
-        const card = document.createElement("div");
-        card.className = "ev-card-bubble";
-        card.innerHTML = `
-          <h4>${data.title || "Untitled"}</h4>
-          <p>${data.message || ""}</p>
-          <p class="helper-text">Posted: ${new Date(
-            data.createdAt || Date.now()
-          ).toLocaleString()}</p>
-        `;
-        announcementList.appendChild(card);
-      });
-    });
+  if (hwToggleBtn) {
+    if (total > LIMIT) {
+      hwToggleBtn.style.display = "inline-block";
+      hwToggleBtn.textContent = showAllHomework
+        ? "Show fewer homework items"
+        : `Show older homework (${total - LIMIT} more)`;
+    } else {
+      hwToggleBtn.style.display = "none";
+    }
   }
 
-  // homework
-  if (homeworkList) {
-    const q = query(collection(db, "homework"), orderBy("postedAt", "desc"));
-    onSnapshot(q, (snap) => {
-      homeworkList.innerHTML = "";
-      snap.forEach((docSnap) => {
-        const data = docSnap.data();
-        const levels = data.levels || [];
-        const subs = data.subjects || [];
-
-        const levelMatch =
-          levels.length === 0 || (level && levels.includes(level));
-        const subjectMatch =
-          subs.length === 0 ||
-          (subjects.length > 0 &&
-            subjects.some((s) => subs.includes(s)));
-
-        if (!levelMatch || !subjectMatch) return;
-
-        const links = data.links || [];
-        const linksHtml = links
-          .map(
-            (url, i) =>
-              `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
-          )
-          .join("");
-
-        const card = document.createElement("div");
-        card.className = "ev-card-bubble";
-        card.innerHTML = `
-          <h4>${data.title || "Untitled"}</h4>
-          ${data.description ? `<p>${data.description}</p>` : ""}
-          ${
-            linksHtml
-              ? `<ul class="ev-link-list">${linksHtml}</ul>`
-              : "<p>No links attached.</p>"
-          }
-          <p class="helper-text">
-            Posted: ${
-              data.postedAt
-                ? new Date(data.postedAt).toLocaleDateString()
-                : "-"
-            }
-            ${
-              data.dueAt
-                ? " • Due: " + new Date(data.dueAt).toLocaleDateString()
-                : ""
-            }
-          </p>
-        `;
-        homeworkList.appendChild(card);
-      });
-    });
+  if (hwCountLabel) {
+    hwCountLabel.textContent = showAllHomework
+      ? `Showing all ${total} homework items`
+      : `Showing latest ${Math.min(LIMIT, total)} of ${total} homework items`;
   }
+}
+
+// Toggle buttons
+if (annToggleBtn) {
+  annToggleBtn.addEventListener("click", () => {
+    showAllAnnouncements = !showAllAnnouncements;
+    renderStudentAnnouncements();
+  });
+}
+
+if (hwToggleBtn) {
+  hwToggleBtn.addEventListener("click", () => {
+    showAllHomework = !showAllHomework;
+    renderStudentHomework();
+  });
 }
 
 function initChat(student) {
