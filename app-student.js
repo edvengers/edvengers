@@ -370,35 +370,43 @@ function initChat(student) {
   if (chatUnsub) chatUnsub();
   chatUnsub = onSnapshot(q, (snap) => {
     threadEl.innerHTML = "";
+
     snap.forEach((docSnap) => {
       const m = docSnap.data();
-const row = document.createElement("div");
+      const isStudentMsg = m.sender === "student";
 
-// On STUDENT hub:
-//   student's own messages  = right (green)
-//   teacher's messages      = left (dark)
-const isMine = m.sender === "student";
+      // Student view:
+      //  - student (me) on RIGHT (green)
+      //  - teacher on LEFT (grey)
+      const row = document.createElement("div");
+      row.className =
+        "chat-row " + (isStudentMsg ? "chat-row-right" : "chat-row-left");
 
-row.className =
-  "chat-row " + (isMine ? "chat-row-right" : "chat-row-left");
+      let inner = `
+        <div class="chat-bubble ${
+          isStudentMsg ? "chat-bubble-me" : "chat-bubble-other"
+        }">
+          ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
+      `;
 
-let inner = `
-  <div class="chat-bubble ${
-    isMine ? "chat-bubble-right" : "chat-bubble-left"
-  }">
-    ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
-`;
       if (m.imageUrl) {
-        inner += `<div class="chat-image"><img src="${m.imageUrl}" alt="attachment" /></div>`;
+        inner += `
+          <div class="chat-image">
+            <img src="${m.imageUrl}" alt="attachment" />
+          </div>
+        `;
       }
-      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
 
+      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
       row.innerHTML = inner;
       threadEl.appendChild(row);
     });
+
+    // auto-scroll to bottom
     threadEl.scrollTop = threadEl.scrollHeight;
   });
 
+  // sending logic (unchanged)
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = input.value.trim();
