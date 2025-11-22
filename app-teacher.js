@@ -356,21 +356,18 @@ if (annForm) {
     const message = document
       .getElementById("announcement-message")
       .value.trim();
-    const levelsRaw = document
-      .getElementById("announcement-levels")
-      .value.trim();
-    const subjectsRaw = document
-      .getElementById("announcement-subjects")
-      .value.trim();
+
+    const levelVal = document
+      .getElementById("announcement-level")
+      .value;
+    const subjectVal = document
+      .getElementById("announcement-subject")
+      .value;
 
     if (!title || !message) return;
 
-    const levels = levelsRaw
-      ? levelsRaw.split(",").map((s) => s.trim())
-      : [];
-    const subjects = subjectsRaw
-      ? subjectsRaw.split(",").map((s) => s.trim())
-      : [];
+    const levels = levelVal ? [levelVal] : [];      // e.g. ["P5"]
+    const subjects = subjectVal ? [subjectVal] : []; // e.g. ["P5 Math"]
 
     try {
       await addDoc(collection(db, "announcements"), {
@@ -436,23 +433,15 @@ if (hwForm) {
       }
     }
 
-    const levelsRaw = document
-      .getElementById("homework-levels")
-      .value.trim();
-    const subjectsRaw = document
-      .getElementById("homework-subjects")
-      .value.trim();
+    const levelVal = document.getElementById("homework-level").value;
+    const subjectVal = document.getElementById("homework-subject").value;
     const postedDate = document.getElementById("homework-posted").value;
     const dueDate = document.getElementById("homework-due").value;
 
     if (!title || links.length === 0) return;
 
-    const levels = levelsRaw
-      ? levelsRaw.split(",").map((s) => s.trim())
-      : [];
-    const subjects = subjectsRaw
-      ? subjectsRaw.split(",").map((s) => s.trim())
-      : [];
+    const levels = levelVal ? [levelVal] : [];         // e.g. ["P6"]
+    const subjects = subjectVal ? [subjectVal] : [];   // e.g. ["P6 English"]
 
     const postedAt = postedDate ? new Date(postedDate).getTime() : Date.now();
     const dueAt = dueDate ? new Date(dueDate).getTime() : null;
