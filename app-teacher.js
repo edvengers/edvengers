@@ -44,7 +44,7 @@ function fmtTime(ts) {
 }
 
 /* --------------------------------------------------
-   SIMPLE TEACHER LOGIN (same as before)
+   SIMPLE TEACHER LOGIN
 -------------------------------------------------- */
 
 const TEACHER_PASSWORD = "1234";
@@ -93,7 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ---- Students & Hero Points ----
+/* --------------------------------------------------
+   STUDENTS & HERO POINTS
+-------------------------------------------------- */
 
 const studentsForm = document.getElementById("students-form");
 const studentsList = document.getElementById("students-list");
@@ -103,9 +105,9 @@ const filterLevelInput = document.getElementById("filter-level");
 const filterSubjectInput = document.getElementById("filter-subject");
 const updatePointsBtn = document.getElementById("update-points-btn");
 
-let studentsCache = [];           // full list from Firestore
-let selectedStudentId = null;     // which student we are working with
-let stagedDelta = 0;              // pending change in points for that student
+let studentsCache = []; // full list from Firestore
+let selectedStudentId = null; // which student we are working with
+let stagedDelta = 0; // pending change in points for that student
 
 // helper to find student by id
 function findStudentById(id) {
@@ -267,7 +269,7 @@ if (studentsSelect) {
   });
 }
 
-// 4️⃣ Handle +1 / +5 / reset buttons (only stage changes, do NOT hit Firestore yet)
+// 4️⃣ Handle +1 / +5 / reset buttons (stage only)
 if (studentsList) {
   studentsList.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-action]");
@@ -341,7 +343,7 @@ onSnapshot(studentsQuery, (snap) => {
 });
 
 /* --------------------------------------------------
-   ANNOUNCEMENTS (unchanged)
+   ANNOUNCEMENTS
 -------------------------------------------------- */
 
 const annForm = document.getElementById("announcement-form");
@@ -362,16 +364,12 @@ if (annForm) {
       .getElementById("announcement-message")
       .value.trim();
 
-    const levelVal = document
-      .getElementById("announcement-level")
-      .value;
-    const subjectVal = document
-      .getElementById("announcement-subject")
-      .value;
+    const levelVal = document.getElementById("announcement-level").value;
+    const subjectVal = document.getElementById("announcement-subject").value;
 
     if (!title || !message) return;
 
-    const levels = levelVal ? [levelVal] : [];      // e.g. ["P5"]
+    const levels = levelVal ? [levelVal] : []; // e.g. ["P5"]
     const subjects = subjectVal ? [subjectVal] : []; // e.g. ["P5 Math"]
 
     try {
@@ -471,7 +469,7 @@ if (annToggleBtn) {
 }
 
 /* --------------------------------------------------
-   HOMEWORK (unchanged)
+   HOMEWORK
 -------------------------------------------------- */
 
 const hwForm = document.getElementById("homework-form");
@@ -505,8 +503,8 @@ if (hwForm) {
 
     if (!title || links.length === 0) return;
 
-    const levels = levelVal ? [levelVal] : [];         // e.g. ["P6"]
-    const subjects = subjectVal ? [subjectVal] : [];   // e.g. ["P6 English"]
+    const levels = levelVal ? [levelVal] : []; // e.g. ["P6"]
+    const subjects = subjectVal ? [subjectVal] : []; // e.g. ["P6 English"]
 
     const postedAt = postedDate ? new Date(postedDate).getTime() : Date.now();
     const dueAt = dueDate ? new Date(dueDate).getTime() : null;
@@ -625,7 +623,7 @@ if (hwToggleBtn) {
 }
 
 /* --------------------------------------------------
-   CHAT (unchanged from previous working version)
+   CHAT – WhatsApp-style (teacher view)
 -------------------------------------------------- */
 
 const chatStudentList = document.getElementById("chat-student-list");
@@ -639,6 +637,15 @@ const chatStudentIdHidden = document.getElementById("teacher-chat-student-id");
 let chatStudentId = null;
 let chatThreadUnsub = null;
 
+// highlight active student bubble
+function setActiveStudentItem(id) {
+  if (!chatStudentList) return;
+  chatStudentList.querySelectorAll(".chat-student-item").forEach((el) => {
+    el.classList.toggle("active", el.dataset.id === id);
+  });
+}
+
+// sidebar: students
 if (chatStudentList) {
   const q = query(collection(db, "students"), orderBy("name", "asc"));
   onSnapshot(q, (snap) => {
@@ -655,19 +662,25 @@ if (chatStudentList) {
       item.dataset.id = s.id;
       item.innerHTML = `
         <div class="chat-student-name">${s.name}</div>
-        <div class="chat-student-meta">Level: ${s.level || "-"} • ${
-        (s.subjects || []).join(", ") || "No subjects"
-      }</div>
+        <div class="chat-student-meta">
+          Level: ${s.level || "-"} • ${(s.subjects || []).join(", ") || "No subjects"}
+        </div>
       `;
       item.addEventListener("click", () => openChatForStudent(s.id, s.name));
       chatStudentList.appendChild(item);
     });
+
+    // keep highlight if we already had a selected chat
+    if (chatStudentId) {
+      setActiveStudentItem(chatStudentId);
+    }
   });
 }
 
 function openChatForStudent(id, name) {
   chatStudentId = id;
   if (chatStudentIdHidden) chatStudentIdHidden.value = id;
+  setActiveStudentItem(id);
 
   // stop listening to previous student thread
   if (chatThreadUnsub) chatThreadUnsub();
@@ -683,17 +696,16 @@ function openChatForStudent(id, name) {
       const m = docSnap.data();
       const row = document.createElement("div");
 
-      // On teacher side, teacher’s own messages are on the right (green),
-      // student’s messages on the left (dark) – like WhatsApp.
-      const isTeacherMsg = m.sender === "teacher";
+      // On teacher dashboard:
+      //   teacher's own messages = right (green)
+      //   student's messages     = left (dark)
+      const isMine = m.sender === "teacher";
 
-      row.className =
-        "chat-row " +
-        (isTeacherMsg ? "chat-row-student" : "chat-row-teacher");
+      row.className = "chat-row " + (isMine ? "chat-row-right" : "chat-row-left");
 
       let inner = `
         <div class="chat-bubble ${
-          isTeacherMsg ? "chat-bubble-student" : "chat-bubble-teacher"
+          isMine ? "chat-bubble-right" : "chat-bubble-left"
         }">
           ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
       `;
@@ -710,6 +722,8 @@ function openChatForStudent(id, name) {
       row.innerHTML = inner;
       chatThread.appendChild(row);
     });
+
+    chatThread.scrollTop = chatThread.scrollHeight;
   });
 }
 
