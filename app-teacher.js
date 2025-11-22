@@ -269,7 +269,7 @@ if (studentsSelect) {
   });
 }
 
-// 4️⃣ Handle +1 / +5 / reset buttons (stage only)
+// 4️⃣ Handle +1 / +5 / reset buttons (only stage changes)
 if (studentsList) {
   studentsList.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-action]");
@@ -286,10 +286,8 @@ if (studentsList) {
     } else if (action === "add5") {
       stagedDelta += 5;
     } else if (action === "resetStars") {
-      // reset to 0 => delta = -current
       stagedDelta = -current;
     } else if (action === "resetPwd") {
-      // password reset happens immediately
       const ref = doc(db, "students", selectedStudentId);
       updateDoc(ref, { password: "heroes2026", updatedAt: Date.now() })
         .then(() => alert("Password reset to heroes2026."))
@@ -323,7 +321,6 @@ if (updatePointsBtn) {
         updatedAt: Date.now(),
       });
       stagedDelta = 0; // clear pending
-      // Firestore snapshot will refresh studentsCache -> UI
     } catch (err) {
       console.error(err);
       alert("Failed to update points.");
@@ -369,8 +366,8 @@ if (annForm) {
 
     if (!title || !message) return;
 
-    const levels = levelVal ? [levelVal] : []; // e.g. ["P5"]
-    const subjects = subjectVal ? [subjectVal] : []; // e.g. ["P5 Math"]
+    const levels = levelVal ? [levelVal] : [];
+    const subjects = subjectVal ? [subjectVal] : [];
 
     try {
       await addDoc(collection(db, "announcements"), {
@@ -434,9 +431,7 @@ function renderTeacherAnnouncements() {
         Levels: ${(d.levels || []).join(", ") || "All"}
         • Subjects: ${(d.subjects || []).join(", ") || "All"}
         • Posted: ${
-          d.createdAt
-            ? new Date(d.createdAt).toLocaleString()
-            : "-"
+          d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"
         }
       </p>
     `;
@@ -503,8 +498,8 @@ if (hwForm) {
 
     if (!title || links.length === 0) return;
 
-    const levels = levelVal ? [levelVal] : []; // e.g. ["P6"]
-    const subjects = subjectVal ? [subjectVal] : []; // e.g. ["P6 English"]
+    const levels = levelVal ? [levelVal] : [];
+    const subjects = subjectVal ? [subjectVal] : [];
 
     const postedAt = postedDate ? new Date(postedDate).getTime() : Date.now();
     const dueAt = dueDate ? new Date(dueDate).getTime() : null;
@@ -583,9 +578,7 @@ function renderTeacherHomework() {
         Levels: ${(d.levels || []).join(", ") || "All"}
         • Subjects: ${(d.subjects || []).join(", ") || "All"}
         • Posted: ${
-          d.postedAt
-            ? new Date(d.postedAt).toLocaleDateString()
-            : "-"
+          d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"
         }
         ${
           d.dueAt
@@ -623,7 +616,8 @@ if (hwToggleBtn) {
 }
 
 /* --------------------------------------------------
-   CHAT – WhatsApp-style (teacher view)
+   CHAT – WhatsApp-style
+   Teacher: own msgs RIGHT (green), student LEFT (grey)
 -------------------------------------------------- */
 
 const chatStudentList = document.getElementById("chat-student-list");
@@ -637,15 +631,7 @@ const chatStudentIdHidden = document.getElementById("teacher-chat-student-id");
 let chatStudentId = null;
 let chatThreadUnsub = null;
 
-// highlight active student bubble
-function setActiveStudentItem(id) {
-  if (!chatStudentList) return;
-  chatStudentList.querySelectorAll(".chat-student-item").forEach((el) => {
-    el.classList.toggle("active", el.dataset.id === id);
-  });
-}
-
-// sidebar: students
+// Sidebar: pretty bubbles for each student
 if (chatStudentList) {
   const q = query(collection(db, "students"), orderBy("name", "asc"));
   onSnapshot(q, (snap) => {
@@ -657,22 +643,28 @@ if (chatStudentList) {
     });
 
     students.forEach((s) => {
-      const item = document.createElement("div");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "chat-student-item";
       item.dataset.id = s.id;
       item.innerHTML = `
         <div class="chat-student-name">${s.name}</div>
         <div class="chat-student-meta">
-          Level: ${s.level || "-"} • ${(s.subjects || []).join(", ") || "No subjects"}
+          Level: ${s.level || "-"} • ${
+        (s.subjects || []).join(", ") || "No subjects"
+      }
         </div>
       `;
       item.addEventListener("click", () => openChatForStudent(s.id, s.name));
       chatStudentList.appendChild(item);
     });
 
-    // keep highlight if we already had a selected chat
+    // keep selection highlighted if already open
     if (chatStudentId) {
-      setActiveStudentItem(chatStudentId);
+      const active = chatStudentList.querySelector(
+        `[data-id="${chatStudentId}"]`
+      );
+      if (active) active.classList.add("active");
     }
   });
 }
@@ -680,7 +672,15 @@ if (chatStudentList) {
 function openChatForStudent(id, name) {
   chatStudentId = id;
   if (chatStudentIdHidden) chatStudentIdHidden.value = id;
-  setActiveStudentItem(id);
+
+  // highlight current student in sidebar
+  if (chatStudentList) {
+    Array.from(chatStudentList.querySelectorAll(".chat-student-item")).forEach(
+      (el) => {
+        el.classList.toggle("active", el.dataset.id === id);
+      }
+    );
+  }
 
   // stop listening to previous student thread
   if (chatThreadUnsub) chatThreadUnsub();
@@ -694,18 +694,15 @@ function openChatForStudent(id, name) {
 
     snap.forEach((docSnap) => {
       const m = docSnap.data();
+      const isTeacherMsg = m.sender === "teacher";
+
       const row = document.createElement("div");
-
-      // On teacher dashboard:
-      //   teacher's own messages = right (green)
-      //   student's messages     = left (dark)
-      const isMine = m.sender === "teacher";
-
-      row.className = "chat-row " + (isMine ? "chat-row-right" : "chat-row-left");
+      row.className =
+        "chat-row " + (isTeacherMsg ? "chat-row-right" : "chat-row-left");
 
       let inner = `
         <div class="chat-bubble ${
-          isMine ? "chat-bubble-right" : "chat-bubble-left"
+          isTeacherMsg ? "chat-bubble-me" : "chat-bubble-other"
         }">
           ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
       `;
@@ -723,6 +720,7 @@ function openChatForStudent(id, name) {
       chatThread.appendChild(row);
     });
 
+    // auto-scroll to bottom
     chatThread.scrollTop = chatThread.scrollHeight;
   });
 }
