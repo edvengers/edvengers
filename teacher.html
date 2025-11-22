@@ -84,12 +84,12 @@
   <h2>Students &amp; Hero Points</h2>
   <p class="helper-text">
     Filter by level and subject, select a student, then stage Hero Points changes.
-    Click <strong>Update Points</strong> to save. Use the profile section only when you need
-    to add or edit a student.
+    Click <strong>Update Points</strong> to save. Use the profile section below only when you
+    need to add or edit a student.
   </p>
 
   <form id="students-form">
-    <!-- 1️⃣ Filters: Level then Subject, then existing student -->
+    <!-- 1️⃣ Filters: Level then Subject then Student -->
     <div class="form-row">
       <div class="form-group">
         <label for="filter-level">Level</label>
@@ -125,17 +125,24 @@
       </div>
     </div>
 
-    <!-- 2️⃣ Selected student row: points + buttons + Update -->
+    <!-- 2️⃣ Selected student row (+1 / +5 / reset etc) -->
     <div id="students-list" class="students-list">
-      <!-- Filled by app-teacher.js for the selected student only -->
+      <p class="helper-text">Select a student above to see Hero Points.</p>
     </div>
 
-    <!-- 3️⃣ Optional: profile edit / create (collapsed) -->
+    <!-- 3️⃣ Update Points button (applies staged changes) -->
+    <div style="margin-top: 0.75rem;">
+      <button type="button" id="update-points-btn" class="btn">
+        Update Points
+      </button>
+    </div>
+
+    <!-- 4️⃣ Optional: profile edit / create (collapsed) -->
     <details class="ev-collapsible" style="margin-top: 1.5rem;">
       <summary>Edit / create student profile (optional)</summary>
 
       <p class="helper-text" style="margin-top: 0.75rem;">
-        Use this when you need to add a new student or change level / subjects.
+        Use this only when you need to add a new student or change level / subjects.
         Hero Points and password are handled by the buttons above.
       </p>
 

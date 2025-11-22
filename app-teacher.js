@@ -93,9 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/* --------------------------------------------------
-   STUDENTS & HERO POINTS (reworked)
--------------------------------------------------- */
+// ---- Students & Hero Points ----
 
 const studentsForm = document.getElementById("students-form");
 const studentsList = document.getElementById("students-list");
@@ -105,203 +103,37 @@ const filterLevelInput = document.getElementById("filter-level");
 const filterSubjectInput = document.getElementById("filter-subject");
 const updatePointsBtn = document.getElementById("update-points-btn");
 
-let studentsCache = [];          // full list of students from Firestore
-let activeStudentId = null;      // which student we’re currently viewing
-const stagedPoints = {};         // { studentId: delta }
+let studentsCache = [];           // full list from Firestore
+let selectedStudentId = null;     // which student we are working with
+let stagedDelta = 0;              // pending change in points for that student
 
-/** helper: find student by id from cache */
-function getStudentById(id) {
+// helper to find student by id
+function findStudentById(id) {
   return studentsCache.find((s) => s.id === id) || null;
 }
 
-/** (1) Populate the "Existing student" dropdown based on filters */
-function populateStudentSelect() {
-  if (!studentsSelect) return;
-  const levelFilter = (filterLevelInput?.value || "").trim();
-  const subjectFilter = (filterSubjectInput?.value || "").trim();
-
-  studentsSelect.innerHTML = '<option value="">-- Select student --</option>';
-
-  studentsCache.forEach((s) => {
-    if (levelFilter && s.level !== levelFilter) return;
-    if (subjectFilter && !(s.subjects || []).includes(subjectFilter)) return;
-
-    const opt = document.createElement("option");
-    opt.value = s.id;         // use doc id
-    opt.textContent = s.name; // show name
-    studentsSelect.appendChild(opt);
-  });
-
-  // if current active student no longer matches filter, clear it
-  if (activeStudentId) {
-    const stillVisible = [...studentsSelect.options].some(
-      (opt) => opt.value === activeStudentId
-    );
-    if (!stillVisible) {
-      activeStudentId = null;
-      renderSelectedStudentRow();
-    }
-  }
-}
-
-/** (2) Render single selected-student row with staged points */
-function renderSelectedStudentRow() {
-  if (!studentsList) return;
-  studentsList.innerHTML = "";
-
-  if (!activeStudentId) {
-    const msg = document.createElement("p");
-    msg.className = "helper-text";
-    msg.textContent = "Select a student above to view and adjust Hero Points.";
-    studentsList.appendChild(msg);
-    return;
-  }
-
-  const s = getStudentById(activeStudentId);
-  if (!s) {
-    const msg = document.createElement("p");
-    msg.className = "helper-text";
-    msg.textContent = "Student not found. Try clearing filters.";
-    studentsList.appendChild(msg);
-    return;
-  }
-
-  const delta = stagedPoints[activeStudentId] || 0;
-  const pendingText =
-    delta === 0
-      ? ""
-      : ` (current: ${s.stars || 0}, pending: ${
-          delta > 0 ? "+" + delta : delta
-        })`;
-
-  const row = document.createElement("div");
-  row.className = "student-row ev-card-bubble";
-  row.dataset.id = s.id;
-
-  row.innerHTML = `
-    <div class="student-main">
-      <div><strong>${s.name}</strong></div>
-      <div class="helper-text">
-        Level: ${s.level || "-"}${
-    s.subjects?.length ? " • Subjects: " + s.subjects.join(", ") : ""
-  } • Hero Points: <strong>${(s.stars || 0) + delta}</strong>${pendingText}
-      </div>
-    </div>
-    <div class="student-actions">
-      <button class="btn btn-small" data-action="add1">+1</button>
-      <button class="btn btn-small" data-action="add5">+5</button>
-      <button class="btn btn-ghost btn-small" data-action="resetPoints">
-        Reset Points
-      </button>
-      <button class="btn btn-ghost btn-small" data-action="resetPwd">
-        Reset Password
-      </button>
-    </div>
-  `;
-
-  studentsList.appendChild(row);
-
-  // wire buttons (only change stagedPoints; no Firestore yet)
-  row.querySelectorAll(".student-actions button").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const action = btn.dataset.action;
-      const current = s.stars || 0;
-      const existingDelta = stagedPoints[activeStudentId] || 0;
-
-      if (action === "add1") {
-        stagedPoints[activeStudentId] = existingDelta + 1;
-        renderSelectedStudentRow();
-      } else if (action === "add5") {
-        stagedPoints[activeStudentId] = existingDelta + 5;
-        renderSelectedStudentRow();
-      } else if (action === "resetPoints") {
-        // set pending so that final result will be 0
-        stagedPoints[activeStudentId] = -current;
-        renderSelectedStudentRow();
-      } else if (action === "resetPwd") {
-        // password reset can be immediate
-        try {
-          await updateDoc(doc(db, "students", activeStudentId), {
-            password: "heroes2026",
-            updatedAt: Date.now(),
-          });
-          alert("Password reset to heroes2026.");
-        } catch (err) {
-          console.error(err);
-          alert("Failed to reset password.");
-        }
-      }
-    });
-  });
-}
-
-/** (3) When filters or select change, re-render */
-if (filterLevelInput) {
-  filterLevelInput.addEventListener("change", () => {
-    populateStudentSelect();
-  });
-}
-if (filterSubjectInput) {
-  filterSubjectInput.addEventListener("change", () => {
-    populateStudentSelect();
-  });
-}
-if (studentsSelect) {
-  studentsSelect.addEventListener("change", () => {
-    activeStudentId = studentsSelect.value || null;
-    renderSelectedStudentRow();
-  });
-}
-
-/** (4) "Update Points" button – only here we write to Firestore */
-if (updatePointsBtn) {
-  updatePointsBtn.addEventListener("click", async () => {
-    if (!activeStudentId) {
-      alert("Select a student first.");
-      return;
-    }
-    const delta = stagedPoints[activeStudentId] || 0;
-    if (delta === 0) {
-      alert("No point changes to save.");
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, "students", activeStudentId), {
-        stars: increment(delta),
-        updatedAt: Date.now(),
-      });
-      // clear staged delta for that student
-      delete stagedPoints[activeStudentId];
-      alert("Hero Points updated.");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update Hero Points.");
-    }
-  });
-}
-
-/** (5) Edit / create profile (same behaviour as before, but now only when needed) */
+// 1️⃣ Add / update student profile (inside collapsible)
 if (studentsForm) {
   studentsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const nameInput = document.getElementById("student-name");
-    const levelInput = document.getElementById("student-level");
-    const subjectsInput = document.getElementById("student-subjects");
+    const levelSelect = document.getElementById("student-level");
+    const subjectsSelect = document.getElementById("student-subjects");
 
     if (!nameInput) return;
 
     const name = nameInput.value.trim();
     if (!name) return;
 
-    const level = levelInput ? levelInput.value.trim() : "";
-    const subjects = subjectsInput.value
-      ? subjectsInput.value
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : [];
+    const level = levelSelect ? levelSelect.value.trim() : "";
+
+    let subjects = [];
+    if (subjectsSelect) {
+      subjects = Array.from(subjectsSelect.selectedOptions).map((o) =>
+        o.value.trim()
+      );
+    }
 
     const id = slugify(name);
 
@@ -312,12 +144,13 @@ if (studentsForm) {
           name,
           level,
           subjects,
-          password: "heroes2026",
+          password: "heroes2026", // default/reset
           stars: 0,
           updatedAt: Date.now(),
         },
         { merge: true }
       );
+
       studentsForm.reset();
       alert(`Saved/updated ${name}. Default password: heroes2026`);
     } catch (err) {
@@ -327,7 +160,176 @@ if (studentsForm) {
   });
 }
 
-/** (6) Live Firestore subscription to keep dropdown + cache updated */
+// 2️⃣ Render student row based on current selection + stagedDelta
+function renderStudentRow() {
+  if (!studentsList) return;
+
+  studentsList.innerHTML = "";
+
+  if (!selectedStudentId) {
+    studentsList.innerHTML =
+      '<p class="helper-text">Select a student above to see Hero Points.</p>';
+    return;
+  }
+
+  const student = findStudentById(selectedStudentId);
+  if (!student) {
+    studentsList.innerHTML =
+      '<p class="helper-text">Student not found in current filter.</p>';
+    return;
+  }
+
+  const current = student.stars || 0;
+  const pendingText =
+    stagedDelta !== 0
+      ? ` (pending: ${stagedDelta > 0 ? "+" : ""}${stagedDelta})`
+      : "";
+
+  const row = document.createElement("div");
+  row.className = "student-row ev-card-bubble";
+  row.dataset.id = student.id;
+
+  row.innerHTML = `
+    <div class="student-main">
+      <div><strong>${student.name}</strong></div>
+      <div class="helper-text">
+        Level: ${student.level || "-"}${
+    student.subjects?.length ? " • Subjects: " + student.subjects.join(", ") : ""
+  }
+        • Hero Points: <strong>${current}</strong>${pendingText}
+      </div>
+    </div>
+    <div class="student-actions">
+      <button class="btn btn-small" data-action="add1">+1</button>
+      <button class="btn btn-small" data-action="add5">+5</button>
+      <button class="btn btn-ghost btn-small" data-action="resetStars">
+        Reset Points
+      </button>
+      <button class="btn btn-ghost btn-small" data-action="resetPwd">
+        Reset Password
+      </button>
+    </div>
+  `;
+
+  studentsList.appendChild(row);
+}
+
+// 3️⃣ Filter list + fill student dropdown
+function applyFiltersAndFillSelect() {
+  if (!studentsSelect) return;
+
+  const levelFilter = (filterLevelInput?.value || "").trim();
+  const subjectFilter = (filterSubjectInput?.value || "").trim();
+
+  let list = [...studentsCache];
+
+  if (levelFilter) {
+    list = list.filter((s) => s.level === levelFilter);
+  }
+  if (subjectFilter) {
+    list = list.filter((s) => (s.subjects || []).includes(subjectFilter));
+  }
+
+  studentsSelect.innerHTML = '<option value="">-- Select student --</option>';
+
+  list.forEach((s) => {
+    const opt = document.createElement("option");
+    opt.value = s.id; // use doc id
+    opt.textContent = s.name;
+    studentsSelect.appendChild(opt);
+  });
+
+  // if current selection not in filtered list, clear selection & staged points
+  if (!list.some((s) => s.id === selectedStudentId)) {
+    selectedStudentId = null;
+    stagedDelta = 0;
+  }
+
+  renderStudentRow();
+}
+
+// dropdown change handlers
+if (filterLevelInput) {
+  filterLevelInput.addEventListener("change", () => {
+    applyFiltersAndFillSelect();
+  });
+}
+if (filterSubjectInput) {
+  filterSubjectInput.addEventListener("change", () => {
+    applyFiltersAndFillSelect();
+  });
+}
+if (studentsSelect) {
+  studentsSelect.addEventListener("change", () => {
+    selectedStudentId = studentsSelect.value || null;
+    stagedDelta = 0; // reset whenever you switch student
+    renderStudentRow();
+  });
+}
+
+// 4️⃣ Handle +1 / +5 / reset buttons (only stage changes, do NOT hit Firestore yet)
+if (studentsList) {
+  studentsList.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn || !selectedStudentId) return;
+
+    const action = btn.dataset.action;
+    const student = findStudentById(selectedStudentId);
+    if (!student) return;
+
+    const current = student.stars || 0;
+
+    if (action === "add1") {
+      stagedDelta += 1;
+    } else if (action === "add5") {
+      stagedDelta += 5;
+    } else if (action === "resetStars") {
+      // reset to 0 => delta = -current
+      stagedDelta = -current;
+    } else if (action === "resetPwd") {
+      // password reset happens immediately
+      const ref = doc(db, "students", selectedStudentId);
+      updateDoc(ref, { password: "heroes2026", updatedAt: Date.now() })
+        .then(() => alert("Password reset to heroes2026."))
+        .catch((err) => {
+          console.error(err);
+          alert("Failed to reset password.");
+        });
+    }
+
+    renderStudentRow();
+  });
+}
+
+// 5️⃣ Update Points button (apply stagedDelta to Firestore)
+if (updatePointsBtn) {
+  updatePointsBtn.addEventListener("click", async () => {
+    if (!selectedStudentId) {
+      alert("Select a student first.");
+      return;
+    }
+    if (stagedDelta === 0) {
+      alert("No pending point changes to save.");
+      return;
+    }
+
+    const ref = doc(db, "students", selectedStudentId);
+
+    try {
+      await updateDoc(ref, {
+        stars: increment(stagedDelta),
+        updatedAt: Date.now(),
+      });
+      stagedDelta = 0; // clear pending
+      // Firestore snapshot will refresh studentsCache -> UI
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update points.");
+    }
+  });
+}
+
+// 6️⃣ Live load from Firestore and keep cache in sync
 const studentsQuery = query(collection(db, "students"), orderBy("name", "asc"));
 onSnapshot(studentsQuery, (snap) => {
   studentsCache = [];
@@ -335,11 +337,7 @@ onSnapshot(studentsQuery, (snap) => {
     const data = docSnap.data();
     studentsCache.push({ id: docSnap.id, ...data });
   });
-
-  // rebuild dropdown based on current filters
-  populateStudentSelect();
-  // refresh selected student row (keeps staged delta intact)
-  renderSelectedStudentRow();
+  applyFiltersAndFillSelect();
 });
 
 /* --------------------------------------------------
