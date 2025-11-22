@@ -80,68 +80,103 @@
 
           <!-- STUDENTS & HERO POINTS -->
           <section class="dashboard-card">
-            <div class="card-header">Students &amp; Hero Points</div>
-            <p class="card-subtitle">
-              Create / update students. Award Hero Points to specific students, by level,
-              by subject, or whole level.
-            </p>
+            <div class="card">
+  <h2>Students &amp; Hero Points</h2>
+  <p class="helper-text">
+    Filter by level and subject, select a student, then award Hero Points or reset password.
+    Use the profile section below only when you need to add or edit a student.
+  </p>
 
-            <form id="students-form">
-              <div class="dashboard-grid">
-                <div class="form-field">
-                  <label for="student-select">Existing student</label>
-                  <select id="student-select">
-                    <option value="">-- New or select --</option>
-                  </select>
-                </div>
+  <form id="students-form">
+    <!-- 1️⃣ Filters: Level then Subject -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="filter-level">Level</label>
+        <select id="filter-level" class="input">
+          <option value="">All levels</option>
+          <option value="P3">P3</option>
+          <option value="P4">P4</option>
+          <option value="P5">P5</option>
+          <option value="P6">P6</option>
+        </select>
+      </div>
 
-                <div class="form-field">
-                  <label for="student-name">Student name</label>
-                  <input
-                    id="student-name"
-                    type="text"
-                    placeholder="e.g. Ethan Tan"
-                    required
-                  />
-                </div>
+      <div class="form-group">
+        <label for="filter-subject">Subject</label>
+        <select id="filter-subject" class="input">
+          <option value="">All subjects</option>
+          <option value="P3 English">P3 English</option>
+          <option value="P3 Math">P3 Math</option>
+          <option value="P4 English">P4 English</option>
+          <option value="P4 Math">P4 Math</option>
+          <option value="P5 English">P5 English</option>
+          <option value="P5 Math">P5 Math</option>
+          <option value="P6 English">P6 English</option>
+          <option value="P6 Math">P6 Math</option>
+        </select>
+      </div>
 
-                <div class="form-field">
-                  <label for="student-level">Level</label>
-                  <input id="student-level" type="text" placeholder="e.g. P5" />
-                </div>
+      <!-- 2️⃣ Existing student (filtered by above) -->
+      <div class="form-group">
+        <label for="student-select">Existing student</label>
+        <select id="student-select" class="input">
+          <option value="">-- Select student --</option>
+        </select>
+      </div>
+    </div>
 
-                <div class="form-field">
-                  <label for="student-subjects">Subjects (comma-separated)</label>
-                  <input
-                    id="student-subjects"
-                    type="text"
-                    placeholder="e.g. English, Math"
-                  />
-                </div>
-              </div>
+    <!-- 3️⃣ Selected student + +1 / +5 / reset points / reset password -->
+    <div id="students-list" class="students-list">
+      <!-- Filled by app-teacher.js (one clean row with buttons) -->
+    </div>
 
-              <button type="submit" class="btn btn-primary">
-                Save / Update Student
-              </button>
-            </form>
+    <!-- 4️⃣ Optional: profile edit / create (collapsed to keep UI clean) -->
+    <details class="ev-collapsible" style="margin-top: 1.5rem;">
+      <summary>Edit / create student profile (optional)</summary>
 
-            <div class="filter-row">
-              <div class="form-field-small">
-                <label for="filter-level">Filter level</label>
-                <input id="filter-level" type="text" placeholder="e.g. P5" />
-              </div>
-              <div class="form-field-small">
-                <label for="filter-subject">Filter subject</label>
-                <input id="filter-subject" type="text" placeholder="e.g. Math" />
-              </div>
-              <button id="filter-apply" class="btn btn-small">Apply Filter</button>
-              <button id="filter-clear" class="btn btn-ghost btn-small">
-                Clear
-              </button>
-            </div>
+      <p class="helper-text" style="margin-top: 0.75rem;">
+        Use this only when you need to add a new student or change level / subjects.
+        Hero Points and password are handled by the buttons above.
+      </p>
 
-            <div id="students-list"></div>
-          </section>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="student-name">Student name</label>
+          <input
+            id="student-name"
+            type="text"
+            class="input"
+            placeholder="e.g. Ethan Tan"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="student-level">Level</label>
+          <input
+            id="student-level"
+            type="text"
+            class="input"
+            placeholder="e.g. P5"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="student-subjects">Subjects (comma-separated)</label>
+          <input
+            id="student-subjects"
+            type="text"
+            class="input"
+            placeholder="e.g. P5 English, P5 Math"
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn" style="margin-top: 0.75rem;">
+        Save / Update Student
+      </button>
+    </details>
+  </form>
+</div>
 
           <!-- ANNOUNCEMENTS & HOMEWORK -->
           <section class="dashboard-card">
