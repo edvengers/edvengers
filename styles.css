@@ -843,8 +843,8 @@ body {
 }
 
 .chat-bubble-other {
-  background: #0b1120; /* dark grey/blue for the other side */
-  color: #e5e7eb;
+  background: #e5e7eb;  /* light grey like WhatsApp */
+  color: #020617;       /* dark text */
 }
 
 .chat-text {
