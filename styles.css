@@ -720,11 +720,6 @@ body {
   line-height: 1.35;
 }
 
-.teacher-chat-row-student .teacher-chat-bubble {
-  background: #0c2344;
-  border-bottom-left-radius: 2px;
-}
-
 .teacher-chat-row-teacher .teacher-chat-bubble {
   background: #12b886;
   color: #02101f;
@@ -862,4 +857,16 @@ body {
   opacity: 0.7;
   margin-top: 0.15rem;
   text-align: right;
+}
+
+/* RECEIVED MESSAGES (LEFT SIDE) */
+.chat-bubble-teacher {
+  background: #2f3a4a !important; /* dark grey */
+  color: #f1f5f9 !important;
+}
+
+/* SENT MESSAGES (RIGHT SIDE) */
+.chat-bubble-student {
+  background: #16c784 !important; /* WhatsApp-like green */
+  color: #021310 !important;
 }
