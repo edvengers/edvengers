@@ -12,6 +12,7 @@ import {
   updateDoc,
   doc,
   setDoc,
+  increment,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
   getStorage,
@@ -42,9 +43,11 @@ function fmtTime(ts) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// ---- Simple teacher login ----
+/* --------------------------------------------------
+   SIMPLE TEACHER LOGIN (same as before)
+-------------------------------------------------- */
 
-const TEACHER_PASSWORD = "teach-heroes-2026"; // change this to whatever you like
+const TEACHER_PASSWORD = "1234";
 
 const loginSection = document.getElementById("teacher-login-section");
 const dashSection = document.getElementById("teacher-dashboard-section");
@@ -90,7 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ---- Students & Hero Points ----
+/* --------------------------------------------------
+   STUDENTS & HERO POINTS (reworked)
+-------------------------------------------------- */
 
 const studentsForm = document.getElementById("students-form");
 const studentsList = document.getElementById("students-list");
@@ -98,82 +103,19 @@ const studentsSelect = document.getElementById("student-select");
 
 const filterLevelInput = document.getElementById("filter-level");
 const filterSubjectInput = document.getElementById("filter-subject");
+const updatePointsBtn = document.getElementById("update-points-btn");
 
-const levelSelectProfile = document.getElementById("student-level");
-const subjectsSelectProfile = document.getElementById("student-subjects");
+let studentsCache = [];          // full list of students from Firestore
+let activeStudentId = null;      // which student we’re currently viewing
+const stagedPoints = {};         // { studentId: delta }
 
-let studentsCache = []; // full list from Firestore
-let selectedStudentName = ""; // name from dropdown
-let stagedStars = null; // staged points before "Update Points"
-
-// When existing student is chosen, fill name / level / subjects in profile (optional)
-if (studentsSelect && document.getElementById("student-name")) {
-  const nameInput = document.getElementById("student-name");
-  studentsSelect.addEventListener("change", () => {
-    selectedStudentName = studentsSelect.value || "";
-    const s = studentsCache.find((st) => st.name === selectedStudentName);
-
-    if (nameInput && s) nameInput.value = s.name || "";
-
-    if (levelSelectProfile && s) {
-      levelSelectProfile.value = s.level || "";
-    }
-
-    if (subjectsSelectProfile && s) {
-      const subs = s.subjects || [];
-      Array.from(subjectsSelectProfile.options).forEach((opt) => {
-        opt.selected = subs.includes(opt.value);
-      });
-    }
-
-    // Reset staged stars and render the row
-    stagedStars = s ? s.stars || 0 : null;
-    renderStudentsList();
-  });
+/** helper: find student by id from cache */
+function getStudentById(id) {
+  return studentsCache.find((s) => s.id === id) || null;
 }
 
-// Create / update student document
-if (studentsForm) {
-  studentsForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const nameInput = document.getElementById("student-name");
-    let name = nameInput ? nameInput.value.trim() : "";
-
-    if (!name) {
-      alert("Please enter a student name.");
-      return;
-    }
-
-    const level = levelSelectProfile ? levelSelectProfile.value : "";
-    const subjects = subjectsSelectProfile
-      ? Array.from(subjectsSelectProfile.selectedOptions).map((o) => o.value)
-      : [];
-
-    const id = slugify(name);
-
-    try {
-      await setDoc(
-        doc(db, "students", id),
-        {
-          name,
-          level,
-          subjects,
-          password: "heroes2026", // default/reset
-          stars: 0,
-          updatedAt: Date.now(),
-        },
-        { merge: true }
-      );
-      alert(`Saved/updated ${name}. Default password: heroes2026`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save student.");
-    }
-  });
-}
-
-// Build the dropdown options based on filters
-function refreshStudentOptions() {
+/** (1) Populate the "Existing student" dropdown based on filters */
+function populateStudentSelect() {
   if (!studentsSelect) return;
   const levelFilter = (filterLevelInput?.value || "").trim();
   const subjectFilter = (filterSubjectInput?.value || "").trim();
@@ -185,55 +127,56 @@ function refreshStudentOptions() {
     if (subjectFilter && !(s.subjects || []).includes(subjectFilter)) return;
 
     const opt = document.createElement("option");
-    opt.value = s.name;
-    opt.textContent = s.name;
+    opt.value = s.id;         // use doc id
+    opt.textContent = s.name; // show name
     studentsSelect.appendChild(opt);
   });
 
-  // If current selection no longer matches filter, clear it
-  const stillValid = studentsCache.find((s) => {
-    if (s.name !== selectedStudentName) return false;
-    if (levelFilter && s.level !== levelFilter) return false;
-    if (subjectFilter && !(s.subjects || []).includes(subjectFilter))
-      return false;
-    return true;
-  });
-
-  if (!stillValid) {
-    selectedStudentName = "";
-    stagedStars = null;
-    studentsSelect.value = "";
-  } else {
-    studentsSelect.value = selectedStudentName;
+  // if current active student no longer matches filter, clear it
+  if (activeStudentId) {
+    const stillVisible = [...studentsSelect.options].some(
+      (opt) => opt.value === activeStudentId
+    );
+    if (!stillVisible) {
+      activeStudentId = null;
+      renderSelectedStudentRow();
+    }
   }
 }
 
-// Render the single selected student's row with staged stars
-function renderStudentsList() {
+/** (2) Render single selected-student row with staged points */
+function renderSelectedStudentRow() {
   if (!studentsList) return;
   studentsList.innerHTML = "";
 
-  if (!selectedStudentName) {
-    const p = document.createElement("p");
-    p.className = "helper-text";
-    p.textContent = "Select a student above to view and update Hero Points.";
-    studentsList.appendChild(p);
+  if (!activeStudentId) {
+    const msg = document.createElement("p");
+    msg.className = "helper-text";
+    msg.textContent = "Select a student above to view and adjust Hero Points.";
+    studentsList.appendChild(msg);
     return;
   }
 
-  const s = studentsCache.find((st) => st.name === selectedStudentName);
+  const s = getStudentById(activeStudentId);
   if (!s) {
-    const p = document.createElement("p");
-    p.className = "helper-text";
-    p.textContent = "Student not found. Try clearing filters.";
-    studentsList.appendChild(p);
+    const msg = document.createElement("p");
+    msg.className = "helper-text";
+    msg.textContent = "Student not found. Try clearing filters.";
+    studentsList.appendChild(msg);
     return;
   }
 
-  const current = stagedStars !== null ? stagedStars : s.stars || 0;
+  const delta = stagedPoints[activeStudentId] || 0;
+  const pendingText =
+    delta === 0
+      ? ""
+      : ` (current: ${s.stars || 0}, pending: ${
+          delta > 0 ? "+" + delta : delta
+        })`;
+
   const row = document.createElement("div");
   row.className = "student-row ev-card-bubble";
-  row.dataset.id = slugify(s.name);
+  row.dataset.id = s.id;
 
   row.innerHTML = `
     <div class="student-main">
@@ -241,47 +184,44 @@ function renderStudentsList() {
       <div class="helper-text">
         Level: ${s.level || "-"}${
     s.subjects?.length ? " • Subjects: " + s.subjects.join(", ") : ""
-  } • Hero Points: <strong id="hero-points-value">${current}</strong>
+  } • Hero Points: <strong>${(s.stars || 0) + delta}</strong>${pendingText}
       </div>
     </div>
     <div class="student-actions">
       <button class="btn btn-small" data-action="add1">+1</button>
       <button class="btn btn-small" data-action="add5">+5</button>
-      <button class="btn btn-ghost btn-small" data-action="resetStars">
+      <button class="btn btn-ghost btn-small" data-action="resetPoints">
         Reset Points
       </button>
       <button class="btn btn-ghost btn-small" data-action="resetPwd">
         Reset Password
-      </button>
-      <button class="btn btn-small" data-action="applyStars" style="margin-left: 0.75rem;">
-        Update Points
       </button>
     </div>
   `;
 
   studentsList.appendChild(row);
 
-  const valueEl = row.querySelector("#hero-points-value");
-
-  function updateDisplay(newVal) {
-    stagedStars = newVal;
-    if (valueEl) valueEl.textContent = stagedStars;
-  }
-
+  // wire buttons (only change stagedPoints; no Firestore yet)
   row.querySelectorAll(".student-actions button").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const action = btn.dataset.action;
-      const base = stagedStars !== null ? stagedStars : s.stars || 0;
+      const current = s.stars || 0;
+      const existingDelta = stagedPoints[activeStudentId] || 0;
 
       if (action === "add1") {
-        updateDisplay(base + 1);
+        stagedPoints[activeStudentId] = existingDelta + 1;
+        renderSelectedStudentRow();
       } else if (action === "add5") {
-        updateDisplay(base + 5);
-      } else if (action === "resetStars") {
-        updateDisplay(0);
+        stagedPoints[activeStudentId] = existingDelta + 5;
+        renderSelectedStudentRow();
+      } else if (action === "resetPoints") {
+        // set pending so that final result will be 0
+        stagedPoints[activeStudentId] = -current;
+        renderSelectedStudentRow();
       } else if (action === "resetPwd") {
+        // password reset can be immediate
         try {
-          await updateDoc(doc(db, "students", row.dataset.id), {
+          await updateDoc(doc(db, "students", activeStudentId), {
             password: "heroes2026",
             updatedAt: Date.now(),
           });
@@ -290,60 +230,121 @@ function renderStudentsList() {
           console.error(err);
           alert("Failed to reset password.");
         }
-      } else if (action === "applyStars") {
-        // Commit staged stars to Firestore
-        const finalStars =
-          stagedStars !== null ? stagedStars : s.stars || 0;
-        try {
-          await updateDoc(doc(db, "students", row.dataset.id), {
-            stars: finalStars,
-            updatedAt: Date.now(),
-          });
-          // After update, rely on snapshot to refresh, but we can also clear staging
-          stagedStars = null;
-        } catch (err) {
-          console.error(err);
-          alert("Failed to update points.");
-        }
       }
     });
   });
 }
 
-// Filter change → refresh list + options
+/** (3) When filters or select change, re-render */
 if (filterLevelInput) {
   filterLevelInput.addEventListener("change", () => {
-    refreshStudentOptions();
-    stagedStars = null;
-    selectedStudentName = "";
-    renderStudentsList();
+    populateStudentSelect();
   });
 }
 if (filterSubjectInput) {
   filterSubjectInput.addEventListener("change", () => {
-    refreshStudentOptions();
-    stagedStars = null;
-    selectedStudentName = "";
-    renderStudentsList();
+    populateStudentSelect();
+  });
+}
+if (studentsSelect) {
+  studentsSelect.addEventListener("change", () => {
+    activeStudentId = studentsSelect.value || null;
+    renderSelectedStudentRow();
   });
 }
 
-// live load from Firestore
+/** (4) "Update Points" button – only here we write to Firestore */
+if (updatePointsBtn) {
+  updatePointsBtn.addEventListener("click", async () => {
+    if (!activeStudentId) {
+      alert("Select a student first.");
+      return;
+    }
+    const delta = stagedPoints[activeStudentId] || 0;
+    if (delta === 0) {
+      alert("No point changes to save.");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "students", activeStudentId), {
+        stars: increment(delta),
+        updatedAt: Date.now(),
+      });
+      // clear staged delta for that student
+      delete stagedPoints[activeStudentId];
+      alert("Hero Points updated.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update Hero Points.");
+    }
+  });
+}
+
+/** (5) Edit / create profile (same behaviour as before, but now only when needed) */
+if (studentsForm) {
+  studentsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const nameInput = document.getElementById("student-name");
+    const levelInput = document.getElementById("student-level");
+    const subjectsInput = document.getElementById("student-subjects");
+
+    if (!nameInput) return;
+
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    const level = levelInput ? levelInput.value.trim() : "";
+    const subjects = subjectsInput.value
+      ? subjectsInput.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const id = slugify(name);
+
+    try {
+      await setDoc(
+        doc(db, "students", id),
+        {
+          name,
+          level,
+          subjects,
+          password: "heroes2026",
+          stars: 0,
+          updatedAt: Date.now(),
+        },
+        { merge: true }
+      );
+      studentsForm.reset();
+      alert(`Saved/updated ${name}. Default password: heroes2026`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save student.");
+    }
+  });
+}
+
+/** (6) Live Firestore subscription to keep dropdown + cache updated */
 const studentsQuery = query(collection(db, "students"), orderBy("name", "asc"));
 onSnapshot(studentsQuery, (snap) => {
   studentsCache = [];
   snap.forEach((docSnap) => {
     const data = docSnap.data();
-    const entry = { id: docSnap.id, ...data };
-    studentsCache.push(entry);
+    studentsCache.push({ id: docSnap.id, ...data });
   });
 
-  // After each snapshot, rebuild dropdown + re-render selected student row
-  refreshStudentOptions();
-  renderStudentsList();
+  // rebuild dropdown based on current filters
+  populateStudentSelect();
+  // refresh selected student row (keeps staged delta intact)
+  renderSelectedStudentRow();
 });
 
-// ---- Announcements ----
+/* --------------------------------------------------
+   ANNOUNCEMENTS (unchanged)
+-------------------------------------------------- */
 
 const annForm = document.getElementById("announcement-form");
 const annList = document.getElementById("announcement-list");
@@ -390,11 +391,11 @@ if (annForm) {
 }
 
 if (annList) {
-  const q2 = query(
+  const qAnn = query(
     collection(db, "announcements"),
     orderBy("createdAt", "desc")
   );
-  onSnapshot(q2, (snap) => {
+  onSnapshot(qAnn, (snap) => {
     annList.innerHTML = "";
     snap.forEach((docSnap) => {
       const d = docSnap.data();
@@ -414,7 +415,9 @@ if (annList) {
   });
 }
 
-// ---- Homework ----
+/* --------------------------------------------------
+   HOMEWORK (unchanged)
+-------------------------------------------------- */
 
 const hwForm = document.getElementById("homework-form");
 const hwList = document.getElementById("homework-list");
@@ -475,8 +478,8 @@ if (hwForm) {
 }
 
 if (hwList) {
-  const q3 = query(collection(db, "homework"), orderBy("postedAt", "desc"));
-  onSnapshot(q3, (snap) => {
+  const qHw = query(collection(db, "homework"), orderBy("postedAt", "desc"));
+  onSnapshot(qHw, (snap) => {
     hwList.innerHTML = "";
     snap.forEach((docSnap) => {
       const d = docSnap.data();
@@ -502,7 +505,9 @@ if (hwList) {
           Levels: ${(d.levels || []).join(", ") || "All"}
           • Subjects: ${(d.subjects || []).join(", ") || "All"}
           • Posted: ${
-            d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"
+            d.postedAt
+              ? new Date(d.postedAt).toLocaleDateString()
+              : "-"
           }
           ${
             d.dueAt
@@ -516,7 +521,9 @@ if (hwList) {
   });
 }
 
-// ---- Chat ----
+/* --------------------------------------------------
+   CHAT (unchanged from previous working version)
+-------------------------------------------------- */
 
 const chatStudentList = document.getElementById("chat-student-list");
 const chatThread = document.getElementById("chat-thread");
@@ -529,10 +536,9 @@ const chatStudentIdHidden = document.getElementById("teacher-chat-student-id");
 let chatStudentId = null;
 let chatThreadUnsub = null;
 
-// sidebar: students with last message / pending
 if (chatStudentList) {
-  const q4 = query(collection(db, "students"), orderBy("name", "asc"));
-  onSnapshot(q4, async (snap) => {
+  const q = query(collection(db, "students"), orderBy("name", "asc"));
+  onSnapshot(q, (snap) => {
     const students = [];
     chatStudentList.innerHTML = "";
 
