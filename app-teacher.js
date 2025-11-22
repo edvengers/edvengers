@@ -669,44 +669,48 @@ function openChatForStudent(id, name) {
   chatStudentId = id;
   if (chatStudentIdHidden) chatStudentIdHidden.value = id;
 
+  // stop listening to previous student thread
   if (chatThreadUnsub) chatThreadUnsub();
 
   const msgsRef = collection(db, "chats", id, "messages");
   const q = query(msgsRef, orderBy("createdAt", "asc"));
+
   chatThreadUnsub = onSnapshot(q, (snap) => {
     if (!chatThread) return;
     chatThread.innerHTML = "";
+
     snap.forEach((docSnap) => {
-  const m = docSnap.data();
-  const row = document.createElement("div");
+      const m = docSnap.data();
+      const row = document.createElement("div");
 
-  // On teacher side, teacher's own messages are on the right (green),
-  // student's messages on the left (dark) – like WhatsApp.
-  const isTeacherMsg = m.sender === "teacher";
+      // On teacher side, teacher’s own messages are on the right (green),
+      // student’s messages on the left (dark) – like WhatsApp.
+      const isTeacherMsg = m.sender === "teacher";
 
-  row.className =
-    "chat-row " +
-    (isTeacherMsg ? "chat-row-student" : "chat-row-teacher");
+      row.className =
+        "chat-row " +
+        (isTeacherMsg ? "chat-row-student" : "chat-row-teacher");
 
-  let inner = `
-    <div class="chat-bubble ${
-      isTeacherMsg ? "chat-bubble-student" : "chat-bubble-teacher"
-    }">
-      ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
-  `;
+      let inner = `
+        <div class="chat-bubble ${
+          isTeacherMsg ? "chat-bubble-student" : "chat-bubble-teacher"
+        }">
+          ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
+      `;
 
-  if (m.imageUrl) {
-    inner += `
-      <div class="chat-image">
-        <img src="${m.imageUrl}" alt="attachment" />
-      </div>
-    `;
-  }
+      if (m.imageUrl) {
+        inner += `
+          <div class="chat-image">
+            <img src="${m.imageUrl}" alt="attachment" />
+          </div>
+        `;
+      }
 
-  inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
-  row.innerHTML = inner;
-  chatThread.appendChild(row);
-});
+      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
+      row.innerHTML = inner;
+      chatThread.appendChild(row);
+    });
+  });
 }
 
 if (chatForm) {

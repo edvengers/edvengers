@@ -781,73 +781,41 @@ body {
 }
 
 /* "Me" bubble (right side) – greenish, like WhatsApp but Edvengers */
-.chat-bubble-student {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #0b1120;
-  border-bottom-right-radius: 0.25rem;
-}
-
-/* "Other" bubble (left side) – dark slate */
+.chat-bubble-student,
 .chat-bubble-teacher {
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  color: #e5e7eb;
-  border-bottom-left-radius: 0.25rem;
+  color: #f9fafb; /* light text */
 }
 
-/* Image inside bubbles */
-.chat-image {
-  margin-top: 0.35rem;
+.chat-bubble-student {
+  background: #0ea5e9; /* teal */
 }
 
-.chat-image img {
-  max-width: 220px;
-  border-radius: 0.75rem;
-  display: block;
+.chat-bubble-teacher {
+  background: #111827; /* dark slate */
 }
 
-/* Time label */
-.chat-time {
-  margin-top: 0.18rem;
-  font-size: 0.7rem;
-  opacity: 0.8;
-  text-align: right;
-}
-
-/* Text wrapper inside bubble */
-.chat-text {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-/* Chat form (bottom bar) */
-.chat-form,
-#teacher-chat-form {
-  margin-top: 0.6rem;
+.chat-row {
   display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
+  margin-bottom: 0.4rem;
 }
 
-.chat-form textarea,
-#teacher-chat-input {
-  flex: 1;
-  min-height: 2.4rem;
-  max-height: 5rem;
-  resize: vertical;
+.chat-row-student {
+  justify-content: flex-start;
 }
 
-.chat-form .file-label,
-#teacher-chat-form .file-label {
-  font-size: 0.75rem;
-  opacity: 0.85;
+.chat-row-teacher {
+  justify-content: flex-end;
 }
 
-/* Status text under chat form */
-#chat-status,
-#teacher-chat-status {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  opacity: 0.8;
+.chat-bubble {
+  max-width: 70%;
+  padding: 0.4rem 0.6rem;
+  border-radius: 1rem;
+}
+
+.chat-time {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-top: 0.15rem;
+  text-align: right;
 }
