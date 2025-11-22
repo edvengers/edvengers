@@ -372,19 +372,22 @@ function initChat(student) {
     threadEl.innerHTML = "";
     snap.forEach((docSnap) => {
       const m = docSnap.data();
-      const row = document.createElement("div");
-      row.className =
-        "chat-row " +
-        (m.sender === "student" ? "chat-row-student" : "chat-row-teacher");
+const row = document.createElement("div");
 
-      let inner = `
-        <div class="chat-bubble ${
-          m.sender === "student"
-            ? "chat-bubble-student"
-            : "chat-bubble-teacher"
-        }">
-          ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
-      `;
+// On STUDENT hub:
+//   student's own messages  = right (green)
+//   teacher's messages      = left (dark)
+const isMine = m.sender === "student";
+
+row.className =
+  "chat-row " + (isMine ? "chat-row-right" : "chat-row-left");
+
+let inner = `
+  <div class="chat-bubble ${
+    isMine ? "chat-bubble-right" : "chat-bubble-left"
+  }">
+    ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
+`;
       if (m.imageUrl) {
         inner += `<div class="chat-image"><img src="${m.imageUrl}" alt="attachment" /></div>`;
       }

@@ -819,3 +819,123 @@ body {
   margin-top: 0.15rem;
   text-align: right;
 }
+
+/* =========================================================
+   WhatsApp-style chat (overrides older chat styles)
+   ========================================================= */
+
+.chat-window,
+#chat-thread {
+  max-height: 360px;
+  min-height: 220px;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.85); /* dark slate */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Generic row container */
+.chat-row {
+  display: flex;
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
+/* Left (incoming) vs right (me) */
+.chat-row-left {
+  justify-content: flex-start;
+}
+
+.chat-row-right {
+  justify-content: flex-end;
+}
+
+/* Base bubble */
+.chat-bubble {
+  max-width: 70%;
+  padding: 0.55rem 0.8rem 0.4rem;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.55);
+}
+
+/* Incoming bubble (left) */
+.chat-bubble-left {
+  background: #020617; /* near-black */
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* My bubble (right) – WhatsApp-ish green */
+.chat-bubble-right {
+  background: #22c55e;
+  color: #022c22;
+}
+
+/* Time + images */
+.chat-time {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-top: 0.18rem;
+  text-align: right;
+}
+
+.chat-image img {
+  max-width: 240px;
+  max-height: 240px;
+  border-radius: 10px;
+  display: block;
+  margin-top: 0.35rem;
+}
+
+/* =========================================================
+   Teacher: student list styling for chat sidebar
+   ========================================================= */
+
+#chat-student-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.chat-student-item {
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 0.9rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.chat-student-item:hover {
+  background: rgba(15, 23, 42, 1);
+  transform: translateY(-1px);
+}
+
+.chat-student-item.active {
+  border-color: var(--ev-accent);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+}
+
+.chat-student-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.chat-student-meta {
+  font-size: 0.78rem;
+  color: var(--ev-muted);
+}
