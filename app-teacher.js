@@ -93,8 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ---- Students & Hero Points ----
 
+// Form + DOM refs
 const studentsForm = document.getElementById("students-form");
-const studentsList = document.getElementById("students-list");
+const studentsList = document.getElementById("students-list"); // now shows ONE selected student
 const studentsSelect = document.getElementById("student-select");
 
 const filterLevelInput = document.getElementById("filter-level");
@@ -102,27 +103,161 @@ const filterSubjectInput = document.getElementById("filter-subject");
 const filterApplyBtn = document.getElementById("filter-apply");
 const filterClearBtn = document.getElementById("filter-clear");
 
-let studentsCache = []; // keep full list in memory for filtering
+let studentsCache = [];        // all students from Firestore
+let currentStudentId = null;   // id of selected student in dropdown
 
-if (studentsSelect && document.getElementById("student-name")) {
-  const nameInput = document.getElementById("student-name");
-  studentsSelect.addEventListener("change", () => {
-    if (studentsSelect.value) {
-      nameInput.value = studentsSelect.value;
+// helper to slugify new ids if you ever create from name only
+function slugify(name) {
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+}
+
+// ---------- SELECT POPULATION & FILTERING ----------
+
+function populateStudentSelect() {
+  if (!studentsSelect) return;
+
+  const levelFilter = (filterLevelInput?.value || "").trim();
+  const subjectFilter = (filterSubjectInput?.value || "").trim().toLowerCase();
+
+  studentsSelect.innerHTML = '<option value="">-- Select student --</option>';
+
+  studentsCache.forEach((s) => {
+    // level filter
+    if (levelFilter && (s.level || "") !== levelFilter) return;
+
+    // subject filter (case-insensitive, matches any subject)
+    if (subjectFilter) {
+      const subs = (s.subjects || []).map((x) => x.toLowerCase());
+      if (!subs.includes(subjectFilter)) return;
     }
+
+    const opt = document.createElement("option");
+    opt.value = s.id; // use document id, not name
+    opt.textContent = s.name;
+    studentsSelect.appendChild(opt);
   });
 }
+
+function getCurrentStudent() {
+  if (!currentStudentId) return null;
+  return studentsCache.find((s) => s.id === currentStudentId) || null;
+}
+
+// ---------- RENDER SINGLE SELECTED STUDENT ROW ----------
+
+function renderSelectedStudent() {
+  if (!studentsList) return;
+  const s = getCurrentStudent();
+
+  if (!s) {
+    studentsList.innerHTML =
+      '<p class="helper-text">Filter by level and subject, then select a student above to manage Hero Points.</p>';
+    return;
+  }
+
+  const subjectsText = (s.subjects || []).join(", ");
+  const stars = typeof s.stars === "number" ? s.stars : 0;
+
+  studentsList.innerHTML = `
+    <div class="student-row ev-card-bubble">
+      <div class="student-main">
+        <div><strong>${s.name}</strong></div>
+        <div class="helper-text">
+          Level: ${s.level || "-"}${
+    subjectsText ? " • Subjects: " + subjectsText : ""
+  } • Hero Points: <strong id="hero-points-value">${stars}</strong>
+        </div>
+      </div>
+      <div class="student-actions">
+        <button id="hero-add1" class="btn btn-small">+1</button>
+        <button id="hero-add5" class="btn btn-small">+5</button>
+        <button id="hero-reset-points" class="btn btn-ghost btn-small">
+          Reset Points
+        </button>
+        <button id="hero-reset-password" class="btn btn-ghost btn-small">
+          Reset Password
+        </button>
+      </div>
+    </div>
+  `;
+
+  // attach button handlers for THIS student
+  const add1Btn = document.getElementById("hero-add1");
+  const add5Btn = document.getElementById("hero-add5");
+  const resetPointsBtn = document.getElementById("hero-reset-points");
+  const resetPwdBtn = document.getElementById("hero-reset-password");
+
+  if (add1Btn) {
+    add1Btn.addEventListener("click", () => updateHeroPoints("add1"));
+  }
+  if (add5Btn) {
+    add5Btn.addEventListener("click", () => updateHeroPoints("add5"));
+  }
+  if (resetPointsBtn) {
+    resetPointsBtn.addEventListener("click", () => updateHeroPoints("reset"));
+  }
+  if (resetPwdBtn) {
+    resetPwdBtn.addEventListener("click", () => resetStudentPassword());
+  }
+}
+
+// ---------- UPDATE HERO POINTS IN FIRESTORE ----------
+
+async function updateHeroPoints(action) {
+  const s = getCurrentStudent();
+  if (!s) {
+    alert("Select a student first.");
+    return;
+  }
+  const ref = doc(db, "students", s.id);
+
+  try {
+    if (action === "add1") {
+      await updateDoc(ref, { stars: increment(1), updatedAt: Date.now() });
+    } else if (action === "add5") {
+      await updateDoc(ref, { stars: increment(5), updatedAt: Date.now() });
+    } else if (action === "reset") {
+      await updateDoc(ref, { stars: 0, updatedAt: Date.now() });
+    }
+  } catch (err) {
+    console.error("Failed to update Hero Points:", err);
+    alert("Failed to update Hero Points.");
+  }
+}
+
+async function resetStudentPassword() {
+  const s = getCurrentStudent();
+  if (!s) {
+    alert("Select a student first.");
+    return;
+  }
+  const ref = doc(db, "students", s.id);
+  try {
+    await updateDoc(ref, { password: "heroes2026", updatedAt: Date.now() });
+    alert(`Password for ${s.name} reset to heroes2026.`);
+  } catch (err) {
+    console.error("Failed to reset password:", err);
+    alert("Failed to reset password.");
+  }
+}
+
+// ---------- CREATE / UPDATE STUDENT DOC ----------
 
 if (studentsForm) {
   studentsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const selectVal = studentsSelect ? studentsSelect.value.trim() : "";
-    let name = selectVal;
-    if (!name) {
-      const nameInput = document.getElementById("student-name");
-      name = nameInput ? nameInput.value.trim() : "";
+
+    // existing student selection takes priority
+    const selectedId = studentsSelect ? studentsSelect.value.trim() : "";
+    const nameInput = document.getElementById("student-name");
+    let name = nameInput ? nameInput.value.trim() : "";
+
+    let id = selectedId;
+    if (!id) {
+      // new student: id from name
+      if (!name) return;
+      id = slugify(name);
     }
-    if (!name) return;
 
     const levelInput = document.getElementById("student-level");
     const subjectsInput = document.getElementById("student-subjects");
@@ -134,7 +269,12 @@ if (studentsForm) {
           .filter(Boolean)
       : [];
 
-    const id = slugify(name);
+    // if name was blank but we have an existing student id, get name from cache
+    if (!name) {
+      const existing = studentsCache.find((s) => s.id === id);
+      if (existing) name = existing.name;
+    }
+
     try {
       await setDoc(
         doc(db, "students", id),
@@ -142,15 +282,19 @@ if (studentsForm) {
           name,
           level,
           subjects,
-          password: "heroes2026", // default/reset
-          stars: 0,
+          // do NOT touch stars here so existing points are preserved
+          // only set default password for brand-new students (merge handles both)
+          password: "heroes2026",
           updatedAt: Date.now(),
+          createdAt: Date.now(),
         },
         { merge: true }
       );
+      alert(`Saved/updated ${name}. Default password (if new): heroes2026`);
       studentsForm.reset();
       if (studentsSelect) studentsSelect.value = "";
-      alert(`Saved/updated ${name}. Default password: heroes2026`);
+      currentStudentId = null;
+      renderSelectedStudent();
     } catch (err) {
       console.error(err);
       alert("Failed to save student.");
@@ -158,111 +302,63 @@ if (studentsForm) {
   });
 }
 
-function renderStudentsList() {
-  if (!studentsList) return;
-  studentsList.innerHTML = "";
-
-  const levelFilter = (filterLevelInput?.value || "").trim();
-  const subjectFilter = (filterSubjectInput?.value || "").trim();
-
-  let list = [...studentsCache];
-  if (levelFilter) {
-    list = list.filter((s) => s.level === levelFilter);
-  }
-  if (subjectFilter) {
-    list = list.filter((s) =>
-      (s.subjects || []).includes(subjectFilter)
-    );
-  }
-
-  list.forEach((s) => {
-    const row = document.createElement("div");
-    row.className = "student-row ev-card-bubble";
-    row.dataset.id = s.id;
-    row.innerHTML = `
-      <div class="student-main">
-        <div><strong>${s.name}</strong></div>
-        <div class="helper-text">
-          Level: ${s.level || "-"}${
-      s.subjects?.length ? " • Subjects: " + s.subjects.join(", ") : ""
-    } • Hero Points: <strong>${s.stars || 0}</strong>
-        </div>
-      </div>
-      <div class="student-actions">
-        <button class="btn btn-small" data-action="add1">+1</button>
-        <button class="btn btn-small" data-action="add5">+5</button>
-        <button class="btn btn-ghost btn-small" data-action="resetStars">
-          Reset Points
-        </button>
-        <button class="btn btn-ghost btn-small" data-action="resetPwd">
-          Reset Password
-        </button>
-      </div>
-    `;
-    studentsList.appendChild(row);
-  });
-
-  studentsList.querySelectorAll(".student-actions button").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const card = btn.closest(".student-row");
-      const id = card.dataset.id;
-      const action = btn.dataset.action;
-      const ref = doc(db, "students", id);
-
-      try {
-        if (action === "add1") {
-          await updateDoc(ref, { stars: increment(1), updatedAt: Date.now() });
-        } else if (action === "add5") {
-          await updateDoc(ref, { stars: increment(5), updatedAt: Date.now() });
-        } else if (action === "resetStars") {
-          await updateDoc(ref, { stars: 0, updatedAt: Date.now() });
-        } else if (action === "resetPwd") {
-          await updateDoc(ref, {
-            password: "heroes2026",
-            updatedAt: Date.now(),
-          });
-          alert("Password reset to heroes2026.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Failed to update student.");
-      }
-    });
-  });
-}
+// ---------- FILTER BUTTONS & SELECT CHANGE ----------
 
 if (filterApplyBtn) {
-  filterApplyBtn.addEventListener("click", () => renderStudentsList());
+  filterApplyBtn.addEventListener("click", () => {
+    populateStudentSelect();
+    // if there is exactly one student option, you could auto-select it (optional)
+  });
 }
+
 if (filterClearBtn) {
   filterClearBtn.addEventListener("click", () => {
     if (filterLevelInput) filterLevelInput.value = "";
     if (filterSubjectInput) filterSubjectInput.value = "";
-    renderStudentsList();
+    populateStudentSelect();
+    currentStudentId = null;
+    if (studentsSelect) studentsSelect.value = "";
+    renderSelectedStudent();
   });
 }
 
-// live load from Firestore
+if (studentsSelect) {
+  studentsSelect.addEventListener("change", () => {
+    const id = studentsSelect.value || null;
+    currentStudentId = id;
+
+    const s = getCurrentStudent();
+    // fill the form with selected student's info, so you can edit level/subjects
+    if (s) {
+      const nameInput = document.getElementById("student-name");
+      const levelInput = document.getElementById("student-level");
+      const subjectsInput = document.getElementById("student-subjects");
+      if (nameInput) nameInput.value = s.name || "";
+      if (levelInput) levelInput.value = s.level || "";
+      if (subjectsInput) subjectsInput.value = (s.subjects || []).join(", ");
+    }
+    renderSelectedStudent();
+  });
+}
+
+// ---------- REALTIME LOAD OF STUDENTS ----------
+
 const studentsQuery = query(collection(db, "students"), orderBy("name", "asc"));
 onSnapshot(studentsQuery, (snap) => {
   studentsCache = [];
-  if (studentsSelect) {
-    studentsSelect.innerHTML =
-      '<option value="">-- New or select --</option>';
-  }
   snap.forEach((docSnap) => {
-    const data = docSnap.data();
-    const entry = { id: docSnap.id, ...data };
-    studentsCache.push(entry);
-
-    if (studentsSelect && data.name) {
-      const opt = document.createElement("option");
-      opt.value = data.name;
-      opt.textContent = data.name;
-      studentsSelect.appendChild(opt);
-    }
+    studentsCache.push({ id: docSnap.id, ...docSnap.data() });
   });
-  renderStudentsList();
+
+  // refresh dropdown based on current filters
+  populateStudentSelect();
+
+  // keep currentStudentId if it still exists
+  if (currentStudentId && !studentsCache.find((s) => s.id === currentStudentId)) {
+    currentStudentId = null;
+  }
+
+  renderSelectedStudent();
 });
 
 // ---- Announcements ----
