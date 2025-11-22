@@ -859,13 +859,13 @@ body {
   text-align: right;
 }
 
-/* RECEIVED MESSAGES (LEFT SIDE) */
+/* RECEIVED MESSAGES (LEFT SIDE) – light grey like WhatsApp */
 .chat-bubble-teacher {
-  background: #2f3a4a !important; /* dark grey */
-  color: #f1f5f9 !important;
+  background: #e5e5ea !important; /* light grey */
+  color: #111827 !important;      /* dark text */
 }
 
-/* SENT MESSAGES (RIGHT SIDE) */
+/* SENT MESSAGES (RIGHT SIDE) – keep WhatsApp green */
 .chat-bubble-student {
   background: #16c784 !important; /* WhatsApp-like green */
   color: #021310 !important;
