@@ -584,12 +584,16 @@ function renderTeacherHomework() {
     : teacherHomeworkAll.slice(0, LIMIT);
 
   itemsToShow.forEach((d) => {
-    const links = d.links || [];
-    const linksHtml = links
-      .map(
-        (url, i) =>
-          (item) => `<li><a href="${item.url}" target="_blank">${item.name}</a></li>`
-      )
+    // FIX: Handle the new "Name + URL" style correctly
+    const rawLinks = d.links || [];
+    
+    const linksHtml = rawLinks
+      .map((item) => {
+        // Safety: ensure we have a name and url
+        const url = item.url || "#";
+        const name = item.name || "Resource"; 
+        return `<li><a href="${url}" target="_blank">${name}</a></li>`;
+      })
       .join("");
 
     const card = document.createElement("div");
