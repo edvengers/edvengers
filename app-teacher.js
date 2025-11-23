@@ -772,8 +772,13 @@ if (chatForm) {
     }
 
     const text = chatInput.value.trim();
-    const file = chatImage.files[0] || null;
-    if (!text && !file) return;
+const file = chatImage.files[0] || null;
+
+// allow photo-only messages; only block if *nothing* is there
+if (!text && !file) {
+  if (chatStatus) chatStatus.textContent = "Type a message or choose a photo.";
+  return;
+}
 
     try {
       if (chatStatus) chatStatus.textContent = "Sending...";

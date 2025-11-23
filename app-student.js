@@ -442,12 +442,20 @@ function initChat(student) {
     threadEl.scrollTop = threadEl.scrollHeight;
   });
 
-  // sending logic (unchanged)
+  // sending logic – allow text-only, photo-only, or both
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = input.value.trim();
     const file = imageInput.files[0] || null;
-    if (!text && !file) return;
+
+    // only block if *nothing* is provided
+    if (!text && !file) {
+      if (statusEl) {
+        statusEl.textContent = "Type a message or choose a photo.";
+        setTimeout(() => (statusEl.textContent = ""), 1500);
+      }
+      return;
+    }
 
     try {
       if (statusEl) statusEl.textContent = "Sending...";
