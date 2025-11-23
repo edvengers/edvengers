@@ -91,7 +91,7 @@ async function loginStudent(name, password) {
   // Student does not exist yet: Stop them.
   // The Teacher MUST create the account first.
   if (!snap.exists()) {
-    throw new Error("Account not found. Please ask Teacher to create your account first.");
+    throw new Error("Account not found. Please ask Teacher Andy to create your account first.");
   }
 
   const data = snap.data();
@@ -448,4 +448,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
       } catch (err) {
-        console
+        console.error(err);
+        showError(err.message || "Login failed. Please try again.");
+      }
+    });
+  }
+});
