@@ -1027,3 +1027,16 @@ input:focus, textarea:focus, select:focus {
   border-radius: 4px;
   object-fit: contain;
 }
+
+.fame-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  
+  /* THIS IS THE FIX: */
+  max-width: 850px;   /* Forces the 4th item to drop to the next line */
+  margin-left: auto;  /* Centers the whole block on the page */
+  margin-right: auto;
+}
