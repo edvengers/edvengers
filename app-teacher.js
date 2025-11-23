@@ -507,10 +507,15 @@ if (hwForm) {
       .value.trim();
 
     const links = [];
-    for (let i = 1; i <= 5; i++) {
-      const input = document.getElementById(`homework-link-${i}`);
-      if (input && input.value.trim()) {
-        links.push(input.value.trim());
+    for (let i = 1; i <= 3; i++) {
+      const urlInput = document.getElementById(`homework-link-${i}`);
+      const nameInput = document.getElementById(`homework-name-${i}`);
+      
+      if (urlInput && urlInput.value.trim()) {
+        links.push({
+          url: urlInput.value.trim(),
+          name: nameInput.value.trim() || `Resource ${i}` // Default if name is blank
+        });
       }
     }
 
@@ -583,7 +588,7 @@ function renderTeacherHomework() {
     const linksHtml = links
       .map(
         (url, i) =>
-          `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
+          (item) => `<li><a href="${item.url}" target="_blank">${item.name}</a></li>`
       )
       .join("");
 

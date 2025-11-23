@@ -313,8 +313,7 @@ function renderStudentHomework() {
 
   itemsToShow.forEach((d) => {
     const links = (d.links || []).map(
-      (url, i) =>
-        `<li><a href="${url}" target="_blank">Link ${i + 1}</a></li>`
+      (item) => `<li><a href="${item.url}" target="_blank">${item.name}</a></li>`
     );
 
     const card = document.createElement("div");

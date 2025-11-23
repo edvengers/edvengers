@@ -1040,3 +1040,37 @@ input:focus, textarea:focus, select:focus {
   margin-left: auto;  /* Centers the whole block on the page */
   margin-right: auto;
 }
+
+/* ========== BETTER HOMEWORK LINKS ========== */
+.ev-link-list {
+  padding-left: 0;      /* Remove the indentation */
+  margin-top: 0.5rem;
+}
+
+.ev-link-list li {
+  list-style: none;     /* Remove the bullet point */
+  margin-bottom: 0.5rem;
+}
+
+.ev-link-list a {
+  display: inline-block;
+  background: var(--ev-accent); /* Your brand green */
+  color: #021014;       /* Dark text for contrast */
+  text-decoration: none;
+  padding: 0.35rem 0.8rem;
+  border-radius: 99px;  /* Pill shape */
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Hover effect */
+.ev-link-list a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(31, 230, 168, 0.4);
+}
+
+/* Add a little icon before the text */
+.ev-link-list a::before {
+  content: "🔗 ";
+}
