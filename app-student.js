@@ -95,10 +95,9 @@ async function loginStudent(name, password) {
   const ref = doc(db, "students", id);
   const snap = await getDoc(ref);
 
-  // Student does not exist yet: allow creation only with default password
-  if (!snap.exists()) {
-    if (trimmedPwd !== "heroes2026") {
-      throw new Error("Account not found. Please check with your teacher.");
+  // Student does not exist yet: Stop them.
+    if (!snap.exists()) {
+      throw new Error("Account not found. Please ask teachers to create your account first.");
     }
     await setDoc(ref, {
       name: trimmedName,
@@ -529,10 +528,34 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const student = await loginStudent(name, pwd);
 
-        // If password is still default, you *could* prompt for change here.
-        // For now we just log them in. Later we can add a change-password UI.
+        // CHECK: Is it the default password?
+        if (student.password === "heroes2026") {
+          // Hide login, Show password change screen
+          document.getElementById("student-login-section").style.display = "none";
+          document.getElementById("student-password-section").style.display = "block";
+          
+          // Handle the password change submit
+          const pwdForm = document.getElementById("change-password-form");
+          pwdForm.onsubmit = async (evt) => {
+            evt.preventDefault();
+            const newPwd = document.getElementById("new-password").value.trim();
+            if(!newPwd) return;
+            
+            // Save to database
+            const ref = doc(db, "students", student.id);
+            await setDoc(ref, { password: newPwd, updatedAt: Date.now() }, { merge: true });
+            
+            // Update local object and enter hub
+            student.password = newPwd;
+            document.getElementById("student-password-section").style.display = "none";
+            switchToHub(student);
+          };
+          
+        } else {
+          // Normal login
+          switchToHub(student);
+        }
 
-        switchToHub(student);
       } catch (err) {
         console.error(err);
         showError(err.message || "Login failed. Please try again.");

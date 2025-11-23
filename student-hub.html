@@ -73,7 +73,33 @@
       </section>
 
       <!-- HUB -->
-      <section id="student-hub-section" style="display:none;">
+<section id="student-password-section" style="display:none;">
+        <div class="ev-container" style="padding: 2.5rem 0 3rem;">
+          <h1>One Last Step!</h1>
+          <p class="ev-helper-text">
+            Since this is your first time (or you just reset), please create a <strong>secret password</strong>.
+          </p>
+
+          <div class="dashboard-card">
+            <form id="change-password-form">
+              <div class="form-field">
+                <label for="new-password">New Secret Password</label>
+                <input
+                  id="new-password"
+                  type="text"
+                  placeholder="Something you will remember..."
+                  required
+                />
+              </div>
+              
+              <button type="submit" class="btn btn-primary">
+                Save &amp; Enter Hub
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>      
+<section id="student-hub-section" style="display:none;">
         <div class="ev-container" style="padding:2.5rem 0 3.5rem;">
           <h1>
             Hi <span id="student-name-display">hero</span>, welcome to your Student Hub!
