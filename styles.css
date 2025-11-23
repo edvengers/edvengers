@@ -890,3 +890,13 @@ body {
   color: #021310 !important;
 }
 
+/* === FIX FOR GIANT IMAGES === */
+.chat-image img {
+  max-width: 100%;       /* Force image to fit inside the bubble */
+  height: auto;          /* Keep the aspect ratio (don't squish it) */
+  border-radius: 8px;    /* Rounded corners look nicer */
+  margin-top: 0.5rem;    /* Add a little space above the image */
+  display: block;
+}
+
+
