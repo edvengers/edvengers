@@ -899,4 +899,60 @@ body {
   display: block;
 }
 
+/* ========== SUPER-SUIT UPGRADES ========== */
 
+/* 1. COOL SCROLLBARS (Get rid of the grey bars) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #020617; 
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b; 
+  border-radius: 99px;
+  border: 2px solid #020617; 
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ev-accent); 
+}
+
+/* 2. MAKE CARDS POP (Glassy look + Hover glow) */
+.ev-card-bubble {
+  background: rgba(15, 23, 42, 0.6); /* Slightly see-through */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Subtle border */
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ev-card-bubble:hover {
+  transform: translateY(-2px); /* Floats up slightly */
+  border-color: var(--ev-accent); /* Glows green on hover */
+  box-shadow: 0 4px 20px rgba(31, 230, 168, 0.15);
+}
+
+/* 3. LIST ACCENTS (Color code the items) */
+/* Announcements get a green stripe */
+#student-announcements .ev-card-bubble,
+#announcement-list .ev-card-bubble {
+  border-left: 3px solid var(--ev-accent);
+}
+
+/* Homework gets a blue stripe */
+#student-homework-list .ev-card-bubble,
+#homework-list .ev-card-bubble {
+  border-left: 3px solid var(--ev-accent-alt);
+}
+
+/* 4. SMOOTHER INPUTS */
+input, textarea, select {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: border-color 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--ev-accent) !important;
+  box-shadow: 0 0 0 3px rgba(31, 230, 168, 0.1);
+}
