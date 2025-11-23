@@ -70,7 +70,7 @@ function fmtDateLabel(ts) {
    SIMPLE TEACHER LOGIN
 -------------------------------------------------- */
 
-const TEACHER_PASSWORD = "1234";
+const TEACHER_PASSWORD = "kalb25";
 
 const loginSection = document.getElementById("teacher-login-section");
 const dashSection = document.getElementById("teacher-dashboard-section");
