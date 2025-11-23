@@ -43,6 +43,29 @@ function fmtTime(ts) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function fmtDateLabel(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const thatDay = new Date(d);
+  thatDay.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round((thatDay - today) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === -1) return "Yesterday";
+
+  // e.g. "15 Nov 2025"
+  return d.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 /* --------------------------------------------------
    SIMPLE TEACHER LOGIN
 -------------------------------------------------- */
@@ -692,8 +715,23 @@ function openChatForStudent(id, name) {
     if (!chatThread) return;
     chatThread.innerHTML = "";
 
+    let lastDateKey = "";
+
     snap.forEach((docSnap) => {
       const m = docSnap.data();
+      const created = m.createdAt || Date.now();
+      const dateObj = new Date(created);
+      const dateKey = dateObj.toDateString();
+
+      // 1) Date divider if day changed
+      if (dateKey !== lastDateKey) {
+        lastDateKey = dateKey;
+        const divider = document.createElement("div");
+        divider.className = "chat-date-divider";
+        divider.textContent = fmtDateLabel(created);
+        chatThread.appendChild(divider);
+      }
+
       const isTeacherMsg = m.sender === "teacher";
 
       const row = document.createElement("div");
@@ -715,12 +753,12 @@ function openChatForStudent(id, name) {
         `;
       }
 
-      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
+      inner += `<div class="chat-time">${fmtTime(created)}</div></div>`;
+
       row.innerHTML = inner;
       chatThread.appendChild(row);
     });
 
-    // auto-scroll to bottom
     chatThread.scrollTop = chatThread.scrollHeight;
   });
 }

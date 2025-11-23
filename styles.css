@@ -859,6 +859,18 @@ body {
   text-align: right;
 }
 
+.chat-date-divider {
+  align-self: center;
+  margin: 0.4rem 0;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--ev-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 /* RECEIVED MESSAGES (LEFT SIDE) – light grey like WhatsApp */
 .chat-bubble-teacher {
   background: #e5e5ea !important; /* light grey */
@@ -870,3 +882,4 @@ body {
   background: #16c784 !important; /* WhatsApp-like green */
   color: #021310 !important;
 }
+

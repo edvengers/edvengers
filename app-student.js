@@ -43,6 +43,29 @@ function fmtTime(ts) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function fmtDateLabel(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const thatDay = new Date(d);
+  thatDay.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round((thatDay - today) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === -1) return "Yesterday";
+
+  // e.g. "15 Nov 2025"
+  return d.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 let currentStudent = null;
 let chatUnsub = null;
 
@@ -371,13 +394,26 @@ function initChat(student) {
   chatUnsub = onSnapshot(q, (snap) => {
     threadEl.innerHTML = "";
 
+    let lastDateKey = "";
+
     snap.forEach((docSnap) => {
       const m = docSnap.data();
+      const created = m.createdAt || Date.now();
+      const dateObj = new Date(created);
+      const dateKey = dateObj.toDateString(); // used to detect day change
+
+      // 1) Insert date divider when day changes
+      if (dateKey !== lastDateKey) {
+        lastDateKey = dateKey;
+        const divider = document.createElement("div");
+        divider.className = "chat-date-divider";
+        divider.textContent = fmtDateLabel(created);
+        threadEl.appendChild(divider);
+      }
+
+      // 2) Actual message bubble
       const isStudentMsg = m.sender === "student";
 
-      // Student view:
-      //  - student (me) on RIGHT (green)
-      //  - teacher on LEFT (grey)
       const row = document.createElement("div");
       row.className =
         "chat-row " + (isStudentMsg ? "chat-row-right" : "chat-row-left");
@@ -397,12 +433,12 @@ function initChat(student) {
         `;
       }
 
-      inner += `<div class="chat-time">${fmtTime(m.createdAt)}</div></div>`;
+      inner += `<div class="chat-time">${fmtTime(created)}</div></div>`;
+
       row.innerHTML = inner;
       threadEl.appendChild(row);
     });
 
-    // auto-scroll to bottom
     threadEl.scrollTop = threadEl.scrollHeight;
   });
 
