@@ -25,7 +25,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
   projectId: "edvengers-portal",
-  storageBucket: "edvengers-portal.appspot.com",
+  storageBucket: "edvengers-portal.firebasestorage.app",
   messagingSenderId: "825538244708",
   appId: "1:825538244708:web:5eb57d970a65433190ef71",
 };
