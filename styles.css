@@ -871,6 +871,13 @@ body {
   text-transform: uppercase;
 }
 
+.chat-bubble {
+  max-width: 420px;      /* WhatsApp-like width */
+  width: fit-content;    /* shrink to content */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
 /* RECEIVED MESSAGES (LEFT SIDE) – light grey like WhatsApp */
 .chat-bubble-teacher {
   background: #e5e5ea !important; /* light grey */
