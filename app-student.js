@@ -25,7 +25,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
   projectId: "edvengers-portal",
-  storageBucket: "edvengers-portal.firebasestorage.app",
+  storageBucket: "edvengers-portal.firebasestorage.app", // Correct bucket name
   messagingSenderId: "825538244708",
   appId: "1:825538244708:web:5eb57d970a65433190ef71",
 };
@@ -46,19 +46,13 @@ function fmtTime(ts) {
 function fmtDateLabel(ts) {
   if (!ts) return "";
   const d = new Date(ts);
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   const thatDay = new Date(d);
   thatDay.setHours(0, 0, 0, 0);
-
   const diffDays = Math.round((thatDay - today) / (1000 * 60 * 60 * 24));
-
   if (diffDays === 0) return "Today";
   if (diffDays === -1) return "Yesterday";
-
-  // e.g. "15 Nov 2025"
   return d.toLocaleDateString(undefined, {
     day: "2-digit",
     month: "short",
@@ -82,7 +76,6 @@ const hwCountLabel = document.getElementById("student-hw-count");
 let allAnnouncementsForStudent = [];
 let allHomeworkForStudent = [];
 
-// whether we're showing all or just latest few
 let showAllAnnouncements = false;
 let showAllHomework = false;
 
@@ -96,19 +89,9 @@ async function loginStudent(name, password) {
   const snap = await getDoc(ref);
 
   // Student does not exist yet: Stop them.
-    if (!snap.exists()) {
-      throw new Error("Account not found. Please ask teachers to create your account first.");
-    }
-    await setDoc(ref, {
-      name: trimmedName,
-      level: "",
-      subjects: [],
-      stars: 0,
-      password: "heroes2026",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    return { id, ...{ name: trimmedName, level: "", subjects: [], stars: 0 } };
+  // The Teacher MUST create the account first.
+  if (!snap.exists()) {
+    throw new Error("Account not found. Please ask Teacher to create your account first.");
   }
 
   const data = snap.data();
@@ -121,12 +104,14 @@ async function loginStudent(name, password) {
 
 function switchToHub(student) {
   currentStudent = student;
-
   localStorage.setItem("edvengerStudentName", student.name);
 
   const loginSection = document.getElementById("student-login-section");
+  const pwdSection = document.getElementById("student-password-section");
   const hubSection = document.getElementById("student-hub-section");
+
   if (loginSection) loginSection.style.display = "none";
+  if (pwdSection) pwdSection.style.display = "none"; // Ensure this is hidden
   if (hubSection) hubSection.style.display = "block";
 
   // Fill profile
@@ -140,8 +125,7 @@ function switchToHub(student) {
   if (profileName) profileName.textContent = student.name;
   if (profileLevel) profileLevel.textContent = student.level || "-";
   if (profileSubjects)
-    profileSubjects.textContent =
-      (student.subjects && student.subjects.join(", ")) || "-";
+    profileSubjects.textContent = (student.subjects && student.subjects.join(", ")) || "-";
   if (starsEl) starsEl.textContent = student.stars || 0;
 
   // Live updates for stars & basic profile
@@ -152,8 +136,7 @@ function switchToHub(student) {
     if (starsEl) starsEl.textContent = data.stars || 0;
     if (profileLevel) profileLevel.textContent = data.level || "-";
     if (profileSubjects)
-      profileSubjects.textContent =
-        (data.subjects && data.subjects.join(", ")) || "-";
+      profileSubjects.textContent = (data.subjects && data.subjects.join(", ")) || "-";
   });
 
   initAnnouncementsAndHomework(student);
@@ -164,93 +147,57 @@ function initAnnouncementsAndHomework(student) {
   const level = student.level;
   const subjects = student.subjects || [];
 
-  // --- Announcements: listen + filter + store list ---
-  const annQuery = query(
-    collection(db, "announcements"),
-    orderBy("createdAt", "desc")
-  );
-
+  // --- Announcements ---
+  const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
   onSnapshot(annQuery, (snap) => {
     if (!annContainer) return;
-
     const list = [];
-
     snap.forEach((docSnap) => {
       const d = docSnap.data();
       const levels = d.levels || [];
       const subs = d.subjects || [];
+      const levelMatch = levels.length === 0 || (level && levels.includes(level));
+      const subjectMatch = subs.length === 0 || (subjects.length > 0 && subjects.some((s) => subs.includes(s)));
 
-      const levelMatch =
-        levels.length === 0 || (level && levels.includes(level));
-      const subjectMatch =
-        subs.length === 0 ||
-        (subjects.length > 0 &&
-          subjects.some((s) => subs.includes(s)));
-
-      if (!levelMatch || !subjectMatch) return;
-
-      list.push({
-        id: docSnap.id,
-        ...d,
-      });
+      if (levelMatch && subjectMatch) {
+        list.push({ id: docSnap.id, ...d });
+      }
     });
-
     allAnnouncementsForStudent = list;
     renderStudentAnnouncements();
   });
 
-  // --- Homework: listen + filter + store list ---
-  const hwQuery = query(
-    collection(db, "homework"),
-    orderBy("postedAt", "desc")
-  );
-
+  // --- Homework ---
+  const hwQuery = query(collection(db, "homework"), orderBy("postedAt", "desc"));
   onSnapshot(hwQuery, (snap) => {
     if (!hwContainer) return;
-
     const list = [];
-
     snap.forEach((docSnap) => {
       const d = docSnap.data();
       const levels = d.levels || [];
       const subs = d.subjects || [];
+      const levelMatch = levels.length === 0 || (level && levels.includes(level));
+      const subjectMatch = subs.length === 0 || (subjects.length > 0 && subjects.some((s) => subs.includes(s)));
 
-      const levelMatch =
-        levels.length === 0 || (level && levels.includes(level));
-      const subjectMatch =
-        subs.length === 0 ||
-        (subjects.length > 0 &&
-          subjects.some((s) => subs.includes(s)));
-
-      if (!levelMatch || !subjectMatch) return;
-
-      list.push({
-        id: docSnap.id,
-        ...d,
-      });
+      if (levelMatch && subjectMatch) {
+        list.push({ id: docSnap.id, ...d });
+      }
     });
-
     allHomeworkForStudent = list;
     renderStudentHomework();
   });
 }
 
-// ---- Rendering helpers for announcements + homework ----
-
 function renderStudentAnnouncements() {
   if (!annContainer) return;
-
   annContainer.innerHTML = "";
-
   const total = allAnnouncementsForStudent.length;
   if (!total) {
-    annContainer.innerHTML =
-      '<p class="helper-text">No announcements yet.</p>';
+    annContainer.innerHTML = '<p class="helper-text">No announcements yet.</p>';
     if (annToggleBtn) annToggleBtn.style.display = "none";
     if (annCountLabel) annCountLabel.textContent = "";
     return;
   }
-
   const LIMIT = 5;
   const itemsToShow = showAllAnnouncements
     ? allAnnouncementsForStudent
@@ -263,11 +210,7 @@ function renderStudentAnnouncements() {
       <h4>${d.title || "Untitled"}</h4>
       <p>${d.message || ""}</p>
       <p class="helper-text">
-        Posted: ${
-          d.createdAt
-            ? new Date(d.createdAt).toLocaleString()
-            : "-"
-        }
+        Posted: ${d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}
       </p>
     `;
     annContainer.appendChild(card);
@@ -283,7 +226,6 @@ function renderStudentAnnouncements() {
       annToggleBtn.style.display = "none";
     }
   }
-
   if (annCountLabel) {
     annCountLabel.textContent = showAllAnnouncements
       ? `Showing all ${total} announcements`
@@ -293,27 +235,27 @@ function renderStudentAnnouncements() {
 
 function renderStudentHomework() {
   if (!hwContainer) return;
-
   hwContainer.innerHTML = "";
-
   const total = allHomeworkForStudent.length;
   if (!total) {
-    hwContainer.innerHTML =
-      '<p class="helper-text">No homework assigned yet.</p>';
+    hwContainer.innerHTML = '<p class="helper-text">No homework assigned yet.</p>';
     if (hwToggleBtn) hwToggleBtn.style.display = "none";
     if (hwCountLabel) hwCountLabel.textContent = "";
     return;
   }
-
   const LIMIT = 5;
   const itemsToShow = showAllHomework
     ? allHomeworkForStudent
     : allHomeworkForStudent.slice(0, LIMIT);
 
   itemsToShow.forEach((d) => {
-    const links = (d.links || []).map(
-      (item) => `<li><a href="${item.url}" target="_blank">${item.name}</a></li>`
-    );
+    // NEW LOGIC: Handle objects {url, name}
+    const linksHtml = (d.links || []).map((item) => {
+        // Handle both old format (string) and new format (object) just in case
+        const url = item.url || item; 
+        const name = item.name || "Resource";
+        return `<li><a href="${url}" target="_blank">${name}</a></li>`;
+    }).join("");
 
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
@@ -321,22 +263,13 @@ function renderStudentHomework() {
       <h4>${d.title || "Untitled"}</h4>
       ${d.description ? `<p>${d.description}</p>` : ""}
       ${
-        links.length
-          ? `<ul class="ev-link-list">${links.join("")}</ul>`
+        linksHtml
+          ? `<ul class="ev-link-list">${linksHtml}</ul>`
           : '<p class="helper-text">No links provided.</p>'
       }
       <p class="helper-text">
-        Posted: ${
-          d.postedAt
-            ? new Date(d.postedAt).toLocaleDateString()
-            : "-"
-        }
-        ${
-          d.dueAt
-            ? " • Due: " +
-              new Date(d.dueAt).toLocaleDateString()
-            : ""
-        }
+        Posted: ${d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"}
+        ${d.dueAt ? " • Due: " + new Date(d.dueAt).toLocaleDateString() : ""}
       </p>
     `;
     hwContainer.appendChild(card);
@@ -352,7 +285,6 @@ function renderStudentHomework() {
       hwToggleBtn.style.display = "none";
     }
   }
-
   if (hwCountLabel) {
     hwCountLabel.textContent = showAllHomework
       ? `Showing all ${total} homework items`
@@ -361,19 +293,14 @@ function renderStudentHomework() {
 }
 
 // Toggle buttons
-if (annToggleBtn) {
-  annToggleBtn.addEventListener("click", () => {
+if (annToggleBtn) annToggleBtn.addEventListener("click", () => {
     showAllAnnouncements = !showAllAnnouncements;
     renderStudentAnnouncements();
-  });
-}
-
-if (hwToggleBtn) {
-  hwToggleBtn.addEventListener("click", () => {
+});
+if (hwToggleBtn) hwToggleBtn.addEventListener("click", () => {
     showAllHomework = !showAllHomework;
     renderStudentHomework();
-  });
-}
+});
 
 function initChat(student) {
   const threadEl = document.getElementById("chat-window");
@@ -384,23 +311,19 @@ function initChat(student) {
 
   if (!threadEl || !form || !input) return;
 
-  // subscribe to chat messages
   const msgsRef = collection(db, "chats", student.id, "messages");
   const q = query(msgsRef, orderBy("createdAt", "asc"));
 
   if (chatUnsub) chatUnsub();
   chatUnsub = onSnapshot(q, (snap) => {
     threadEl.innerHTML = "";
-
     let lastDateKey = "";
-
     snap.forEach((docSnap) => {
       const m = docSnap.data();
       const created = m.createdAt || Date.now();
       const dateObj = new Date(created);
-      const dateKey = dateObj.toDateString(); // used to detect day change
+      const dateKey = dateObj.toDateString();
 
-      // 1) Insert date divider when day changes
       if (dateKey !== lastDateKey) {
         lastDateKey = dateKey;
         const divider = document.createElement("div");
@@ -409,44 +332,27 @@ function initChat(student) {
         threadEl.appendChild(divider);
       }
 
-      // 2) Actual message bubble
       const isStudentMsg = m.sender === "student";
-
       const row = document.createElement("div");
-      row.className =
-        "chat-row " + (isStudentMsg ? "chat-row-right" : "chat-row-left");
-
+      row.className = "chat-row " + (isStudentMsg ? "chat-row-right" : "chat-row-left");
       let inner = `
-        <div class="chat-bubble ${
-          isStudentMsg ? "chat-bubble-me" : "chat-bubble-other"
-        }">
+        <div class="chat-bubble ${isStudentMsg ? "chat-bubble-me" : "chat-bubble-other"}">
           ${m.text ? `<div class="chat-text">${m.text}</div>` : ""}
       `;
-
       if (m.imageUrl) {
-        inner += `
-          <div class="chat-image">
-            <img src="${m.imageUrl}" alt="attachment" />
-          </div>
-        `;
+        inner += `<div class="chat-image"><img src="${m.imageUrl}" alt="attachment" /></div>`;
       }
-
       inner += `<div class="chat-time">${fmtTime(created)}</div></div>`;
-
       row.innerHTML = inner;
       threadEl.appendChild(row);
     });
-
     threadEl.scrollTop = threadEl.scrollHeight;
   });
 
-  // sending logic – allow text-only, photo-only, or both
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = input.value.trim();
     const file = imageInput.files[0] || null;
-
-    // only block if *nothing* is provided
     if (!text && !file) {
       if (statusEl) {
         statusEl.textContent = "Type a message or choose a photo.";
@@ -454,10 +360,8 @@ function initChat(student) {
       }
       return;
     }
-
     try {
       if (statusEl) statusEl.textContent = "Sending...";
-
       let imageUrl = null;
       if (file) {
         const path = `chat-images/${student.id}/${Date.now()}_${file.name}`;
@@ -465,14 +369,12 @@ function initChat(student) {
         await uploadBytes(ref, file);
         imageUrl = await getDownloadURL(ref);
       }
-
       await addDoc(msgsRef, {
         sender: "student",
         text,
         imageUrl,
         createdAt: Date.now(),
       });
-
       input.value = "";
       imageInput.value = "";
       if (statusEl) {
@@ -501,21 +403,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
-  // Auto-login if name stored
+  // Check if we have a saved user
   const savedName = localStorage.getItem("edvengerStudentName");
-  if (savedName) {
-    // best-effort fetch
-    try {
-      const id = slugify(savedName);
-      const ref = doc(db, "students", id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        switchToHub({ id, ...snap.data() });
-      }
-    } catch (_) {
-      // ignore
-    }
-  }
+  // Optional: Auto-login logic if desired, or skip to force password entry every time.
+  // For now, we'll let them log in manually to ensure security.
 
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
@@ -557,9 +448,4 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
       } catch (err) {
-        console.error(err);
-        showError(err.message || "Login failed. Please try again.");
-      }
-    });
-  }
-});
+        console
