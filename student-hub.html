@@ -152,52 +152,48 @@
             </div>
           </div>
 
-          <div class="dashboard-grid">
+          <div class="card" style="margin-top: 1rem;">
+            <div class="card-header">Announcements</div>
+            <p class="helper-text">
+              Important updates from your teachers. Newest first.
+            </p>
 
-            <div class="card">
-              <div class="card-header">Announcements</div>
-              <p class="helper-text">
-                Important updates from your teachers. Newest first.
-              </p>
+            <div id="student-announcements"></div>
 
-              <div id="student-announcements"></div>
+            <div class="student-section-footer">
+              <button
+                id="student-ann-toggle"
+                type="button"
+                class="btn btn-ghost btn-small"
+                style="display:none;"
+              >
+                Show older announcements
+              </button>
 
-              <div class="student-section-footer">
-                <button
-                  id="student-ann-toggle"
-                  type="button"
-                  class="btn btn-ghost btn-small"
-                  style="display:none;"
-                >
-                  Show older announcements
-                </button>
-
-                <span id="student-ann-count" class="helper-text"></span>
-              </div>
+              <span id="student-ann-count" class="helper-text"></span>
             </div>
+          </div>
 
-            <div class="card">
-              <div class="card-header">Homework &amp; Links</div>
-              <p class="helper-text">
-                Homework for your level & subjects. Newest first.
-              </p>
+          <div class="card">
+            <div class="card-header">Homework &amp; Links</div>
+            <p class="helper-text">
+              Homework for your level & subjects. Newest first.
+            </p>
 
-              <div id="student-homework-list"></div>
+            <div id="student-homework-list"></div>
 
-              <div class="student-section-footer">
-                <button
-                  id="student-hw-toggle"
-                  type="button"
-                  class="btn btn-ghost btn-small"
-                  style="display:none;"
-                >
-                  Show older homework
-                </button>
+            <div class="student-section-footer">
+              <button
+                id="student-hw-toggle"
+                type="button"
+                class="btn btn-ghost btn-small"
+                style="display:none;"
+              >
+                Show older homework
+              </button>
 
-                <span id="student-hw-count" class="helper-text"></span>
-              </div>
+              <span id="student-hw-count" class="helper-text"></span>
             </div>
-
           </div>
 
           <section class="dashboard-card">
