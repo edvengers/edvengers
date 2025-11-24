@@ -5,107 +5,178 @@
     <title>Edvengers Student Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Edvengers">
+    <link rel="apple-touch-icon" href="images/app-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#020617">
+    <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   </head>
 
   <body class="portal-body">
     <header class="ev-header">
       <div class="ev-container ev-nav">
-        <div class="ev-logo">Edvengers</div>
-        <a href="index.html" class="btn-ghost">Back</a>
+        <div class="ev-logo">
+          <span class="ev-logo-mark">E</span>
+          <span class="ev-logo-text">Edvengers</span>
+        </div>
+        <nav class="ev-nav-links">
+          <a href="index.html" class="btn btn-ghost btn-back">
+            ← Back to Main Site
+          </a>
+        </nav>
       </div>
     </header>
 
     <main>
       <section id="student-login-section">
-        <div class="ev-container" style="padding: 3rem 0;">
+        <div class="ev-container" style="padding: 2.5rem 0 3rem;">
           <h1>Student Login</h1>
+          <p class="ev-helper-text">
+            Welcome, Edvenger! Log in to see your classes, homework, Hero Points and chat.
+          </p>
           <div class="dashboard-card">
             <form id="student-login-form">
-              <label>Name</label><input id="login-name" type="text" placeholder="e.g. Ethan Tan" required />
-              <label>Password</label><input id="login-password" type="password" required />
-              <p class="helper-text" style="margin-top:1rem; color:#a9b4d8;">
-                First time login? Use default: <strong>heroes2026</strong>
+              <div class="form-field">
+                <label for="login-name">Student Name / ID</label>
+                <input id="login-name" type="text" placeholder="e.g. Ethan Tan" required />
+              </div>
+              <div class="form-field">
+                <label for="login-password">Portal Password</label>
+                <input id="login-password" type="password" placeholder="Ask your teacher" required />
+              </div>
+              <p class="helper-text">
+                First time login? Use the default password: <strong>heroes2026</strong>
               </p>
-              <button type="submit" class="btn-primary" style="margin-top:1rem;">Enter Hub</button>
+              <p id="login-error" class="helper-text" style="color:#ff6b6b; display:none;"></p>
+              <button type="submit" class="btn btn-primary">Enter Student Hub</button>
             </form>
           </div>
         </div>
       </section>
 
       <section id="student-password-section" style="display:none;">
-        <div class="ev-container">
-          <h1>Set Secret Password</h1>
+        <div class="ev-container" style="padding: 2.5rem 0 3rem;">
+          <h1>One Last Step!</h1>
+          <p class="ev-helper-text">
+            Since this is your first time (or you just reset), please create a <strong>secret password</strong>.
+          </p>
           <div class="dashboard-card">
             <form id="change-password-form">
-              <label>New Secret Password</label><input id="new-password" type="text" required />
-              <button type="submit" class="btn-primary">Save &amp; Start</button>
+              <div class="form-field">
+                <label for="new-password">New Secret Password</label>
+                <input id="new-password" type="text" placeholder="Something you will remember..." required />
+              </div>
+              <button type="submit" class="btn btn-primary">Save &amp; Enter Hub</button>
             </form>
           </div>
         </div>
       </section>
 
       <section id="student-hub-section" style="display:none;">
-        <div class="ev-container" style="padding:2rem 0;">
-          <h1>Hi <span id="student-name-display">hero</span>!</h1>
+        <div class="ev-container" style="padding:2.5rem 0 3.5rem;">
+          <h1>Hi <span id="student-name-display">hero</span>, welcome to your Student Hub!</h1>
+          <p class="ev-helper-text">
+            Join lessons, check announcements, see homework and chat with your teachers.
+          </p>
 
           <div class="dashboard-grid">
             <div class="card">
               <div class="card-header">Your Details</div>
               <p>Name: <strong id="profile-name"></strong></p>
               <p>Level: <strong id="profile-level"></strong></p>
-              <p>Hero Points: <strong id="hero-stars-count" style="color:gold; font-size:1.2rem;">0</strong></p>
+              <p>Subjects: <strong id="profile-subjects"></strong></p>
+              <p>Hero Points: <strong id="hero-stars-count">0</strong></p>
+              <p class="helper-text">Hero Points are awarded for effort, participation and improvement.</p>
             </div>
 
             <div class="card">
-              <div class="card-header">Live Class</div>
-              <p class="helper-text">Join 5 mins early.</p>
-              <a href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1" target="_blank" class="btn-primary" style="text-decoration:none; text-align:center; display:block;">
+              <div class="card-header">Join Live Lesson</div>
+              <p>Tap the button a few minutes before your class. Use your real name in Zoom.</p>
+              <a href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1" target="_blank" class="btn btn-primary">
                 Join Zoom Lesson
               </a>
+              <p class="helper-text">Prepare your notebook, pen and worksheets before joining.</p>
             </div>
-            
+
             <div class="card">
               <div class="card-header">Attendance</div>
-              <p class="helper-text">Class starting?</p>
-              <button id="btn-attendance" class="btn-primary" style="width:100%">🙋‍♂️ I'm Here!</button>
+              <p class="helper-text">Class starting? Report in for duty!</p>
+              <button id="btn-attendance" class="btn btn-primary" style="width:100%">🙋‍♂️ I'm Here!</button>
+              <p id="attendance-status" class="helper-text" style="font-size:0.75rem; min-height:1rem;"></p>
             </div>
           </div>
 
-          <div class="card" style="margin-top:1.5rem;">
+          <div class="card" style="margin-top: 1rem;">
             <div class="card-header">Announcements</div>
+            <p class="helper-text">Important updates from your teachers. Newest first.</p>
             <div id="student-announcements"></div>
+            <div class="student-section-footer">
+              <button id="student-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display:none;">Show older announcements</button>
+              <span id="student-ann-count" class="helper-text"></span>
+            </div>
           </div>
 
-          <div class="card" style="margin-top:1.5rem;">
-            <div class="card-header">Homework</div>
+          <div class="card">
+            <div class="card-header">Homework &amp; Links</div>
+            <p class="helper-text">Homework for your level & subjects. Newest first.</p>
             <div id="student-homework-list"></div>
+            <div class="student-section-footer">
+              <button id="student-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display:none;">Show older homework</button>
+              <span id="student-hw-count" class="helper-text"></span>
+            </div>
           </div>
 
-          <section class="dashboard-card" style="margin-top:1.5rem;">
-            <div class="card-header">Chat with Teacher</div>
+          <section class="dashboard-card">
+            <div class="card-header">Chat with Your Teacher</div>
+            <p class="card-subtitle">Ask questions about homework or lessons. You can also send a photo of your work if needed.</p>
             <div id="chat-window" class="chat-window"></div>
-            <form id="chat-form" style="display:flex; gap:0.5rem;">
-              <input id="chat-input" type="text" placeholder="Message..." style="margin:0;" />
-              <label style="font-size:1.5rem; cursor:pointer;">📷 <input type="file" id="chat-image" accept="image/*" style="display:none;" /></label>
-              <button type="submit" class="btn-primary" style="width:auto;">Send</button>
+            <form id="chat-form" class="chat-form">
+              <div class="chat-row-inputs">
+                <label class="chat-label">
+                  <span>Your message</span>
+                  <textarea id="chat-input" rows="2" placeholder="Type your message..."></textarea>
+                </label>
+                <div class="chat-attachments">
+                  <label class="file-label">
+                    📎 Photo
+                    <input type="file" id="chat-image" accept="image/*" />
+                  </label>
+                </div>
+              </div>
+              <p id="chat-status" class="helper-text"></p>
+              <div class="chat-actions">
+                <button type="submit" class="btn btn-primary">Send</button>
+              </div>
             </form>
           </section>
         </div>
       </section>
     </main>
 
+    <footer class="ev-footer">
+      <div class="ev-container">
+        <p>© <span id="year"></span> Edvengers Student Hub.</p>
+      </div>
+    </footer>
+
     <div id="mission-overlay" class="mission-overlay hidden">
       <div class="mission-header">
-        <span class="mission-title">Mission</span>
-        <button class="btn-ghost" onclick="closeMission()">Close</button>
+        <span class="mission-title">⚡ Current Mission</span>
+        <button class="btn btn-ghost btn-small" onclick="closeMission()">❌ Return to HQ</button>
       </div>
-      <div class="mission-frame-container"><iframe id="mission-frame" src=""></iframe></div>
+      <div class="mission-frame-container">
+        <iframe id="mission-frame" src="" frameborder="0"></iframe>
+      </div>
     </div>
+
     <div id="flying-hero" class="flying-hero hidden">🦸‍♂️</div>
 
+    <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
     <script src="app-student.js" type="module"></script>
   </body>
 </html>
