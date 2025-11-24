@@ -1,4 +1,4 @@
-// app-student.js
+// app-student.js (V3.0 - Gamified)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -64,8 +64,32 @@ const hwCountLabel = document.getElementById("student-hw-count");
 
 let allAnnouncementsForStudent = [];
 let allHomeworkForStudent = [];
-let annVisibleCount = 3; // Show 3 at a time (horizontal pages)
+let annVisibleCount = 3; 
 let hwVisibleCount = 3;
+
+// --- GLOBAL FUNCTIONS FOR MISSION OVERLAY ---
+window.openMission = function(url) {
+  const overlay = document.getElementById("mission-overlay");
+  const frame = document.getElementById("mission-frame");
+  if (overlay && frame) {
+    frame.src = url;
+    overlay.classList.remove("hidden");
+  }
+};
+
+window.closeMission = function() {
+  const overlay = document.getElementById("mission-overlay");
+  const frame = document.getElementById("mission-frame");
+  if (overlay && frame) {
+    overlay.classList.add("hidden");
+    frame.src = ""; // Stop video/audio
+    
+    // REWARD: Confetti when they finish a mission and return!
+    if(typeof confetti === 'function') {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
+  }
+};
 
 async function loginStudent(name, password) {
   const trimmedName = name.trim();
@@ -123,6 +147,53 @@ function switchToHub(student) {
 
   initAnnouncementsAndHomework(student);
   initChat(student);
+  initAttendance(); // Start the attendance button logic
+}
+
+function initAttendance() {
+    const attBtn = document.getElementById("btn-attendance");
+    if (attBtn) {
+      attBtn.addEventListener("click", async () => {
+        if (!currentStudent) return;
+        
+        // 1. Visuals
+        if(typeof confetti === 'function') {
+            confetti({ particleCount: 150, spread: 100 });
+        }
+        
+        const hero = document.getElementById("flying-hero");
+        if (hero) {
+          hero.classList.remove("hidden");
+          hero.classList.add("fly-across");
+          setTimeout(() => {
+            hero.classList.remove("fly-across");
+            hero.classList.add("hidden");
+          }, 2600);
+        }
+    
+        // 2. Disable button temporarily
+        attBtn.disabled = true;
+        attBtn.textContent = "Marked Present! ✅";
+        
+        // 3. Send Log to Teacher (via Chat) and Trigger Red Dot
+        const msgsRef = collection(db, "chats", currentStudent.id, "messages");
+        await addDoc(msgsRef, {
+          sender: "student",
+          text: "🔴 SYSTEM: Student Checked In for Class",
+          createdAt: Date.now(),
+          isSystem: true
+        });
+        
+        const studentRef = doc(db, "students", currentStudent.id);
+        await setDoc(studentRef, { hasUnread: true }, { merge: true });
+        
+        // Re-enable after 1 hour (simple debounce)
+        setTimeout(() => {
+            attBtn.disabled = false;
+            attBtn.textContent = "🙋‍♂️ I'm Here!";
+        }, 3600000);
+      });
+    }
 }
 
 function initAnnouncementsAndHomework(student) {
@@ -222,10 +293,11 @@ function renderStudentHomework() {
   const itemsToShow = allHomeworkForStudent.slice(0, hwVisibleCount);
 
   itemsToShow.forEach((d) => {
+    // OVERLAY BUTTON LOGIC
     const linksHtml = (d.links || []).map((item) => {
         const url = item.url || item; 
         const name = item.name || "Resource";
-        return `<li><a href="${url}" target="_blank">${name}</a></li>`;
+        return `<li><button class="btn-link" style="background:var(--ev-accent); border:none; border-radius:99px; padding:0.35rem 0.8rem; font-weight:700; cursor:pointer;" onclick="openMission('${url}')">🔗 ${name}</button></li>`;
     }).join("");
 
     const card = document.createElement("div");
@@ -332,11 +404,9 @@ function initChat(student) {
         createdAt: Date.now(),
       });
 
-      // --- UNREAD TRIGGER ---
-      // Mark this student as having unread messages so Teacher sees the Red Dot
+      // Trigger Red Dot
       const studentRef = doc(db, "students", student.id);
       await setDoc(studentRef, { hasUnread: true }, { merge: true });
-      // ----------------------
 
       input.value = "";
       imageInput.value = "";

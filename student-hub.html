@@ -14,6 +14,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#020617">
     <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   </head>
 
   <body class="portal-body">
@@ -139,7 +141,7 @@
               </p>
               
               <a
-                href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1"
+                href="https://us06web.zoom.us/j/YOUR_ZOOM_LINK_HERE"
                 target="_blank"
                 class="btn btn-primary"
               >
@@ -149,6 +151,15 @@
               <p class="helper-text">
                 Prepare your notebook, pen and worksheets before joining.
               </p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">Attendance</div>
+              <p class="helper-text">Class starting? Report in for duty!</p>
+              <button id="btn-attendance" class="btn btn-primary" style="width:100%">
+                🙋‍♂️ I'm Here!
+              </button>
+              <p id="attendance-status" class="helper-text" style="font-size:0.75rem; min-height:1rem;"></p>
             </div>
           </div>
 
@@ -246,6 +257,20 @@
         <p>© <span id="year"></span> Edvengers Student Hub.</p>
       </div>
     </footer>
+
+    <div id="mission-overlay" class="mission-overlay hidden">
+      <div class="mission-header">
+        <span class="mission-title">⚡ Current Mission</span>
+        <button class="btn btn-ghost btn-small" onclick="closeMission()">
+          ❌ Return to HQ
+        </button>
+      </div>
+      <div class="mission-frame-container">
+        <iframe id="mission-frame" src="" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <div id="flying-hero" class="flying-hero hidden">🦸‍♂️</div>
 
     <script>
       document.getElementById("year").textContent = new Date().getFullYear();
