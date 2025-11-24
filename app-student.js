@@ -1,4 +1,4 @@
-// app-student.js (V3.0 - Gamified)
+// app-student.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -67,7 +67,6 @@ let allHomeworkForStudent = [];
 let annVisibleCount = 3; 
 let hwVisibleCount = 3;
 
-// --- GLOBAL FUNCTIONS FOR MISSION OVERLAY ---
 window.openMission = function(url) {
   const overlay = document.getElementById("mission-overlay");
   const frame = document.getElementById("mission-frame");
@@ -82,9 +81,7 @@ window.closeMission = function() {
   const frame = document.getElementById("mission-frame");
   if (overlay && frame) {
     overlay.classList.add("hidden");
-    frame.src = ""; // Stop video/audio
-    
-    // REWARD: Confetti when they finish a mission and return!
+    frame.src = ""; 
     if(typeof confetti === 'function') {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
@@ -147,7 +144,7 @@ function switchToHub(student) {
 
   initAnnouncementsAndHomework(student);
   initChat(student);
-  initAttendance(); // Start the attendance button logic
+  initAttendance(); 
 }
 
 function initAttendance() {
@@ -156,7 +153,6 @@ function initAttendance() {
       attBtn.addEventListener("click", async () => {
         if (!currentStudent) return;
         
-        // 1. Visuals
         if(typeof confetti === 'function') {
             confetti({ particleCount: 150, spread: 100 });
         }
@@ -171,11 +167,9 @@ function initAttendance() {
           }, 2600);
         }
     
-        // 2. Disable button temporarily
         attBtn.disabled = true;
         attBtn.textContent = "Marked Present! ✅";
         
-        // 3. Send Log to Teacher (via Chat) and Trigger Red Dot
         const msgsRef = collection(db, "chats", currentStudent.id, "messages");
         await addDoc(msgsRef, {
           sender: "student",
@@ -187,7 +181,6 @@ function initAttendance() {
         const studentRef = doc(db, "students", currentStudent.id);
         await setDoc(studentRef, { hasUnread: true }, { merge: true });
         
-        // Re-enable after 1 hour (simple debounce)
         setTimeout(() => {
             attBtn.disabled = false;
             attBtn.textContent = "🙋‍♂️ I'm Here!";
@@ -293,7 +286,6 @@ function renderStudentHomework() {
   const itemsToShow = allHomeworkForStudent.slice(0, hwVisibleCount);
 
   itemsToShow.forEach((d) => {
-    // OVERLAY BUTTON LOGIC
     const linksHtml = (d.links || []).map((item) => {
         const url = item.url || item; 
         const name = item.name || "Resource";
@@ -324,7 +316,6 @@ function renderStudentHomework() {
   }
 }
 
-// Show More buttons (+3 logic)
 if (annToggleBtn) annToggleBtn.addEventListener("click", () => {
     annVisibleCount += 3;
     renderStudentAnnouncements();
@@ -404,7 +395,6 @@ function initChat(student) {
         createdAt: Date.now(),
       });
 
-      // Trigger Red Dot
       const studentRef = doc(db, "students", student.id);
       await setDoc(studentRef, { hasUnread: true }, { merge: true });
 

@@ -29,35 +29,18 @@
           <p class="ev-helper-text">
             Internal dashboard for Edvengers teachers.
           </p>
-
           <div class="dashboard-card">
             <form id="teacher-login-form">
               <div class="form-field">
                 <label for="teacher-username">Username</label>
-                <input
-                  id="teacher-username"
-                  type="text"
-                  placeholder="e.g. andy"
-                  required
-                />
+                <input id="teacher-username" type="text" placeholder="e.g. andy" required />
               </div>
               <div class="form-field">
                 <label for="teacher-password">Password</label>
-                <input
-                  id="teacher-password"
-                  type="password"
-                  required
-                />
+                <input id="teacher-password" type="password" required />
               </div>
-              <p class="helper-text">
-                For now, this uses a simple shared password you control.
-              </p>
-              <p
-                id="teacher-login-error"
-                class="helper-text"
-                style="color:#ff6b6b; display:none;"
-              ></p>
-
+              <p class="helper-text">For now, this uses a simple shared password you control.</p>
+              <p id="teacher-login-error" class="helper-text" style="color:#ff6b6b; display:none;"></p>
               <button type="submit" class="btn btn-primary">Enter Dashboard</button>
             </form>
           </div>
@@ -68,9 +51,7 @@
         <div class="ev-container" style="padding:2.5rem 0 3.5rem;">
           <div class="dashboard-top-row">
             <h1>Teacher Dashboard</h1>
-            <button id="teacher-logout-btn" class="btn btn-ghost">
-              Log out
-            </button>
+            <button id="teacher-logout-btn" class="btn btn-ghost">Log out</button>
           </div>
           <p class="ev-helper-text">
             Manage students, Hero Points, announcements, homework, and Q&A chat here.
@@ -83,7 +64,6 @@
                 Filter by level and subject, select a student, then stage Hero Points changes.
                 Click <strong>Update Points</strong> to save.
               </p>
-
               <form id="students-form">
                 <div class="form-row">
                   <div class="form-group">
@@ -96,7 +76,6 @@
                       <option value="P6">P6</option>
                     </select>
                   </div>
-
                   <div class="form-group">
                     <label for="filter-subject">Subject</label>
                     <select id="filter-subject" class="input">
@@ -111,7 +90,6 @@
                       <option value="P6 Math">P6 Math</option>
                     </select>
                   </div>
-
                   <div class="form-group">
                     <label for="student-select">Existing student</label>
                     <select id="student-select" class="input">
@@ -119,31 +97,21 @@
                     </select>
                   </div>
                 </div>
-
                 <div id="students-list" class="students-list">
                   <p class="helper-text">Select a student above to see Hero Points.</p>
                 </div>
-
                 <div style="margin-top: 0.75rem;">
-                  <button type="button" id="update-points-btn" class="btn">
-                    Update Points
-                  </button>
+                  <button type="button" id="update-points-btn" class="btn">Update Points</button>
                 </div>
-
                 <details class="ev-collapsible" style="margin-top: 1.5rem;">
                   <summary>Edit / create student profile (optional)</summary>
                   <p class="helper-text" style="margin-top: 0.75rem;">
-                    Use this only when you need to add a new student.
+                    Use this only when you need to add a new student or change level / subjects.
                   </p>
                   <div class="form-row">
                     <div class="form-group">
                       <label for="student-name">Student name</label>
-                      <input
-                        id="student-name"
-                        type="text"
-                        class="input"
-                        placeholder="e.g. Ethan Tan"
-                      />
+                      <input id="student-name" type="text" class="input" placeholder="e.g. Ethan Tan" />
                     </div>
                     <div class="form-group">
                       <label for="student-level">Level</label>
@@ -169,9 +137,7 @@
                       </select>
                     </div>
                   </div>
-                  <button type="submit" class="btn" style="margin-top: 0.75rem;">
-                    Save / Update Student
-                  </button>
+                  <button type="submit" class="btn" style="margin-top: 0.75rem;">Save / Update Student</button>
                 </details>
               </form>
             </div>
@@ -179,30 +145,18 @@
 
           <section class="dashboard-card">
             <div class="card-header">Announcements &amp; Homework</div>
-            <p class="card-subtitle">
-              Target announcements and homework by level and subject.
-            </p>
+            <p class="card-subtitle">Target announcements and homework by level and subject.</p>
 
             <div class="card" style="margin-bottom: 1.5rem;">
               <div class="card-header">Announcements</div>
               <form id="announcement-form">
                 <div class="form-field">
                   <label for="announcement-title">Title</label>
-                  <input
-                    id="announcement-title"
-                    type="text"
-                    placeholder="e.g. P6 Math – Week 3 Reminder"
-                    required
-                  />
+                  <input id="announcement-title" type="text" placeholder="e.g. P6 Math – Week 3 Reminder" required />
                 </div>
                 <div class="form-field">
                   <label for="announcement-message">Message</label>
-                  <textarea
-                    id="announcement-message"
-                    rows="3"
-                    placeholder="Key reminder, lesson focus, etc."
-                    required
-                  ></textarea>
+                  <textarea id="announcement-message" rows="3" placeholder="Key reminder, lesson focus, etc." required></textarea>
                 </div>
                 <div class="form-field" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
                   <input type="checkbox" id="announcement-pinned" style="width:auto; margin:0; cursor:pointer;" />
@@ -232,21 +186,11 @@
                     <option value="P6 Math">P6 Math</option>
                   </select>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                  Post Announcement
-                </button>
+                <button type="submit" class="btn btn-primary">Post Announcement</button>
               </form>
-
               <div id="announcement-list" style="margin-top:1rem;"></div>
               <div class="teacher-section-footer">
-                <button
-                  id="teacher-ann-toggle"
-                  type="button"
-                  class="btn btn-ghost btn-small"
-                  style="display: none;"
-                >
-                  Show older announcements
-                </button>
+                <button id="teacher-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older announcements</button>
                 <span id="teacher-ann-count" class="helper-text"></span>
               </div>
             </div>
@@ -256,28 +200,15 @@
               <form id="homework-form">
                 <div class="form-field">
                   <label for="homework-title">Title</label>
-                  <input
-                    id="homework-title"
-                    type="text"
-                    placeholder="e.g. P5 English – Week 2 Practice"
-                    required
-                  />
+                  <input id="homework-title" type="text" placeholder="e.g. P5 English – Week 2 Practice" required />
                 </div>
                 <div class="form-field">
                   <label for="homework-description">Description (optional)</label>
-                  <textarea
-                    id="homework-description"
-                    rows="3"
-                    placeholder="Short description / instructions"
-                  ></textarea>
+                  <textarea id="homework-description" rows="3" placeholder="Short description / instructions"></textarea>
                 </div>
-
                 <div class="form-field">
                   <label>Homework Links &amp; Names</label>
-                  <p class="helper-text" style="margin-bottom:0.5rem;">
-                    Name (e.g. "Worksheet A") — URL (e.g. Google Drive link)
-                  </p>
-
+                  <p class="helper-text" style="margin-bottom:0.5rem;">Name (e.g. "Worksheet A") — URL (e.g. Google Drive link)</p>
                   <div class="link-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
                     <input id="homework-name-1" type="text" placeholder="Link 1 Name" style="width:40%;" />
                     <input id="homework-link-1" type="url" placeholder="https://..." style="flex:1;" required />
@@ -299,7 +230,6 @@
                     <input id="homework-link-5" type="url" placeholder="https://..." style="flex:1;" />
                   </div>
                 </div>
-
                 <div class="dashboard-grid">
                   <div class="form-field">
                     <label for="homework-level">Level</label>
@@ -324,7 +254,6 @@
                     </select>
                   </div>
                 </div>
-
                 <div class="dashboard-grid">
                   <div class="form-field">
                     <label for="homework-posted">Posted date</label>
@@ -335,22 +264,11 @@
                     <input id="homework-due" type="date" />
                   </div>
                 </div>
-
-                <button type="submit" class="btn btn-primary">
-                  Add Homework
-                </button>
+                <button type="submit" class="btn btn-primary">Add Homework</button>
               </form>
-
               <div id="homework-list" style="margin-top:1rem;"></div>
               <div class="teacher-section-footer">
-                <button
-                  id="teacher-hw-toggle"
-                  type="button"
-                  class="btn btn-ghost btn-small"
-                  style="display: none;"
-                >
-                  Show older homework
-                </button>
+                <button id="teacher-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older homework</button>
                 <span id="teacher-hw-count" class="helper-text"></span>
               </div>
             </div>
@@ -359,47 +277,29 @@
           <section class="dashboard-card">
             <div class="card-header">Student Chat</div>
             <p class="card-subtitle">
-              Reply to student questions. Click a student to open their chat, then send
-              text or attach a photo.
+              Reply to student questions. Click a student to open their chat, then send text or attach a photo.
             </p>
-
             <div class="chat-layout">
               <aside class="chat-sidebar" id="chat-student-list"></aside>
-
               <section class="chat-main">
                 <div id="chat-thread" class="chat-window"></div>
-
                 <form id="teacher-chat-form" class="chat-form">
                   <input type="hidden" id="teacher-chat-student-id" />
-
                   <div class="chat-row-inputs">
                     <label class="chat-label">
                       <span>Your message</span>
-                      <textarea
-                        id="teacher-chat-input"
-                        rows="2"
-                        placeholder="Type your reply..."
-                      ></textarea>
+                      <textarea id="teacher-chat-input" rows="2" placeholder="Type your reply..."></textarea>
                     </label>
-
                     <div class="chat-attachments">
                       <label class="file-label">
                         📎 Photo
-                        <input
-                          type="file"
-                          id="teacher-chat-image"
-                          accept="image/*"
-                        />
+                        <input type="file" id="teacher-chat-image" accept="image/*" />
                       </label>
                     </div>
                   </div>
-
                   <p id="teacher-chat-status" class="helper-text"></p>
-
                   <div class="chat-actions">
-                    <button type="submit" class="btn btn-primary">
-                      Send reply
-                    </button>
+                    <button type="submit" class="btn btn-primary">Send reply</button>
                   </div>
                 </form>
               </section>

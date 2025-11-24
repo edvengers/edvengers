@@ -53,7 +53,7 @@ function fmtDateLabel(ts) {
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
 
-// !!! YOUR PASSWORD SET HERE !!!
+// !!! PASSWORD SET !!!
 const TEACHER_PASSWORD = "kalb25";
 
 const loginSection = document.getElementById("teacher-login-section");
@@ -366,7 +366,7 @@ if (hwForm) {
     const description = document.getElementById("homework-description").value.trim();
     
     const links = [];
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 5; i++) {
       const urlInput = document.getElementById(`homework-link-${i}`);
       const nameInput = document.getElementById(`homework-name-${i}`);
       if (urlInput && urlInput.value.trim()) {
@@ -486,7 +486,6 @@ if (chatStudentList) {
       item.dataset.id = s.id;
       if (s.id === chatStudentId) item.classList.add("active");
 
-      // RED DOT LOGIC
       const unreadDot = s.hasUnread ? `<span class="unread-badge">!</span>` : "";
 
       item.innerHTML = `
@@ -499,7 +498,6 @@ if (chatStudentList) {
       
       item.addEventListener("click", async () => {
         openChatForStudent(s.id, s.name);
-        // Clear unread
         if (s.hasUnread) {
            updateDoc(doc(db, "students", s.id), { hasUnread: false }).catch(console.error);
         }
