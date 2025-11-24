@@ -191,6 +191,17 @@ function initAnnouncementsAndHomework(student) {
 function renderStudentAnnouncements() {
   if (!annContainer) return;
   annContainer.innerHTML = "";
+
+  // SORTING LOGIC: Pinned first, then Newest
+  allAnnouncementsForStudent.sort((a, b) => {
+    // If 'a' is pinned and 'b' isn't, 'a' goes first (-1)
+    if (a.isPinned && !b.isPinned) return -1;
+    // If 'b' is pinned and 'a' isn't, 'b' goes first (1)
+    if (!a.isPinned && b.isPinned) return 1;
+    // Otherwise, sort by date (Newest first)
+    return b.createdAt - a.createdAt;
+  });
+
   const total = allAnnouncementsForStudent.length;
   if (!total) {
     annContainer.innerHTML = '<p class="helper-text">No announcements yet.</p>';
@@ -198,16 +209,21 @@ function renderStudentAnnouncements() {
     if (annCountLabel) annCountLabel.textContent = "";
     return;
   }
+  
   const LIMIT = 5;
   const itemsToShow = showAllAnnouncements
     ? allAnnouncementsForStudent
     : allAnnouncementsForStudent.slice(0, LIMIT);
 
   itemsToShow.forEach((d) => {
+    // Add a pin icon and a glow effect if pinned
+    const pinIcon = d.isPinned ? "📌 " : "";
+    const pinClass = d.isPinned ? "pinned-item" : "";
+    
     const card = document.createElement("div");
-    card.className = "ev-card-bubble";
+    card.className = `ev-card-bubble ${pinClass}`;
     card.innerHTML = `
-      <h4>${d.title || "Untitled"}</h4>
+      <h4>${pinIcon}${d.title || "Untitled"}</h4>
       <p>${d.message || ""}</p>
       <p class="helper-text">
         Posted: ${d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}

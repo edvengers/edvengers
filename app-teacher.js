@@ -386,6 +386,7 @@ if (annForm) {
 
     const levelVal = document.getElementById("announcement-level").value;
     const subjectVal = document.getElementById("announcement-subject").value;
+const isPinned = document.getElementById("announcement-pinned").checked;
 
     if (!title || !message) return;
 
@@ -398,6 +399,7 @@ if (annForm) {
         message,
         levels,
         subjects,
+isPinned,
         createdAt: Date.now(),
       });
       annForm.reset();

@@ -1074,3 +1074,16 @@ input:focus, textarea:focus, select:focus {
 .ev-link-list a::before {
   content: "🔗 ";
 }
+
+/* ========== FIX ANNOUNCEMENT SPACING ========== */
+.ev-card-bubble p {
+  white-space: pre-wrap;  /* This tells the browser to respect Enter keys */
+  line-height: 1.6;       /* Makes it easier to read */
+}
+
+/* Pinned Announcement Glow */
+.ev-card-bubble.pinned-item {
+  border: 1px solid var(--ev-accent);
+  background: rgba(31, 230, 168, 0.1); /* Green tint */
+  box-shadow: 0 0 15px rgba(31, 230, 168, 0.15);
+}
