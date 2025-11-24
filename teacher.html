@@ -1,32 +1,104 @@
-<section class="dashboard-card">
-          <div class="card-header">Game / Booklet Zone</div>
-          <form id="booklet-form">
-            <div class="form-field">
-               <label>Game Title</label>
-               <input id="booklet-title" type="text" placeholder="e.g. Math Race" required />
-            </div>
-            <div class="form-field">
-               <label>Link</label>
-               <input id="booklet-url" type="url" placeholder="https://blooket.com/..." required />
-            </div>
-            <div class="form-field" style="display:flex; gap:1rem;">
-               <div style="flex:1;">
-                 <label>Level</label>
-                 <select id="booklet-level">
-                   <option value="P3">P3</option><option value="P4">P4</option>
-                   <option value="P5">P5</option><option value="P6">P6</option>
-                 </select>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="portal-body">
+  <header class="ev-header">
+    <div class="ev-container ev-nav">
+      <div class="ev-logo">Edvengers Teacher</div>
+      <a href="index.html" class="btn-ghost">Home</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="teacher-login-section">
+      <div class="ev-container" style="padding:3rem 0;">
+        <h1>Teacher Login</h1>
+        <form id="teacher-login-form" class="dashboard-card">
+          <label>Password</label><input id="teacher-password" type="password" required />
+          <button type="submit" class="btn-primary">Enter</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="teacher-dashboard-section" style="display:none;">
+      <div class="ev-container" style="padding:2rem 0;">
+        <div class="dashboard-top-row">
+          <h1>Dashboard</h1>
+          <button id="teacher-logout-btn" class="btn-ghost">Log out</button>
+        </div>
+
+        <section class="dashboard-card">
+          <h2>Students &amp; Hero Points</h2>
+          <p class="helper-text">Select student to award points.</p>
+          <form id="students-form">
+             <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+               <div><label>Level</label><select id="filter-level"><option value="">All</option><option>P3</option><option>P4</option><option>P5</option><option>P6</option></select></div>
+               <div><label>Subject</label><select id="filter-subject"><option value="">All</option><option>P3 Math</option><option>P3 English</option><option>P4 Math</option><option>P4 English</option><option>P5 Math</option><option>P5 English</option><option>P6 Math</option><option>P6 English</option></select></div>
+               <div><label>Student</label><select id="student-select"><option value="">-- Select --</option></select></div>
+             </div>
+             
+             <div id="students-list" style="margin-top:1rem;"></div>
+             
+             <details style="margin-top:1.5rem; border-top:1px solid #333; padding-top:1rem;">
+               <summary>Add New Student</summary>
+               <div style="margin-top:1rem;">
+                 <label>Name</label><input id="student-name" type="text" />
+                 <label>Level</label><select id="student-level"><option>P3</option><option>P4</option><option>P5</option><option>P6</option></select>
+                 <button type="submit" class="btn-primary">Create Student</button>
                </div>
-               <div style="flex:1;">
-                 <label>Subject</label>
-                 <select id="booklet-subject">
-                   <option value="P3 Math">P3 Math</option><option value="P3 English">P3 English</option>
-                   <option value="P4 Math">P4 Math</option><option value="P4 English">P4 English</option>
-                   <option value="P5 Math">P5 Math</option><option value="P5 English">P5 English</option>
-                   <option value="P6 Math">P6 Math</option><option value="P6 English">P6 English</option>
-                 </select>
-               </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Assign Game</button>
+             </details>
           </form>
         </section>
+
+        <section class="dashboard-card">
+          <h2>Announcements</h2>
+          <form id="announcement-form">
+            <input id="announcement-title" type="text" placeholder="Title" required />
+            <textarea id="announcement-message" rows="3" placeholder="Message" required></textarea>
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="announcement-pinned" style="width:auto;"> Pin to Top 📌
+            </label>
+            <button type="submit" class="btn-primary">Post</button>
+          </form>
+          <div id="announcement-list" style="margin-top:1rem;"></div>
+        </section>
+
+        <section class="dashboard-card">
+          <h2>Homework</h2>
+          <form id="homework-form">
+            <input id="homework-title" type="text" placeholder="Title" required />
+            <textarea id="homework-description" rows="2" placeholder="Description"></textarea>
+            <div class="link-row" style="display:flex; gap:0.5rem;">
+               <input id="homework-name-1" placeholder="Link Name" style="flex:1;">
+               <input id="homework-link-1" placeholder="URL" style="flex:2;">
+            </div>
+            <button type="submit" class="btn-primary">Post</button>
+          </form>
+          <div id="homework-list" style="margin-top:1rem;"></div>
+        </section>
+
+        <section class="dashboard-card">
+          <h2>Chat</h2>
+          <div class="chat-layout">
+            <aside class="chat-sidebar" id="chat-student-list"></aside>
+            <section class="chat-main">
+              <div id="chat-thread" class="chat-window"></div>
+              <form id="teacher-chat-form" class="chat-form">
+                <textarea id="teacher-chat-input" rows="2"></textarea>
+                <button type="submit" class="btn-primary">Reply</button>
+              </form>
+            </section>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="app-teacher.js?v=safe" type="module"></script>
+</body>
+</html>

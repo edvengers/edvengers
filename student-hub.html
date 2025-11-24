@@ -1,126 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Student Hub</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-</head>
-<body class="portal-body">
-  <header class="ev-header">
-    <div class="ev-container ev-nav">
-      <div class="ev-logo">Edvengers Student</div>
-      <a href="index.html" class="btn-ghost">Exit</a>
-    </div>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Edvengers Student Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  </head>
 
-  <main>
-    <section id="student-login-section">
-      <div class="ev-container" style="padding: 3rem 0;">
-        <h1>Student Login</h1>
-        <div class="dashboard-card">
-          <form id="student-login-form">
-            <label>Name</label><input id="login-name" type="text" placeholder="Ethan Tan" required />
-            <label>Password</label><input id="login-password" type="password" required />
-            <p class="helper-text" style="color: #a9b4d8; margin-bottom: 1rem;">
-              First time? Use default password: <strong>heroes2026</strong>
-            </p>
-            <button type="submit" class="btn-primary">Enter Hub</button>
-          </form>
-        </div>
+  <body class="portal-body">
+    <header class="ev-header">
+      <div class="ev-container ev-nav">
+        <div class="ev-logo">Edvengers</div>
+        <a href="index.html" class="btn-ghost">Back</a>
       </div>
-    </section>
+    </header>
 
-    <section id="student-password-section" style="display:none;">
-      <div class="ev-container">
-        <h1>Set Secret Password</h1>
-        <div class="dashboard-card">
-          <form id="change-password-form">
-            <label>New Secret Password</label><input id="new-password" type="text" required />
-            <button type="submit" class="btn-primary">Save & Start</button>
-          </form>
+    <main>
+      <section id="student-login-section">
+        <div class="ev-container" style="padding: 3rem 0;">
+          <h1>Student Login</h1>
+          <div class="dashboard-card">
+            <form id="student-login-form">
+              <label>Name</label><input id="login-name" type="text" placeholder="e.g. Ethan Tan" required />
+              <label>Password</label><input id="login-password" type="password" required />
+              <p class="helper-text" style="margin-top:1rem; color:#a9b4d8;">
+                First time login? Use default: <strong>heroes2026</strong>
+              </p>
+              <button type="submit" class="btn-primary" style="margin-top:1rem;">Enter Hub</button>
+            </form>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section id="student-hub-section" style="display:none;">
-      <div class="ev-container" style="padding: 2rem 0;">
-        
-        <div class="dashboard-grid">
-          <div class="card">
-            <div class="card-header">Profile</div>
-            <div class="profile-section">
-              <img id="user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=1" class="profile-avatar" onclick="toggleAvatarSelector()" title="Change Avatar" />
-              <div>
-                <div style="font-size:1.2rem; font-weight:bold;" id="profile-name">Hero</div>
-                <div style="color:gold; font-weight:bold;">⭐ <span id="hero-stars-count">0</span> Points</div>
-              </div>
+      <section id="student-password-section" style="display:none;">
+        <div class="ev-container">
+          <h1>Set Secret Password</h1>
+          <div class="dashboard-card">
+            <form id="change-password-form">
+              <label>New Secret Password</label><input id="new-password" type="text" required />
+              <button type="submit" class="btn-primary">Save &amp; Start</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="student-hub-section" style="display:none;">
+        <div class="ev-container" style="padding:2rem 0;">
+          <h1>Hi <span id="student-name-display">hero</span>!</h1>
+
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">Your Details</div>
+              <p>Name: <strong id="profile-name"></strong></p>
+              <p>Level: <strong id="profile-level"></strong></p>
+              <p>Hero Points: <strong id="hero-stars-count" style="color:gold; font-size:1.2rem;">0</strong></p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">Live Class</div>
+              <p class="helper-text">Join 5 mins early.</p>
+              <a href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1" target="_blank" class="btn-primary" style="text-decoration:none; text-align:center; display:block;">
+                Join Zoom Lesson
+              </a>
             </div>
             
-            <div id="avatar-selector" style="display:none; margin-top:1rem; border-top:1px solid rgba(255,255,255,0.1);">
-              <p class="helper-text">Pick a new look:</p>
-              <div class="avatar-grid" id="avatar-options">
-                </div>
+            <div class="card">
+              <div class="card-header">Attendance</div>
+              <p class="helper-text">Class starting?</p>
+              <button id="btn-attendance" class="btn-primary" style="width:100%">🙋‍♂️ I'm Here!</button>
             </div>
-
-            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin: 1rem 0;">
-            <button id="btn-attendance" class="btn-primary">🙋‍♂️ I'm Here!</button>
           </div>
 
-          <div class="card">
-            <div class="card-header">Live Lesson</div>
-            <p class="helper-text">Join 5 mins early. Have notebook ready.</p>
-            <a href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1" target="_blank" class="btn-primary" style="display:inline-block; text-align:center; text-decoration:none;">
-              Join Zoom
-            </a>
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header">Announcements</div>
+            <div id="student-announcements"></div>
           </div>
-        </div>
 
-        <div class="dashboard-grid" style="margin-top:1.5rem;">
-           <div class="card">
-             <div class="card-header">🎮 Game Zone</div>
-             <div id="booklet-list">
-               <p class="helper-text">No games assigned for your level yet.</p>
-             </div>
-           </div>
-           
-           <div class="card">
-             <div class="card-header">📢 Announcements</div>
-             <div id="student-announcements"></div>
-           </div>
-        </div>
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header">Homework</div>
+            <div id="student-homework-list"></div>
+          </div>
 
-        <div class="card" style="margin-top:1.5rem;">
-          <div class="card-header">📝 Homework</div>
-          <div id="student-homework-list"></div>
+          <section class="dashboard-card" style="margin-top:1.5rem;">
+            <div class="card-header">Chat with Teacher</div>
+            <div id="chat-window" class="chat-window"></div>
+            <form id="chat-form" style="display:flex; gap:0.5rem;">
+              <input id="chat-input" type="text" placeholder="Message..." style="margin:0;" />
+              <label style="font-size:1.5rem; cursor:pointer;">📷 <input type="file" id="chat-image" accept="image/*" style="display:none;" /></label>
+              <button type="submit" class="btn-primary" style="width:auto;">Send</button>
+            </form>
+          </section>
         </div>
+      </section>
+    </main>
 
-        <div class="card" style="margin-top:1.5rem;">
-          <div class="card-header">Chat with Teacher</div>
-          <div id="chat-window" class="chat-window"></div>
-          <form id="chat-form" style="display:flex; gap:0.5rem;">
-            <input id="chat-input" type="text" placeholder="Message..." style="margin:0;" />
-            <label style="margin:0; cursor:pointer; font-size:1.5rem;">
-              📷 <input type="file" id="chat-image" accept="image/*" style="display:none;" />
-            </label>
-            <button type="submit" class="btn-primary" style="width:auto;">Send</button>
-          </form>
-        </div>
-
+    <div id="mission-overlay" class="mission-overlay hidden">
+      <div class="mission-header">
+        <span class="mission-title">Mission</span>
+        <button class="btn-ghost" onclick="closeMission()">Close</button>
       </div>
-    </section>
-  </main>
-
-  <div id="mission-overlay" class="mission-overlay hidden">
-    <div class="mission-header">
-      <span class="mission-title">⚡ Mission</span>
-      <button class="btn-ghost" onclick="closeMission()">Close</button>
+      <div class="mission-frame-container"><iframe id="mission-frame" src=""></iframe></div>
     </div>
-    <div class="mission-frame-container"><iframe id="mission-frame" src=""></iframe></div>
-  </div>
-  <div id="flying-hero" class="flying-hero hidden">🦸‍♂️</div>
+    <div id="flying-hero" class="flying-hero hidden">🦸‍♂️</div>
 
-  <script src="app-student.js" type="module"></script>
-</body>
+    <script src="app-student.js" type="module"></script>
+  </body>
 </html>

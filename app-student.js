@@ -1,4 +1,4 @@
-// app-student.js (V5.0)
+// app-student.js (Safe Restoration)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
@@ -17,29 +17,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 let currentStudent = null;
 
-// 1. PRE-SET AVATARS
-const AVATAR_SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
-window.toggleAvatarSelector = function() {
-  const sel = document.getElementById("avatar-selector");
-  const grid = document.getElementById("avatar-options");
-  if (sel.style.display === "none") {
-    sel.style.display = "block";
-    grid.innerHTML = AVATAR_SEEDS.map(seed => 
-      `<img src="https://api.dicebear.com/7.x/bottts/svg?seed=${seed}" class="avatar-option" onclick="selectAvatar(${seed})">`
-    ).join("");
-  } else {
-    sel.style.display = "none";
-  }
-};
-
-window.selectAvatar = async function(seed) {
-  const url = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
-  document.getElementById("user-avatar").src = url;
-  document.getElementById("avatar-selector").style.display = "none";
-  await updateDoc(doc(db, "students", currentStudent.id), { avatarUrl: url });
-};
-
-// 2. OVERLAY & GAMIFICATION
+// OVERLAY & CONFETTI
 window.openMission = function(url) {
   document.getElementById("mission-overlay").classList.remove("hidden");
   document.getElementById("mission-frame").src = url;
@@ -47,10 +25,10 @@ window.openMission = function(url) {
 window.closeMission = function() {
   document.getElementById("mission-overlay").classList.add("hidden");
   document.getElementById("mission-frame").src = "";
-  if(typeof confetti==='function') confetti({particleCount:100, spread:70, origin:{y:0.6}});
+  if(typeof confetti === 'function') confetti({particleCount:100, spread:70, origin:{y:0.6}});
 };
 
-// 3. LOGIN & INIT
+// LOGIN
 document.getElementById("student-login-form").addEventListener("submit", async(e)=>{
   e.preventDefault();
   const name = document.getElementById("login-name").value.trim();
@@ -70,7 +48,6 @@ document.getElementById("student-login-form").addEventListener("submit", async(e
         ev.preventDefault();
         const newP = document.getElementById("new-password").value;
         await updateDoc(doc(db, "students", id), {password:newP});
-        data.password = newP;
         initHub({id, ...data});
       };
     } else {
@@ -85,55 +62,36 @@ function initHub(student) {
   document.getElementById("student-password-section").style.display="none";
   document.getElementById("student-hub-section").style.display="block";
 
-  // Fill Profile
   document.getElementById("student-name-display").textContent = student.name;
   document.getElementById("profile-name").textContent = student.name;
-  document.getElementById("hero-stars-count").textContent = student.stars || 0;
-  if(student.avatarUrl) document.getElementById("user-avatar").src = student.avatarUrl;
-
-  // Live Stars Update
+  document.getElementById("profile-level").textContent = student.level || "-";
+  
+  // Live Stars
   onSnapshot(doc(db, "students", student.id), (snap) => {
     if(snap.exists()) document.getElementById("hero-stars-count").textContent = snap.data().stars || 0;
   });
 
   // Attendance
-  document.getElementById("btn-attendance").onclick = async function() {
+  const attBtn = document.getElementById("btn-attendance");
+  attBtn.onclick = async function() {
     this.disabled = true; this.textContent = "Marked! ✅";
-    if(typeof confetti==='function') confetti();
+    if(typeof confetti === 'function') confetti();
     const h = document.getElementById("flying-hero");
     h.classList.remove("hidden"); h.classList.add("fly-across");
     setTimeout(()=>h.classList.add("hidden"), 2600);
     
-    // Notify Teacher
     await addDoc(collection(db, "chats", student.id, "messages"), {
       sender:"student", text:"🔴 CHECK-IN", createdAt:Date.now()
     });
     await setDoc(doc(db, "students", student.id), {hasUnread:true}, {merge:true});
   };
 
-  // LOAD BOOKLETS (Smart Filter)
-  const bkDiv = document.getElementById("booklet-list");
-  onSnapshot(collection(db, "booklets"), (snap)=>{
-    bkDiv.innerHTML = "";
-    let found = false;
-    snap.forEach(doc => {
-      const b = doc.data();
-      // Show if level matches AND subject is in student's list
-      if (b.level === student.level && (student.subjects||[]).includes(b.subject)) {
-        found = true;
-        bkDiv.innerHTML += `<div class="booklet-card" onclick="openMission('${b.url}')">🎮 ${b.title}</div>`;
-      }
-    });
-    if(!found) bkDiv.innerHTML = '<p class="helper-text">No games for your subjects today.</p>';
-  });
-
-  // LOAD ANNOUNCEMENTS
+  // Announcements
   const annDiv = document.getElementById("student-announcements");
   onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc")), (snap)=>{
     annDiv.innerHTML="";
     let list = [];
     snap.forEach(d => list.push(d.data()));
-    // Pinned first
     list.sort((a,b) => (a.isPinned===b.isPinned)? 0 : a.isPinned? -1 : 1);
     list.forEach(d => {
        const pin = d.isPinned ? "📌 " : "";
@@ -142,7 +100,7 @@ function initHub(student) {
     });
   });
 
-  // LOAD HOMEWORK
+  // Homework
   const hwDiv = document.getElementById("student-homework-list");
   onSnapshot(query(collection(db, "homework"), orderBy("postedAt", "desc")), (snap)=>{
     hwDiv.innerHTML="";
@@ -153,7 +111,7 @@ function initHub(student) {
     });
   });
 
-  // CHAT
+  // Chat
   const chatWin = document.getElementById("chat-window");
   onSnapshot(query(collection(db, "chats", student.id, "messages"), orderBy("createdAt")), (snap)=>{
     chatWin.innerHTML="";

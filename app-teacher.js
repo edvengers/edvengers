@@ -1,4 +1,4 @@
-// app-teacher.js (V5.0 - Restored & Improved)
+// app-teacher.js (Safe Restoration)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
@@ -26,24 +26,22 @@ document.getElementById("teacher-login-form").addEventListener("submit", (e)=>{
     } else { alert("Wrong password"); }
 });
 
-// --- STUDENTS & HERO POINTS (RESTORED) ---
+// --- STUDENTS & HERO POINTS ---
 let studentsCache = [];
 let selectedStudentId = null;
 const studentsSelect = document.getElementById("student-select");
 const studentsList = document.getElementById("students-list");
 
-// Load Students
 onSnapshot(query(collection(db, "students"), orderBy("name")), (snap)=>{
     studentsCache = [];
-    studentsSelect.innerHTML = '<option value="">Select Student</option>';
+    studentsSelect.innerHTML = '<option value="">-- Select --</option>';
     snap.forEach(d => {
         const s = {id:d.id, ...d.data()};
         studentsCache.push(s);
-        studentsSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.level||"-"})</option>`;
+        studentsSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
     });
 });
 
-// Select Student
 studentsSelect.addEventListener("change", ()=>{
     selectedStudentId = studentsSelect.value;
     renderStudentRow();
@@ -58,25 +56,22 @@ function renderStudentRow() {
     studentsList.innerHTML = `
       <div class="ev-card-bubble student-row">
         <div>
-          <strong>${s.name}</strong><br>
-          <span class="helper-text">Points: ${s.stars||0}</span>
+          <strong style="font-size:1.1rem;">${s.name}</strong><br>
+          <span class="helper-text">Current Points: <strong style="color:gold">${s.stars||0}</strong></span>
         </div>
         <div class="student-actions">
-          <button onclick="modPoints('${s.id}', 1)">+1</button>
-          <button onclick="modPoints('${s.id}', 5)">+5</button>
-          <button onclick="modPoints('${s.id}', -${s.stars})">Reset</button>
+          <button class="btn-small" onclick="modPoints('${s.id}', 1)">+1</button>
+          <button class="btn-small" onclick="modPoints('${s.id}', 5)">+5</button>
+          <button class="btn-small" style="background:red" onclick="modPoints('${s.id}', -${s.stars})">Reset</button>
         </div>
       </div>
     `;
 }
 
-// Global function for the buttons
 window.modPoints = async function(id, delta) {
     await updateDoc(doc(db, "students", id), { stars: increment(delta) });
-    // Re-render happens automatically via onSnapshot
 };
 
-// Create Student
 document.getElementById("students-form").addEventListener("submit", async(e)=>{
     e.preventDefault();
     const name = document.getElementById("student-name").value;
@@ -88,19 +83,17 @@ document.getElementById("students-form").addEventListener("submit", async(e)=>{
     alert("Student Created");
 });
 
-// --- BOOKLETS (NEW SMART LOGIC) ---
-document.getElementById("booklet-form").addEventListener("submit", async(e)=>{
-    e.preventDefault();
-    await addDoc(collection(db, "booklets"), {
-        title: document.getElementById("booklet-title").value, // You need to add this input to HTML if you want titles
-        url: document.getElementById("booklet-url").value,
-        level: document.getElementById("booklet-level").value, // e.g. P3
-        subject: document.getElementById("booklet-subject").value // e.g. P3 Math
+// --- ANNOUNCEMENTS ---
+const annList = document.getElementById("announcement-list");
+onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc")), (snap)=>{
+    annList.innerHTML="";
+    snap.forEach(d => {
+        const a = d.data();
+        const pin = a.isPinned ? "📌" : "";
+        annList.innerHTML += `<div class="ev-card-bubble"><h4>${pin} ${a.title}</h4><p>${a.message}</p></div>`;
     });
-    alert("Booklet/Game Assigned!");
 });
 
-// --- ANNOUNCEMENTS & HOMEWORK ---
 document.getElementById("announcement-form").addEventListener("submit", async(e)=>{
     e.preventDefault();
     await addDoc(collection(db, "announcements"), {
@@ -109,17 +102,28 @@ document.getElementById("announcement-form").addEventListener("submit", async(e)
         isPinned: document.getElementById("announcement-pinned").checked,
         createdAt: Date.now()
     });
-    alert("Announcement Posted");
+    alert("Posted");
+});
+
+// --- HOMEWORK ---
+const hwList = document.getElementById("homework-list");
+onSnapshot(query(collection(db, "homework"), orderBy("postedAt", "desc")), (snap)=>{
+    hwList.innerHTML="";
+    snap.forEach(d => {
+        const h = d.data();
+        hwList.innerHTML += `<div class="ev-card-bubble"><h4>${h.title}</h4></div>`;
+    });
 });
 
 document.getElementById("homework-form").addEventListener("submit", async(e)=>{
     e.preventDefault();
     const links = [{
         url: document.getElementById("homework-link-1").value,
-        name: document.getElementById("homework-name-1").value || "Homework"
+        name: document.getElementById("homework-name-1").value || "Link"
     }];
     await addDoc(collection(db, "homework"), {
         title: document.getElementById("homework-title").value,
+        description: document.getElementById("homework-description").value,
         links, postedAt: Date.now()
     });
     alert("Homework Posted");
@@ -161,8 +165,10 @@ function openChat(id) {
 document.getElementById("teacher-chat-form").addEventListener("submit", async(e)=>{
     e.preventDefault();
     if(!currentChatId) return;
+    const txt = document.getElementById("teacher-chat-input").value;
+    if(!txt) return;
     await addDoc(collection(db, "chats", currentChatId, "messages"), {
-        sender:"teacher", text:document.getElementById("teacher-chat-input").value, createdAt:Date.now()
+        sender:"teacher", text:txt, createdAt:Date.now()
     });
     document.getElementById("teacher-chat-input").value="";
 });
