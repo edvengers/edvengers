@@ -297,20 +297,104 @@ body {
 }
 
 .ev-card-bubble {
-  background: #081324;
+  background: rgba(15, 23, 42, 0.6); 
+  border: 1px solid rgba(255, 255, 255, 0.08); 
   border-radius: 16px;
   padding: 0.9rem 1.1rem;
   margin-bottom: 0.75rem;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ev-card-bubble:hover {
+  transform: translateY(-2px); 
+  border-color: var(--ev-accent); 
+  box-shadow: 0 4px 20px rgba(31, 230, 168, 0.15);
+}
+
+/* Horizontal Scroll Container (New in V2.0) */
+#student-announcements, 
+#student-homework-list,
+#announcement-list,
+#homework-list {
+  display: flex;             
+  overflow-x: auto;          
+  gap: 1rem;                 
+  padding-bottom: 1rem;      
+  scroll-behavior: smooth;   
+}
+
+/* Force cards to keep their shape in scroll */
+#student-announcements .ev-card-bubble, 
+#student-homework-list .ev-card-bubble,
+#announcement-list .ev-card-bubble,
+#homework-list .ev-card-bubble {
+  min-width: 280px;          
+  max-width: 320px;          
+  flex-shrink: 0;            
+  height: auto;              
+  align-self: stretch;       
 }
 
 .ev-card-bubble h4 {
   margin: 0 0 0.35rem;
 }
 
+.ev-card-bubble p {
+  white-space: pre-wrap;  
+  line-height: 1.6;       
+}
+
 .ev-link-list {
   margin: 0 0 0.35rem;
-  padding-left: 1.1rem;
+  padding-left: 0;
+  margin-top: 0.5rem;
+}
+
+.ev-link-list li {
+  list-style: none;
+  margin-bottom: 0.5rem;
+}
+
+.ev-link-list a {
+  display: inline-block;
+  background: var(--ev-accent);
+  color: #021014;
+  text-decoration: none;
+  padding: 0.35rem 0.8rem;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ev-link-list a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(31, 230, 168, 0.4);
+}
+
+.ev-link-list a::before {
+  content: "🔗 ";
+}
+
+/* Announcement & Homework Accents */
+#student-announcements .ev-card-bubble,
+#announcement-list .ev-card-bubble {
+  border-left: 3px solid var(--ev-accent);
+}
+
+#student-homework-list .ev-card-bubble,
+#homework-list .ev-card-bubble {
+  border-left: 3px solid var(--ev-accent-alt);
+}
+
+/* Pinned Announcement Glow */
+.ev-card-bubble.pinned-item {
+  border: 1px solid var(--ev-accent) !important;
+  background: rgba(31, 230, 168, 0.1); 
+  box-shadow: 0 0 15px rgba(31, 230, 168, 0.15);
 }
 
 .ev-schedule-card h3 {
@@ -331,7 +415,6 @@ body {
 }
 
 /* Pricing column highlight */
-
 .ev-column-highlight {
   background: var(--ev-card);
   border-radius: var(--ev-radius-lg);
@@ -352,7 +435,6 @@ body {
 }
 
 /* ========== FAQ (DETAILS) ========== */
-
 .ev-faq {
   max-width: 780px;
   margin: 0 auto;
@@ -400,7 +482,6 @@ body {
 }
 
 /* ========== FOOTER ========== */
-
 .ev-footer {
   padding: 1.5rem 0 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -415,7 +496,6 @@ body {
 }
 
 /* ========== RESPONSIVE ========== */
-
 @media (max-width: 960px) {
   .ev-hero-grid,
   .ev-two-column {
@@ -464,8 +544,7 @@ body {
   }
 }
 
-/* ========== PORTAL PAGES (STUDENT + TEACHER) ========== */
-
+/* ========== PORTAL PAGES ========== */
 .portal-body {
   background: radial-gradient(circle at top, #071531 0, #020712 55%);
   color: var(--ev-text);
@@ -479,21 +558,18 @@ body {
   padding: 2.5rem 1.5rem 3.5rem;
 }
 
-/* Generic page title */
 .portal-body h1 {
   margin-top: 0;
   margin-bottom: 1.25rem;
   font-size: 1.7rem;
 }
 
-/* Subheadings */
 .portal-body h2 {
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   font-size: 1.2rem;
 }
 
-/* Cards & layout */
 .portal-body .card,
 .portal-body .dashboard-card {
   background: var(--ev-card);
@@ -515,7 +591,6 @@ body {
   margin-bottom: 0.6rem;
 }
 
-/* Grid for multiple cards */
 .portal-body .card-grid,
 .portal-body .dashboard-grid {
   display: grid;
@@ -523,7 +598,6 @@ body {
   gap: 1.2rem;
 }
 
-/* Forms & inputs */
 .portal-body label {
   font-size: 0.9rem;
   display: block;
@@ -550,12 +624,10 @@ body {
   resize: vertical;
 }
 
-/* Buttons reuse main .btn styles but add spacing */
 .portal-body .btn {
   margin-top: 0.4rem;
 }
 
-/* Tables / lists */
 .portal-body table {
   width: 100%;
   border-collapse: collapse;
@@ -573,26 +645,6 @@ body {
   font-weight: 600;
 }
 
-/* Chat / question list */
-.portal-body .chat-window,
-.portal-body .question-list {
-  max-height: 360px;
-  overflow-y: auto;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: #050d20;
-  border: 1px solid var(--ev-border-soft);
-}
-
-/* Only question items use this generic bubble style */
-.portal-body .question-item {
-  padding: 0.55rem 0.65rem;
-  border-radius: 10px;
-  margin-bottom: 0.45rem;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-/* Status text */
 .portal-body .helper-text,
 .portal-body .status-text {
   font-size: 0.8rem;
@@ -600,7 +652,6 @@ body {
   margin-top: 0.4rem;
 }
 
-/* Responsive portal layout */
 @media (max-width: 900px) {
   .portal-body .card-grid,
   .portal-body .dashboard-grid {
@@ -608,7 +659,6 @@ body {
   }
 }
 
-/* Back to site button */
 .btn-back {
   margin-bottom: 1.5rem;
   display: inline-flex;
@@ -621,120 +671,7 @@ body {
   opacity: 1;
 }
 
-/* Teacher dashboard chat improvements */
-
-.question-group {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 18px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.question-group-header {
-  font-weight: 600;
-  font-size: 1.05rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.4rem 0;
-}
-
-.question-thread {
-  margin-top: 0.8rem;
-  max-height: 300px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.msg-student {
-  align-self: flex-start;
-  background: rgba(31, 230, 168, 0.12);
-  border-left: 3px solid var(--ev-accent);
-  padding: 0.6rem 0.8rem;
-  border-radius: 10px;
-  max-width: 70%;
-}
-
-.msg-teacher {
-  align-self: flex-end;
-  background: rgba(255, 255, 255, 0.08);
-  border-right: 3px solid var(--ev-accent-alt);
-  padding: 0.6rem 0.8rem;
-  border-radius: 10px;
-  max-width: 70%;
-}
-
-.msg-time {
-  font-size: 0.75rem;
-  color: var(--ev-muted);
-  margin-top: 0.2rem;
-  text-align: right;
-}
-
-.reply-box {
-  margin-top: 0.9rem;
-}
-
-.reply-box textarea {
-  width: 100%;
-  background: #0b142c;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 0.7rem;
-  color: var(--ev-text);
-}
-
-.reply-box button {
-  margin-top: 0.5rem;
-  float: right;
-}
-
-.teacher-chat-thread {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
-}
-
-.teacher-chat-row {
-  display: flex;
-}
-
-.teacher-chat-row-student {
-  justify-content: flex-start;
-}
-
-.teacher-chat-row-teacher {
-  justify-content: flex-end;
-}
-
-.teacher-chat-bubble {
-  max-width: 80%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 14px;
-  font-size: 0.92rem;
-  line-height: 1.35;
-}
-
-.teacher-chat-row-teacher .teacher-chat-bubble {
-  background: #12b886;
-  color: #02101f;
-  border-bottom-right-radius: 2px;
-}
-
-.teacher-chat-time {
-  font-size: 0.75rem;
-  opacity: 0.75;
-  margin-top: 0.15rem;
-  text-align: right;
-}
-
-/* === Chat layout (used by teacher + student) === */
-
+/* === Chat layout === */
 .chat-layout {
   display: flex;
   gap: 1rem;
@@ -752,7 +689,6 @@ body {
 }
 
 /* Student list bubbles in teacher sidebar */
-
 .chat-student-item {
   width: 100%;
   text-align: left;
@@ -765,11 +701,7 @@ body {
   cursor: pointer;
   font: inherit;
   display: block;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.08s ease,
-    box-shadow 0.12s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
 }
 
 .chat-student-item:hover {
@@ -783,6 +715,13 @@ body {
   background: rgba(15, 23, 42, 0.98);
 }
 
+.chat-student-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .chat-student-name {
   font-weight: 600;
   font-size: 0.9rem;
@@ -794,8 +733,18 @@ body {
   margin-top: 0.1rem;
 }
 
-/* Chat window + bubbles (used by BOTH teacher & student hubs) */
+/* Unread Badge */
+.unread-badge {
+  background: #22c55e;
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
 
+/* Chat window + bubbles */
 .chat-window,
 #chat-thread {
   max-height: 360px;
@@ -811,8 +760,6 @@ body {
   gap: 0.35rem;
 }
 
-/* rows */
-
 .chat-row {
   display: flex;
   width: 100%;
@@ -826,8 +773,6 @@ body {
   justify-content: flex-end;
 }
 
-/* bubbles */
-
 .chat-bubble {
   max-width: 72%;
   padding: 0.55rem 0.8rem 0.45rem;
@@ -838,13 +783,13 @@ body {
 }
 
 .chat-bubble-me {
-  background: #22c55e; /* green-ish like WhatsApp "me" bubble */
+  background: #22c55e; 
   color: #022c22;
 }
 
 .chat-bubble-other {
-  background: #e5e7eb;  /* light grey like WhatsApp */
-  color: #020617;       /* dark text */
+  background: #e5e7eb;  
+  color: #020617;       
 }
 
 .chat-text {
@@ -872,36 +817,21 @@ body {
 }
 
 .chat-bubble {
-  max-width: 420px;      /* WhatsApp-like width */
-  width: fit-content;    /* shrink to content */
+  max-width: 420px;
+  width: fit-content;
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
 
-/* RECEIVED MESSAGES (LEFT SIDE) – light grey like WhatsApp */
-.chat-bubble-teacher {
-  background: #e5e5ea !important; /* light grey */
-  color: #111827 !important;      /* dark text */
-}
-
-/* SENT MESSAGES (RIGHT SIDE) – keep WhatsApp green */
-.chat-bubble-student {
-  background: #16c784 !important; /* WhatsApp-like green */
-  color: #021310 !important;
-}
-
-/* === FIX FOR GIANT IMAGES === */
+/* FIX DEFORMED CHAT IMAGES */
 .chat-image img {
-  max-width: 100%;       /* Force image to fit inside the bubble */
-  height: auto;          /* Keep the aspect ratio (don't squish it) */
-  border-radius: 8px;    /* Rounded corners look nicer */
-  margin-top: 0.5rem;    /* Add a little space above the image */
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 8px;
   display: block;
 }
 
-/* ========== SUPER-SUIT UPGRADES ========== */
-
-/* 1. COOL SCROLLBARS (Get rid of the grey bars) */
+/* 1. COOL SCROLLBARS */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -915,34 +845,6 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ev-accent); 
-}
-
-/* 2. MAKE CARDS POP (Glassy look + Hover glow) */
-.ev-card-bubble {
-  background: rgba(15, 23, 42, 0.6); /* Slightly see-through */
-  border: 1px solid rgba(255, 255, 255, 0.08); /* Subtle border */
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.ev-card-bubble:hover {
-  transform: translateY(-2px); /* Floats up slightly */
-  border-color: var(--ev-accent); /* Glows green on hover */
-  box-shadow: 0 4px 20px rgba(31, 230, 168, 0.15);
-}
-
-/* 3. LIST ACCENTS (Color code the items) */
-/* Announcements get a green stripe */
-#student-announcements .ev-card-bubble,
-#announcement-list .ev-card-bubble {
-  border-left: 3px solid var(--ev-accent);
-}
-
-/* Homework gets a blue stripe */
-#student-homework-list .ev-card-bubble,
-#homework-list .ev-card-bubble {
-  border-left: 3px solid var(--ev-accent-alt);
 }
 
 /* 4. SMOOTHER INPUTS */
@@ -1001,6 +903,9 @@ input:focus, textarea:focus, select:focus {
   justify-content: center;
   gap: 1.5rem;
   margin-top: 1rem;
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .fame-item {
@@ -1014,6 +919,7 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .fame-item:hover {
@@ -1028,62 +934,18 @@ input:focus, textarea:focus, select:focus {
   object-fit: contain;
 }
 
-.fame-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
+/* Mobile Hall of Fame Horizontal Scroll */
+@media (max-width: 640px) {
+  .fame-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 1rem;
+    max-width: 100%;
+  }
   
-  /* THIS IS THE FIX: */
-  max-width: 850px;   /* Forces the 4th item to drop to the next line */
-  margin-left: auto;  /* Centers the whole block on the page */
-  margin-right: auto;
-}
-
-/* ========== BETTER HOMEWORK LINKS ========== */
-.ev-link-list {
-  padding-left: 0;      /* Remove the indentation */
-  margin-top: 0.5rem;
-}
-
-.ev-link-list li {
-  list-style: none;     /* Remove the bullet point */
-  margin-bottom: 0.5rem;
-}
-
-.ev-link-list a {
-  display: inline-block;
-  background: var(--ev-accent); /* Your brand green */
-  color: #021014;       /* Dark text for contrast */
-  text-decoration: none;
-  padding: 0.35rem 0.8rem;
-  border-radius: 99px;  /* Pill shape */
-  font-weight: 700;
-  font-size: 0.85rem;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-/* Hover effect */
-.ev-link-list a:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(31, 230, 168, 0.4);
-}
-
-/* Add a little icon before the text */
-.ev-link-list a::before {
-  content: "🔗 ";
-}
-
-/* ========== FIX ANNOUNCEMENT SPACING ========== */
-.ev-card-bubble p {
-  white-space: pre-wrap;  /* This tells the browser to respect Enter keys */
-  line-height: 1.6;       /* Makes it easier to read */
-}
-
-/* Pinned Announcement Glow */
-.ev-card-bubble.pinned-item {
-  border: 1px solid var(--ev-accent);
-  background: rgba(31, 230, 168, 0.1); /* Green tint */
-  box-shadow: 0 0 15px rgba(31, 230, 168, 0.15);
+  .fame-item {
+    min-width: 220px;
+  }
 }

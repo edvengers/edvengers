@@ -1,13 +1,10 @@
 // app-student.js
-// Student login + profile + filtered announcements/homework + chat with photo
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
   collection,
   addDoc,
   query,
-  where,
   orderBy,
   onSnapshot,
   doc,
@@ -25,7 +22,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
   authDomain: "edvengers-portal.firebaseapp.com",
   projectId: "edvengers-portal",
-  storageBucket: "edvengers-portal.firebasestorage.app", // Correct bucket name
+  storageBucket: "edvengers-portal.firebasestorage.app",
   messagingSenderId: "825538244708",
   appId: "1:825538244708:web:5eb57d970a65433190ef71",
 };
@@ -42,7 +39,6 @@ function fmtTime(ts) {
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
-
 function fmtDateLabel(ts) {
   if (!ts) return "";
   const d = new Date(ts);
@@ -53,31 +49,23 @@ function fmtDateLabel(ts) {
   const diffDays = Math.round((thatDay - today) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return "Today";
   if (diffDays === -1) return "Yesterday";
-  return d.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
 
 let currentStudent = null;
 let chatUnsub = null;
 
-// ---- Student announcements & homework limiting ----
 const annContainer = document.getElementById("student-announcements");
 const annToggleBtn = document.getElementById("student-ann-toggle");
 const annCountLabel = document.getElementById("student-ann-count");
-
 const hwContainer = document.getElementById("student-homework-list");
 const hwToggleBtn = document.getElementById("student-hw-toggle");
 const hwCountLabel = document.getElementById("student-hw-count");
 
-// store filtered lists for this student
 let allAnnouncementsForStudent = [];
 let allHomeworkForStudent = [];
-
-let showAllAnnouncements = false;
-let showAllHomework = false;
+let annVisibleCount = 3; // Show 3 at a time (horizontal pages)
+let hwVisibleCount = 3;
 
 async function loginStudent(name, password) {
   const trimmedName = name.trim();
@@ -88,8 +76,6 @@ async function loginStudent(name, password) {
   const ref = doc(db, "students", id);
   const snap = await getDoc(ref);
 
-  // Student does not exist yet: Stop them.
-  // The Teacher MUST create the account first.
   if (!snap.exists()) {
     throw new Error("Account not found. Please ask Teacher Andy to create your account first.");
   }
@@ -111,10 +97,9 @@ function switchToHub(student) {
   const hubSection = document.getElementById("student-hub-section");
 
   if (loginSection) loginSection.style.display = "none";
-  if (pwdSection) pwdSection.style.display = "none"; // Ensure this is hidden
+  if (pwdSection) pwdSection.style.display = "none";
   if (hubSection) hubSection.style.display = "block";
 
-  // Fill profile
   const displayName = document.getElementById("student-name-display");
   const profileName = document.getElementById("profile-name");
   const profileLevel = document.getElementById("profile-level");
@@ -124,19 +109,16 @@ function switchToHub(student) {
   if (displayName) displayName.textContent = student.name;
   if (profileName) profileName.textContent = student.name;
   if (profileLevel) profileLevel.textContent = student.level || "-";
-  if (profileSubjects)
-    profileSubjects.textContent = (student.subjects && student.subjects.join(", ")) || "-";
+  if (profileSubjects) profileSubjects.textContent = (student.subjects && student.subjects.join(", ")) || "-";
   if (starsEl) starsEl.textContent = student.stars || 0;
 
-  // Live updates for stars & basic profile
   const ref = doc(db, "students", student.id);
   onSnapshot(ref, (snap) => {
     const data = snap.data();
     if (!data) return;
     if (starsEl) starsEl.textContent = data.stars || 0;
     if (profileLevel) profileLevel.textContent = data.level || "-";
-    if (profileSubjects)
-      profileSubjects.textContent = (data.subjects && data.subjects.join(", ")) || "-";
+    if (profileSubjects) profileSubjects.textContent = (data.subjects && data.subjects.join(", ")) || "-";
   });
 
   initAnnouncementsAndHomework(student);
@@ -147,7 +129,6 @@ function initAnnouncementsAndHomework(student) {
   const level = student.level;
   const subjects = student.subjects || [];
 
-  // --- Announcements ---
   const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
   onSnapshot(annQuery, (snap) => {
     if (!annContainer) return;
@@ -158,16 +139,12 @@ function initAnnouncementsAndHomework(student) {
       const subs = d.subjects || [];
       const levelMatch = levels.length === 0 || (level && levels.includes(level));
       const subjectMatch = subs.length === 0 || (subjects.length > 0 && subjects.some((s) => subs.includes(s)));
-
-      if (levelMatch && subjectMatch) {
-        list.push({ id: docSnap.id, ...d });
-      }
+      if (levelMatch && subjectMatch) list.push({ id: docSnap.id, ...d });
     });
     allAnnouncementsForStudent = list;
     renderStudentAnnouncements();
   });
 
-  // --- Homework ---
   const hwQuery = query(collection(db, "homework"), orderBy("postedAt", "desc"));
   onSnapshot(hwQuery, (snap) => {
     if (!hwContainer) return;
@@ -178,10 +155,7 @@ function initAnnouncementsAndHomework(student) {
       const subs = d.subjects || [];
       const levelMatch = levels.length === 0 || (level && levels.includes(level));
       const subjectMatch = subs.length === 0 || (subjects.length > 0 && subjects.some((s) => subs.includes(s)));
-
-      if (levelMatch && subjectMatch) {
-        list.push({ id: docSnap.id, ...d });
-      }
+      if (levelMatch && subjectMatch) list.push({ id: docSnap.id, ...d });
     });
     allHomeworkForStudent = list;
     renderStudentHomework();
@@ -192,13 +166,9 @@ function renderStudentAnnouncements() {
   if (!annContainer) return;
   annContainer.innerHTML = "";
 
-  // SORTING LOGIC: Pinned first, then Newest
   allAnnouncementsForStudent.sort((a, b) => {
-    // If 'a' is pinned and 'b' isn't, 'a' goes first (-1)
     if (a.isPinned && !b.isPinned) return -1;
-    // If 'b' is pinned and 'a' isn't, 'b' goes first (1)
     if (!a.isPinned && b.isPinned) return 1;
-    // Otherwise, sort by date (Newest first)
     return b.createdAt - a.createdAt;
   });
 
@@ -209,43 +179,32 @@ function renderStudentAnnouncements() {
     if (annCountLabel) annCountLabel.textContent = "";
     return;
   }
-  
-  const LIMIT = 5;
-  const itemsToShow = showAllAnnouncements
-    ? allAnnouncementsForStudent
-    : allAnnouncementsForStudent.slice(0, LIMIT);
+
+  const itemsToShow = allAnnouncementsForStudent.slice(0, annVisibleCount);
 
   itemsToShow.forEach((d) => {
-    // Add a pin icon and a glow effect if pinned
     const pinIcon = d.isPinned ? "📌 " : "";
     const pinClass = d.isPinned ? "pinned-item" : "";
-    
     const card = document.createElement("div");
     card.className = `ev-card-bubble ${pinClass}`;
     card.innerHTML = `
       <h4>${pinIcon}${d.title || "Untitled"}</h4>
       <p>${d.message || ""}</p>
-      <p class="helper-text">
-        Posted: ${d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}
-      </p>
+      <p class="helper-text">Posted: ${d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}</p>
     `;
     annContainer.appendChild(card);
   });
 
   if (annToggleBtn) {
-    if (total > LIMIT) {
+    if (total > annVisibleCount) {
       annToggleBtn.style.display = "inline-block";
-      annToggleBtn.textContent = showAllAnnouncements
-        ? "Show fewer announcements"
-        : `Show older announcements (${total - LIMIT} more)`;
+      annToggleBtn.textContent = `Show older (+3)`;
     } else {
       annToggleBtn.style.display = "none";
     }
   }
   if (annCountLabel) {
-    annCountLabel.textContent = showAllAnnouncements
-      ? `Showing all ${total} announcements`
-      : `Showing latest ${Math.min(LIMIT, total)} of ${total} announcements`;
+    annCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
   }
 }
 
@@ -259,15 +218,11 @@ function renderStudentHomework() {
     if (hwCountLabel) hwCountLabel.textContent = "";
     return;
   }
-  const LIMIT = 5;
-  const itemsToShow = showAllHomework
-    ? allHomeworkForStudent
-    : allHomeworkForStudent.slice(0, LIMIT);
+
+  const itemsToShow = allHomeworkForStudent.slice(0, hwVisibleCount);
 
   itemsToShow.forEach((d) => {
-    // NEW LOGIC: Handle objects {url, name}
     const linksHtml = (d.links || []).map((item) => {
-        // Handle both old format (string) and new format (object) just in case
         const url = item.url || item; 
         const name = item.name || "Resource";
         return `<li><a href="${url}" target="_blank">${name}</a></li>`;
@@ -278,43 +233,32 @@ function renderStudentHomework() {
     card.innerHTML = `
       <h4>${d.title || "Untitled"}</h4>
       ${d.description ? `<p>${d.description}</p>` : ""}
-      ${
-        linksHtml
-          ? `<ul class="ev-link-list">${linksHtml}</ul>`
-          : '<p class="helper-text">No links provided.</p>'
-      }
-      <p class="helper-text">
-        Posted: ${d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"}
-        ${d.dueAt ? " • Due: " + new Date(d.dueAt).toLocaleDateString() : ""}
-      </p>
+      ${linksHtml ? `<ul class="ev-link-list">${linksHtml}</ul>` : '<p class="helper-text">No links.</p>'}
+      <p class="helper-text">Posted: ${d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"}</p>
     `;
     hwContainer.appendChild(card);
   });
 
   if (hwToggleBtn) {
-    if (total > LIMIT) {
+    if (total > hwVisibleCount) {
       hwToggleBtn.style.display = "inline-block";
-      hwToggleBtn.textContent = showAllHomework
-        ? "Show fewer homework items"
-        : `Show older homework (${total - LIMIT} more)`;
+      hwToggleBtn.textContent = `Show older (+3)`;
     } else {
       hwToggleBtn.style.display = "none";
     }
   }
   if (hwCountLabel) {
-    hwCountLabel.textContent = showAllHomework
-      ? `Showing all ${total} homework items`
-      : `Showing latest ${Math.min(LIMIT, total)} of ${total} homework items`;
+    hwCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
   }
 }
 
-// Toggle buttons
+// Show More buttons (+3 logic)
 if (annToggleBtn) annToggleBtn.addEventListener("click", () => {
-    showAllAnnouncements = !showAllAnnouncements;
+    annVisibleCount += 3;
     renderStudentAnnouncements();
 });
 if (hwToggleBtn) hwToggleBtn.addEventListener("click", () => {
-    showAllHomework = !showAllHomework;
+    hwVisibleCount += 3;
     renderStudentHomework();
 });
 
@@ -369,13 +313,8 @@ function initChat(student) {
     e.preventDefault();
     const text = input.value.trim();
     const file = imageInput.files[0] || null;
-    if (!text && !file) {
-      if (statusEl) {
-        statusEl.textContent = "Type a message or choose a photo.";
-        setTimeout(() => (statusEl.textContent = ""), 1500);
-      }
-      return;
-    }
+    if (!text && !file) return;
+
     try {
       if (statusEl) statusEl.textContent = "Sending...";
       let imageUrl = null;
@@ -385,12 +324,20 @@ function initChat(student) {
         await uploadBytes(ref, file);
         imageUrl = await getDownloadURL(ref);
       }
+      
       await addDoc(msgsRef, {
         sender: "student",
         text,
         imageUrl,
         createdAt: Date.now(),
       });
+
+      // --- UNREAD TRIGGER ---
+      // Mark this student as having unread messages so Teacher sees the Red Dot
+      const studentRef = doc(db, "students", student.id);
+      await setDoc(studentRef, { hasUnread: true }, { merge: true });
+      // ----------------------
+
       input.value = "";
       imageInput.value = "";
       if (statusEl) {
@@ -399,12 +346,10 @@ function initChat(student) {
       }
     } catch (err) {
       console.error(err);
-      if (statusEl) statusEl.textContent = "Failed to send. Try again.";
+      if (statusEl) statusEl.textContent = "Failed to send.";
     }
   });
 }
-
-// ---- Bootstrapping ----
 
 document.addEventListener("DOMContentLoaded", async () => {
   const loginForm = document.getElementById("student-login-form");
@@ -419,50 +364,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
-  // Check if we have a saved user
-  const savedName = localStorage.getItem("edvengerStudentName");
-  // Optional: Auto-login logic if desired, or skip to force password entry every time.
-  // For now, we'll let them log in manually to ensure security.
-
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (loginError) loginError.style.display = "none";
-
       const name = document.getElementById("login-name").value;
       const pwd = document.getElementById("login-password").value;
 
       try {
         const student = await loginStudent(name, pwd);
-
-        // CHECK: Is it the default password?
         if (student.password === "heroes2026") {
-          // Hide login, Show password change screen
           document.getElementById("student-login-section").style.display = "none";
           document.getElementById("student-password-section").style.display = "block";
           
-          // Handle the password change submit
           const pwdForm = document.getElementById("change-password-form");
           pwdForm.onsubmit = async (evt) => {
             evt.preventDefault();
             const newPwd = document.getElementById("new-password").value.trim();
             if(!newPwd) return;
-            
-            // Save to database
             const ref = doc(db, "students", student.id);
             await setDoc(ref, { password: newPwd, updatedAt: Date.now() }, { merge: true });
-            
-            // Update local object and enter hub
             student.password = newPwd;
             document.getElementById("student-password-section").style.display = "none";
             switchToHub(student);
           };
-          
         } else {
-          // Normal login
           switchToHub(student);
         }
-
       } catch (err) {
         console.error(err);
         showError(err.message || "Login failed. Please try again.");
