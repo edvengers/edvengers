@@ -292,17 +292,60 @@ html, body { margin: 0; padding: 0; }
 .ev-card-bubble h4 { margin: 0 0 0.35rem; }
 .ev-card-bubble p { white-space: pre-wrap; line-height: 1.6; }
 
-/* Horizontal Scroll Container (With Snap) */
-#student-announcements,
-#student-homework-list,
-#announcement-list,
+/* ========== LAYOUT LOGIC ========== */
+
+/* 1. HOMEWORK (Horizontal Scroll / Netflix Style) */
+/* We keep this because homework items are small and cute */
+#student-homework-list, 
 #homework-list {
-  display: flex;
-  overflow-x: auto;
-  gap: 1rem;
+  display: flex; 
+  overflow-x: auto; 
+  gap: 1rem; 
   padding-bottom: 1rem;
-  scroll-behavior: smooth;
-  scroll-snap-type: x mandatory; /* Locks scrolling to cards */
+  scroll-behavior: smooth; 
+  scroll-snap-type: x mandatory;
+}
+
+#student-homework-list .ev-card-bubble, 
+#homework-list .ev-card-bubble {
+  min-width: 260px; 
+  max-width: 300px; 
+  flex-shrink: 0; 
+  height: auto; 
+  align-self: stretch;
+  scroll-snap-align: start; 
+  border-left: 3px solid var(--ev-accent-alt);
+}
+
+/* 2. ANNOUNCEMENTS (Vertical Stack / Full Width) */
+/* We REMOVE the scroll logic here so they naturally fill 100% of the width */
+#student-announcements,
+#announcement-list {
+  display: block; /* Standard stacking */
+  width: 100%;
+}
+
+#student-announcements .ev-card-bubble,
+#announcement-list .ev-card-bubble {
+  width: 100%;       /* Force Full Width */
+  margin-bottom: 1rem; /* Add space between stacked items */
+  border-left: 3px solid var(--ev-accent);
+}
+
+/* General Card Styling */
+.ev-card-bubble {
+  background: rgba(15, 23, 42, 0.6); 
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px; 
+  padding: 1.2rem; /* Increased padding for better reading */
+  position: relative; 
+  overflow: hidden;
+}
+.ev-card-bubble h4 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+.ev-card-bubble p { white-space: pre-wrap; line-height: 1.6; }
+.ev-card-bubble.pinned-item { 
+  border: 2px solid var(--ev-accent) !important; 
+  background: rgba(31, 230, 168, 0.08); 
 }
 
 /* 1. HOMEWORK CARDS (Compact Portrait) */
