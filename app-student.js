@@ -1,4 +1,4 @@
-// app-student.js
+// app-student.js (MASTER VERSION)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -30,9 +30,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
-// CONFIG: Avatar settings
+
+// --- AVATAR CONFIG ---
 const AVATAR_PATH = "images/avatars/";
-const AVAILABLE_AVATARS = ["hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"];
+const AVAILABLE_AVATARS = [
+  "hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", 
+  "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"
+];
 
 function slugify(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
@@ -54,19 +58,16 @@ function fmtDateLabel(ts) {
   if (diffDays === -1) return "Yesterday";
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
-
-// --- PASTE THIS NEW FUNCTION HERE ---
+// DATE FORMATTER FIX
 function fmtDateDayMonthYear(ts) {
   if (!ts) return "-";
   const d = new Date(ts);
-  // This code forces the dd/mm/yy format (e.g. 26/11/25)
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
   });
 }
-// ------------------------------------
 
 let currentStudent = null;
 let chatUnsub = null;
@@ -145,12 +146,15 @@ function switchToHub(student) {
 
   if (displayName) displayName.textContent = student.name;
   if (profileName) profileName.textContent = student.name;
-// LOAD SAVED AVATAR
-  if (student.avatar) document.getElementById("my-avatar").src = AVATAR_PATH + student.avatar;
-Part C: Add the Logic
   if (profileLevel) profileLevel.textContent = student.level || "-";
   if (profileSubjects) profileSubjects.textContent = (student.subjects && student.subjects.join(", ")) || "-";
   if (starsEl) starsEl.textContent = student.stars || 0;
+
+  // LOAD AVATAR IF EXISTS
+  if (student.avatar) {
+    const avatarEl = document.getElementById("my-avatar");
+    if(avatarEl) avatarEl.src = AVATAR_PATH + student.avatar;
+  }
 
   const ref = doc(db, "students", student.id);
   onSnapshot(ref, (snap) => {
@@ -163,8 +167,8 @@ Part C: Add the Logic
 
   initAnnouncementsAndHomework(student);
   initChat(student);
-  initAttendance();
-initSelfTraining(student); 
+  initAttendance(); 
+  initSelfTraining(student); // Self Training
 }
 
 function initAttendance() {
@@ -269,10 +273,8 @@ function renderStudentAnnouncements() {
   itemsToShow.forEach((d) => {
     const pinIcon = d.isPinned ? "📌 " : "";
     const pinClass = d.isPinned ? "pinned-item" : "";
+    const dateStr = fmtDateDayMonthYear(d.createdAt); // Date Fix
     
-    // UPDATED: Using the new dd/mm/yy format
-    const dateStr = fmtDateDayMonthYear(d.createdAt);
-
     const card = document.createElement("div");
     card.className = `ev-card-bubble ${pinClass}`;
     card.innerHTML = `
@@ -316,8 +318,7 @@ function renderStudentHomework() {
         return `<li><button class="btn-link" style="background:var(--ev-accent); border:none; border-radius:99px; padding:0.35rem 0.8rem; font-weight:700; cursor:pointer;" onclick="openMission('${url}')">🔗 ${name}</button></li>`;
     }).join("");
 
-    // UPDATED: Using the new dd/mm/yy format
-    const dateStr = fmtDateDayMonthYear(d.postedAt);
+    const dateStr = fmtDateDayMonthYear(d.postedAt); // Date Fix
 
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
@@ -438,7 +439,76 @@ function initChat(student) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+// --- SELF TRAINING LOGIC (NEW TAB FIX) ---
+async function initSelfTraining(student) {
+  const container = document.getElementById("training-buttons-container");
+  if (!container) return;
+
+  // 1. Fetch links
+  const docRef = doc(db, "settings", "training_links");
+  const snap = await getDoc(docRef);
+  
+  if (!snap.exists()) {
+    container.innerHTML = '<p class="helper-text">No training configured yet.</p>';
+    return;
+  }
+  
+  const links = snap.data();
+  const level = student.level || ""; 
+  const subjects = student.subjects || []; 
+
+  container.innerHTML = ""; 
+
+  let buttonsConfig = [];
+  if (level === "P5") {
+    buttonsConfig = [
+      { label: "P5 English Training", url: links.p5_eng, subjectReq: "P5 English" },
+      { label: "P5 Math Training", url: links.p5_math, subjectReq: "P5 Math" }
+    ];
+  } else if (level === "P6") {
+    buttonsConfig = [
+      { label: "P6 English Training", url: links.p6_eng, subjectReq: "P6 English" },
+      { label: "P6 Math Training", url: links.p6_math, subjectReq: "P6 Math" }
+    ];
+  } else {
+    container.innerHTML = '<p class="helper-text">Training modules coming soon for your level!</p>';
+    return;
+  }
+
+  let hasButtons = false;
+  buttonsConfig.forEach(cfg => {
+    if (!cfg.url) return;
+    hasButtons = true;
+    const isUnlocked = subjects.includes(cfg.subjectReq);
+    const btn = document.createElement("button");
+    
+    if (isUnlocked) {
+      btn.className = "btn btn-primary";
+      btn.style.width = "100%";
+      btn.textContent = "⚔️ " + cfg.label;
+      btn.onclick = () => {
+         if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+         window.open(cfg.url, '_blank');
+      };
+    } else {
+      btn.className = "btn";
+      btn.style.width = "100%";
+      btn.style.background = "#1e293b"; 
+      btn.style.color = "#94a3b8"; 
+      btn.style.cursor = "not-allowed";
+      btn.style.border = "1px solid #334155";
+      btn.innerHTML = "🔒 " + cfg.label;
+      btn.onclick = () => alert(`Please subscribe to ${cfg.subjectReq} to access this training!`);
+    }
+    container.appendChild(btn);
+  });
+
+  if (!hasButtons) container.innerHTML = '<p class="helper-text">No training links active currently.</p>';
+}
+
+// --- MAIN EVENT LISTENER (LOGIN + AVATAR) ---
+document.addEventListener("DOMContentLoaded", () => {
+  // 1. Login Logic
   const loginForm = document.getElementById("student-login-form");
   const loginError = document.getElementById("login-error");
 
@@ -484,91 +554,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
-});
 
-/* SELF TRAINING LOGIC (UPDATED: Opens in New Tab) */
-async function initSelfTraining(student) {
-  const container = document.getElementById("training-buttons-container");
-  if (!container) return;
-
-  // 1. Fetch the links from settings
-  const docRef = doc(db, "settings", "training_links");
-  const snap = await getDoc(docRef);
-  
-  if (!snap.exists()) {
-    container.innerHTML = '<p class="helper-text">No training configured yet.</p>';
-    return;
-  }
-  
-  const links = snap.data();
-  const level = student.level || ""; 
-  const subjects = student.subjects || []; 
-
-  container.innerHTML = ""; // Clear loading text
-
-  // 2. Define buttons per level
-  let buttonsConfig = [];
-
-  if (level === "P5") {
-    buttonsConfig = [
-      { label: "P5 English Training", url: links.p5_eng, subjectReq: "P5 English" },
-      { label: "P5 Math Training", url: links.p5_math, subjectReq: "P5 Math" }
-    ];
-  } else if (level === "P6") {
-    buttonsConfig = [
-      { label: "P6 English Training", url: links.p6_eng, subjectReq: "P6 English" },
-      { label: "P6 Math Training", url: links.p6_math, subjectReq: "P6 Math" }
-    ];
-  } else {
-    container.innerHTML = '<p class="helper-text">Training modules coming soon for your level!</p>';
-    return;
-  }
-
-  // 3. Render the buttons
-  let hasButtons = false;
-  buttonsConfig.forEach(cfg => {
-    if (!cfg.url) return; // Skip if teacher hasn't set a link
-    hasButtons = true;
-
-    const isUnlocked = subjects.includes(cfg.subjectReq);
-    const btn = document.createElement("button");
-    
-    // Style logic
-    if (isUnlocked) {
-      btn.className = "btn btn-primary";
-      btn.style.width = "100%";
-      btn.textContent = "⚔️ " + cfg.label;
-      
-      // !!! FIX: Open in New Tab because Blooket blocks embeds !!!
-      btn.onclick = () => {
-         // Fire some confetti for morale
-         if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-         // Open link in new tab
-         window.open(cfg.url, '_blank');
-      };
-
-    } else {
-      // LOCKED STATE
-      btn.className = "btn";
-      btn.style.width = "100%";
-      btn.style.background = "#1e293b"; 
-      btn.style.color = "#94a3b8"; 
-      btn.style.cursor = "not-allowed";
-      btn.style.border = "1px solid #334155";
-      btn.innerHTML = "🔒 " + cfg.label;
-      btn.onclick = () => alert(`Please subscribe to ${cfg.subjectReq} to access this training!`);
-    }
-
-    container.appendChild(btn);
-  });
-
-  if (!hasButtons) {
-    container.innerHTML = '<p class="helper-text">No training links active currently.</p>';
-  }
-}
-
-/* --- AVATAR SYSTEM LOGIC --- */
-document.addEventListener("DOMContentLoaded", () => {
+  // 2. Avatar Logic
   const avatarBtn = document.getElementById("btn-change-avatar");
   const avatarOverlay = document.getElementById("avatar-overlay");
   const closeAvatarBtn = document.getElementById("close-avatar-btn");
@@ -576,19 +563,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const myAvatarImg = document.getElementById("my-avatar");
 
   if (avatarBtn && avatarOverlay) {
-    // 1. Open the popup
     avatarBtn.addEventListener("click", () => {
       renderAvatarGrid();
       avatarOverlay.classList.remove("hidden");
     });
-
-    // 2. Close the popup
     closeAvatarBtn.addEventListener("click", () => {
       avatarOverlay.classList.add("hidden");
     });
   }
 
-  // Helper: Create the grid of images
   function renderAvatarGrid() {
     avatarGrid.innerHTML = "";
     AVAILABLE_AVATARS.forEach(filename => {
@@ -600,22 +583,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Helper: Save choice
   async function selectAvatar(filename) {
     if (!currentStudent) return;
-    
-    // Update image instantly
-    myAvatarImg.src = AVATAR_PATH + filename;
-    avatarOverlay.classList.add("hidden");
+    if (myAvatarImg) myAvatarImg.src = AVATAR_PATH + filename;
+    if (avatarOverlay) avatarOverlay.classList.add("hidden");
 
-    // Save to Database
     try {
       const ref = doc(db, "students", currentStudent.id);
       await setDoc(ref, { avatar: filename }, { merge: true });
-      
-      // Confetti effect!
       if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 } });
-      
     } catch (err) {
       console.error("Error saving avatar:", err);
     }
