@@ -208,6 +208,8 @@ function initAttendance() {
     
         attBtn.disabled = true;
         attBtn.textContent = "Marked Present! ✅";
+// PLAY SUPERHERO SOUND
+        playSound("powerup");
         
         const msgsRef = collection(db, "chats", currentStudent.id, "messages");
         await addDoc(msgsRef, {
@@ -503,6 +505,7 @@ async function initSelfTraining(student) {
       btn.textContent = "⚔️ " + cfg.label;
       btn.onclick = () => {
          if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+playSound("click");
          window.open(cfg.url, '_blank');
       };
     } else {
@@ -607,6 +610,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const ref = doc(db, "students", currentStudent.id);
       await setDoc(ref, { avatar: filename }, { merge: true });
       if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 } });
+playSound("click");
     } catch (err) {
       console.error("Error saving avatar:", err);
     }
