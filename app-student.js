@@ -480,7 +480,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-/* SELF TRAINING LOGIC */
+/* SELF TRAINING LOGIC (UPDATED: Opens in New Tab) */
 async function initSelfTraining(student) {
   const container = document.getElementById("training-buttons-container");
   if (!container) return;
@@ -514,7 +514,6 @@ async function initSelfTraining(student) {
       { label: "P6 Math Training", url: links.p6_math, subjectReq: "P6 Math" }
     ];
   } else {
-    // Show message for P3/P4 or undefined
     container.innerHTML = '<p class="helper-text">Training modules coming soon for your level!</p>';
     return;
   }
@@ -533,7 +532,15 @@ async function initSelfTraining(student) {
       btn.className = "btn btn-primary";
       btn.style.width = "100%";
       btn.textContent = "⚔️ " + cfg.label;
-      btn.onclick = () => window.openMission(cfg.url);
+      
+      // !!! FIX: Open in New Tab because Blooket blocks embeds !!!
+      btn.onclick = () => {
+         // Fire some confetti for morale
+         if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+         // Open link in new tab
+         window.open(cfg.url, '_blank');
+      };
+
     } else {
       // LOCKED STATE
       btn.className = "btn";
