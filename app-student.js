@@ -52,6 +52,19 @@ function fmtDateLabel(ts) {
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
 
+// --- PASTE THIS NEW FUNCTION HERE ---
+function fmtDateDayMonthYear(ts) {
+  if (!ts) return "-";
+  const d = new Date(ts);
+  // This code forces the dd/mm/yy format (e.g. 26/11/25)
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+}
+// ------------------------------------
+
 let currentStudent = null;
 let chatUnsub = null;
 
@@ -249,12 +262,16 @@ function renderStudentAnnouncements() {
   itemsToShow.forEach((d) => {
     const pinIcon = d.isPinned ? "📌 " : "";
     const pinClass = d.isPinned ? "pinned-item" : "";
+    
+    // UPDATED: Using the new dd/mm/yy format
+    const dateStr = fmtDateDayMonthYear(d.createdAt);
+
     const card = document.createElement("div");
     card.className = `ev-card-bubble ${pinClass}`;
     card.innerHTML = `
       <h4>${pinIcon}${d.title || "Untitled"}</h4>
       <p>${d.message || ""}</p>
-      <p class="helper-text">Posted: ${d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}</p>
+      <p class="helper-text">Posted: ${dateStr}</p>
     `;
     annContainer.appendChild(card);
   });
@@ -292,13 +309,16 @@ function renderStudentHomework() {
         return `<li><button class="btn-link" style="background:var(--ev-accent); border:none; border-radius:99px; padding:0.35rem 0.8rem; font-weight:700; cursor:pointer;" onclick="openMission('${url}')">🔗 ${name}</button></li>`;
     }).join("");
 
+    // UPDATED: Using the new dd/mm/yy format
+    const dateStr = fmtDateDayMonthYear(d.postedAt);
+
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     card.innerHTML = `
       <h4>${d.title || "Untitled"}</h4>
       ${d.description ? `<p>${d.description}</p>` : ""}
       ${linksHtml ? `<ul class="ev-link-list">${linksHtml}</ul>` : '<p class="helper-text">No links.</p>'}
-      <p class="helper-text">Posted: ${d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"}</p>
+      <p class="helper-text">Posted: ${dateStr}</p>
     `;
     hwContainer.appendChild(card);
   });
