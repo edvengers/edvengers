@@ -52,7 +52,18 @@ function fmtDateLabel(ts) {
   if (diffDays === -1) return "Yesterday";
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
-
+// --- PASTE THIS NEW FUNCTION HERE ---
+function fmtDateDayMonthYear(ts) {
+  if (!ts) return "-";
+  const d = new Date(ts);
+  // Forces dd/mm/yy format (e.g. 26/11/25)
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+}
+// ------------------------------------
 // !!! PASSWORD SET !!!
 const TEACHER_PASSWORD = "kalb25";
 
@@ -320,6 +331,10 @@ function renderTeacherAnnouncements() {
 
   itemsToShow.forEach((d) => {
     const pinIcon = d.isPinned ? "📌 " : "";
+    
+    // UPDATED: Using dd/mm/yy format
+    const dateStr = fmtDateDayMonthYear(d.createdAt);
+
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     if(d.isPinned) card.style.border = "1px solid var(--ev-accent)";
@@ -328,7 +343,7 @@ function renderTeacherAnnouncements() {
       <h4>${pinIcon}${d.title || "Untitled"}</h4>
       <p>${d.message || ""}</p>
       <p class="helper-text">
-        Levels: ${(d.levels || []).join(", ") || "All"} • Subjects: ${(d.subjects || []).join(", ") || "All"} • Posted: ${d.createdAt ? new Date(d.createdAt).toLocaleString() : "-"}
+        Levels: ${(d.levels || []).join(", ") || "All"} • Subjects: ${(d.subjects || []).join(", ") || "All"} • Posted: ${dateStr}
       </p>
     `;
     annList.appendChild(card);
@@ -430,6 +445,10 @@ function renderTeacherHomework() {
         return `<li><a href="${url}" target="_blank">${name}</a></li>`;
     }).join("");
 
+    // UPDATED: Using dd/mm/yy format for Posted and Due dates
+    const postedStr = fmtDateDayMonthYear(d.postedAt);
+    const dueStr = d.dueAt ? fmtDateDayMonthYear(d.dueAt) : "";
+
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     card.innerHTML = `
@@ -437,8 +456,8 @@ function renderTeacherHomework() {
       ${d.description ? `<p>${d.description}</p>` : ""}
       ${linksHtml ? `<ul class="ev-link-list">${linksHtml}</ul>` : '<p class="helper-text">No links.</p>'}
       <p class="helper-text">
-        Levels: ${(d.levels || []).join(", ") || "All"} • Subjects: ${(d.subjects || []).join(", ") || "All"} • Posted: ${d.postedAt ? new Date(d.postedAt).toLocaleDateString() : "-"}
-        ${d.dueAt ? " • Due: " + new Date(d.dueAt).toLocaleDateString() : ""}
+        Levels: ${(d.levels || []).join(", ") || "All"} • Subjects: ${(d.subjects || []).join(", ") || "All"} • Posted: ${postedStr}
+        ${dueStr ? " • Due: " + dueStr : ""}
       </p>
     `;
     hwList.appendChild(card);
