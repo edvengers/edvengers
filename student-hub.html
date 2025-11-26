@@ -87,11 +87,20 @@
           <div class="dashboard-grid">
             <div class="card">
               <div class="card-header">Your Details</div>
-              <p>Name: <strong id="profile-name"></strong></p>
-              <p>Level: <strong id="profile-level"></strong></p>
-              <p>Subjects: <strong id="profile-subjects"></strong></p>
-              <p>Hero Points: <strong id="hero-stars-count">0</strong></p>
-              <p class="helper-text">Hero Points are awarded for effort, participation and improvement.</p>
+              <div class="profile-header">
+                <div class="profile-avatar-wrapper">
+                  <img id="my-avatar" src="images/avatars/hero-1.png" alt="Hero Avatar" class="current-avatar" />
+                  <br>
+                  <button id="btn-change-avatar" class="btn-change-avatar">Change</button>
+                </div>
+                <div class="profile-info">
+                  <p>Name: <strong id="profile-name">Loading...</strong></p>
+                  <p>Level: <strong id="profile-level">-</strong></p>
+                  <p>Subjects: <strong id="profile-subjects">-</strong></p>
+                  <p>Hero Points: <strong id="hero-stars-count">0</strong></p>
+                </div>
+              </div>
+              <p class="helper-text" style="margin-top:1rem;">Hero Points are awarded for effort, participation and improvement.</p>
             </div>
 
             <div class="card">
@@ -170,6 +179,20 @@
         <p>© <span id="year"></span> Edvengers Student Hub.</p>
       </div>
     </footer>
+
+<div id="avatar-overlay" class="mission-overlay hidden">
+      <div class="mission-header">
+        <span class="mission-title">🦸‍♂️ Choose Identity</span>
+        <button class="btn btn-ghost btn-small" id="close-avatar-btn">❌ Cancel</button>
+      </div>
+      <div class="mission-frame-container" style="background: var(--ev-bg); overflow-y: auto;">
+        <div class="ev-container" style="padding-top: 2rem;">
+          <h2 style="text-align:center;">Select Your Hero</h2>
+          <div id="avatar-grid" class="avatar-grid">
+            </div>
+        </div>
+      </div>
+    </div>
 
     <div id="mission-overlay" class="mission-overlay hidden">
       <div class="mission-header">

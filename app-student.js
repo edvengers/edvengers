@@ -30,6 +30,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
+// CONFIG: Avatar settings
+const AVATAR_PATH = "images/avatars/";
+const AVAILABLE_AVATARS = ["hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"];
 
 function slugify(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
@@ -142,6 +145,9 @@ function switchToHub(student) {
 
   if (displayName) displayName.textContent = student.name;
   if (profileName) profileName.textContent = student.name;
+// LOAD SAVED AVATAR
+  if (student.avatar) document.getElementById("my-avatar").src = AVATAR_PATH + student.avatar;
+Part C: Add the Logic
   if (profileLevel) profileLevel.textContent = student.level || "-";
   if (profileSubjects) profileSubjects.textContent = (student.subjects && student.subjects.join(", ")) || "-";
   if (starsEl) starsEl.textContent = student.stars || 0;
@@ -560,3 +566,58 @@ async function initSelfTraining(student) {
     container.innerHTML = '<p class="helper-text">No training links active currently.</p>';
   }
 }
+
+/* --- AVATAR SYSTEM LOGIC --- */
+document.addEventListener("DOMContentLoaded", () => {
+  const avatarBtn = document.getElementById("btn-change-avatar");
+  const avatarOverlay = document.getElementById("avatar-overlay");
+  const closeAvatarBtn = document.getElementById("close-avatar-btn");
+  const avatarGrid = document.getElementById("avatar-grid");
+  const myAvatarImg = document.getElementById("my-avatar");
+
+  if (avatarBtn && avatarOverlay) {
+    // 1. Open the popup
+    avatarBtn.addEventListener("click", () => {
+      renderAvatarGrid();
+      avatarOverlay.classList.remove("hidden");
+    });
+
+    // 2. Close the popup
+    closeAvatarBtn.addEventListener("click", () => {
+      avatarOverlay.classList.add("hidden");
+    });
+  }
+
+  // Helper: Create the grid of images
+  function renderAvatarGrid() {
+    avatarGrid.innerHTML = "";
+    AVAILABLE_AVATARS.forEach(filename => {
+      const img = document.createElement("img");
+      img.src = AVATAR_PATH + filename;
+      img.className = "avatar-option";
+      img.onclick = () => selectAvatar(filename);
+      avatarGrid.appendChild(img);
+    });
+  }
+
+  // Helper: Save choice
+  async function selectAvatar(filename) {
+    if (!currentStudent) return;
+    
+    // Update image instantly
+    myAvatarImg.src = AVATAR_PATH + filename;
+    avatarOverlay.classList.add("hidden");
+
+    // Save to Database
+    try {
+      const ref = doc(db, "students", currentStudent.id);
+      await setDoc(ref, { avatar: filename }, { merge: true });
+      
+      // Confetti effect!
+      if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 } });
+      
+    } catch (err) {
+      console.error("Error saving avatar:", err);
+    }
+  }
+});
