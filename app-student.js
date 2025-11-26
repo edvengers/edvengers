@@ -33,6 +33,21 @@ const storage = getStorage(app);
 
 // --- AVATAR CONFIG ---
 const AVATAR_PATH = "images/avatars/";
+// --- AUDIO SYSTEM ---
+const AUDIO_PATH = "audio/";
+const SFX = {
+  powerup: new Audio(AUDIO_PATH + "powerup.mp3"),
+  click: new Audio(AUDIO_PATH + "click.mp3")
+};
+
+// Helper to play sound safely
+function playSound(key) {
+  const sound = SFX[key];
+  if (sound) {
+    sound.currentTime = 0; // Reset so it can play rapidly
+    sound.play().catch(err => console.log("Browser blocked audio:", err));
+  }
+}
 const AVAILABLE_AVATARS = [
   "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
   "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
