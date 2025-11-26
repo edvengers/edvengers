@@ -157,7 +157,8 @@ function switchToHub(student) {
 
   initAnnouncementsAndHomework(student);
   initChat(student);
-  initAttendance(); 
+  initAttendance();
+initSelfTraining(student); 
 }
 
 function initAttendance() {
@@ -478,3 +479,77 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 });
+
+/* SELF TRAINING LOGIC */
+async function initSelfTraining(student) {
+  const container = document.getElementById("training-buttons-container");
+  if (!container) return;
+
+  // 1. Fetch the links from settings
+  const docRef = doc(db, "settings", "training_links");
+  const snap = await getDoc(docRef);
+  
+  if (!snap.exists()) {
+    container.innerHTML = '<p class="helper-text">No training configured yet.</p>';
+    return;
+  }
+  
+  const links = snap.data();
+  const level = student.level || ""; 
+  const subjects = student.subjects || []; 
+
+  container.innerHTML = ""; // Clear loading text
+
+  // 2. Define buttons per level
+  let buttonsConfig = [];
+
+  if (level === "P5") {
+    buttonsConfig = [
+      { label: "P5 English Training", url: links.p5_eng, subjectReq: "P5 English" },
+      { label: "P5 Math Training", url: links.p5_math, subjectReq: "P5 Math" }
+    ];
+  } else if (level === "P6") {
+    buttonsConfig = [
+      { label: "P6 English Training", url: links.p6_eng, subjectReq: "P6 English" },
+      { label: "P6 Math Training", url: links.p6_math, subjectReq: "P6 Math" }
+    ];
+  } else {
+    // Show message for P3/P4 or undefined
+    container.innerHTML = '<p class="helper-text">Training modules coming soon for your level!</p>';
+    return;
+  }
+
+  // 3. Render the buttons
+  let hasButtons = false;
+  buttonsConfig.forEach(cfg => {
+    if (!cfg.url) return; // Skip if teacher hasn't set a link
+    hasButtons = true;
+
+    const isUnlocked = subjects.includes(cfg.subjectReq);
+    const btn = document.createElement("button");
+    
+    // Style logic
+    if (isUnlocked) {
+      btn.className = "btn btn-primary";
+      btn.style.width = "100%";
+      btn.textContent = "⚔️ " + cfg.label;
+      btn.onclick = () => window.openMission(cfg.url);
+    } else {
+      // LOCKED STATE
+      btn.className = "btn";
+      btn.style.width = "100%";
+      btn.style.background = "#1e293b"; 
+      btn.style.color = "#94a3b8"; 
+      btn.style.cursor = "not-allowed";
+      btn.style.border = "1px solid #334155";
+      btn.innerHTML = "🔒 " + cfg.label;
+      btn.onclick = () => alert(`Please subscribe to ${cfg.subjectReq} to access this training!`);
+    }
+
+    container.appendChild(btn);
+  });
+
+  if (!hasButtons) {
+    container.innerHTML = '<p class="helper-text">No training links active currently.</p>';
+  }
+}

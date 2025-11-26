@@ -10,6 +10,7 @@ import {
   updateDoc,
   doc,
   setDoc,
+  getDoc, // Added this
   increment,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
@@ -608,6 +609,41 @@ if (chatForm) {
     } catch (err) {
       console.error(err);
       if (chatStatus) chatStatus.textContent = "Failed to send.";
+    }
+  });
+}
+
+/* SELF TRAINING LINKS LOGIC */
+const trainingForm = document.getElementById("training-links-form");
+if (trainingForm) {
+  // 1. Load existing links on startup
+  const docRef = doc(db, "settings", "training_links");
+  getDoc(docRef).then((snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      if(document.getElementById("link-p5-english")) document.getElementById("link-p5-english").value = data.p5_eng || "";
+      if(document.getElementById("link-p5-math")) document.getElementById("link-p5-math").value = data.p5_math || "";
+      if(document.getElementById("link-p6-english")) document.getElementById("link-p6-english").value = data.p6_eng || "";
+      if(document.getElementById("link-p6-math")) document.getElementById("link-p6-math").value = data.p6_math || "";
+    }
+  });
+
+  // 2. Save links on submit
+  trainingForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const p5_eng = document.getElementById("link-p5-english").value.trim();
+    const p5_math = document.getElementById("link-p5-math").value.trim();
+    const p6_eng = document.getElementById("link-p6-english").value.trim();
+    const p6_math = document.getElementById("link-p6-math").value.trim();
+
+    try {
+      await setDoc(doc(db, "settings", "training_links"), {
+        p5_eng, p5_math, p6_eng, p6_math, updatedAt: Date.now()
+      }, { merge: true });
+      alert("Training links saved!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save links.");
     }
   });
 }
