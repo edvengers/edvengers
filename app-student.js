@@ -35,8 +35,8 @@ const storage = getStorage(app);
 // --- CONFIG & AUDIO ---
 const AVATAR_PATH = "images/avatars/";
 const AVAILABLE_AVATARS = [
-  "hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", 
-  "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"
+  "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
+  "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
 ];
 const AUDIO_PATH = "audio/";
 const SFX = {
