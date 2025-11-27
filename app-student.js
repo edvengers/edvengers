@@ -40,8 +40,10 @@ const AVAILABLE_AVATARS = [
 ];
 const AUDIO_PATH = "audio/";
 const SFX = {
-  powerup: new Audio(AUDIO_PATH + "powerup.mp3"),
-  click: new Audio(AUDIO_PATH + "click.mp3")
+  hero_theme: new Audio(AUDIO_PATH + "hero_theme.mp3"), // 2-min song (Check-in ONLY)
+  ding: new Audio(AUDIO_PATH + "ding.mp3"),             // Short coin sound (Power Words)
+  success: new Audio(AUDIO_PATH + "success.mp3"),       // Level up jingle (Mission Submit)
+  click: new Audio(AUDIO_PATH + "click.mp3")            // UI Clicks (Avatars/Links)
 };
 function playSound(key) {
   const sound = SFX[key];
@@ -177,7 +179,7 @@ function initAttendance() {
       attBtn.addEventListener("click", async () => {
         if (!currentStudent) return;
         if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100 });
-        playSound("powerup");
+        playSound("hero_theme"); // Plays the 2-min song
         
         const hero = document.getElementById("flying-hero");
         if (hero) {
@@ -558,7 +560,7 @@ function openFocusMode(drill) {
         if (tag) tag.classList.add("activated");
 
         // AUDIO FX
-        playSound("powerup"); // Ding!
+        playSound("ding"); // Short satisfying chime
 
         // INSTANT REWARD
         awardInstantXP(5);
@@ -626,7 +628,7 @@ async function submitDrill() {
       status: "pending" // Teacher will mark this
     });
 
-    playSound("powerup");
+    playSound("success"); // Mission Complete jingle
     if(typeof confetti === 'function') confetti({ particleCount: 200, spread: 120 });
     
     alert("Mission Accomplished! Data sent to HQ.");
