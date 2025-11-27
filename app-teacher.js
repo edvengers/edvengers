@@ -1,4 +1,4 @@
-// app-teacher.js (MASTER: POPUPS + RESTORED FILTERS)
+// app-teacher.js (MASTER: HOMEWORK DELETE + PAGINATION FIXED)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, setDoc, getDoc, increment, deleteDoc
@@ -20,7 +20,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- OVERLAY HELPERS (MISSION 3 ADDITION) ---
+// --- OVERLAY HELPERS ---
 window.openMission = function(url) {
   const overlay = document.getElementById("mission-overlay");
   const frame = document.getElementById("mission-frame");
@@ -80,7 +80,7 @@ window.switchTab = function(tabName) {
   localStorage.setItem("evTeacherTab", tabName);
 };
 
-/* --- ADMIN: STUDENTS & HERO POINTS --- */
+/* --- ADMIN: STUDENTS --- */
 const studentsForm = document.getElementById("students-form");
 const studentsList = document.getElementById("students-list");
 const studentsSelect = document.getElementById("student-select");
@@ -101,7 +101,7 @@ function renderStudentRow() {
   }
   const student = studentsCache.find(s => s.id === selectedStudentId);
   if (!student) {
-    studentsList.innerHTML = '<p class="helper-text">Student not found in current filter.</p>';
+    studentsList.innerHTML = '<p class="helper-text">Student not found.</p>';
     return;
   }
   const current = student.stars || 0;
@@ -141,7 +141,7 @@ if(filterLevelInput) filterLevelInput.onchange = applyFiltersAndFillSelect;
 if(filterSubjectInput) filterSubjectInput.onchange = applyFiltersAndFillSelect;
 if(studentsSelect) studentsSelect.onchange = () => { selectedStudentId = studentsSelect.value || null; stagedDelta = 0; renderStudentRow(); };
 
-// Point Buttons
+// Points Logic
 document.getElementById("btn-add-1")?.addEventListener("click", () => { stagedDelta += 1; renderStudentRow(); });
 document.getElementById("btn-add-5")?.addEventListener("click", () => { stagedDelta += 5; renderStudentRow(); });
 document.getElementById("btn-sub-1")?.addEventListener("click", () => { stagedDelta -= 1; renderStudentRow(); });
@@ -160,7 +160,7 @@ onSnapshot(query(collection(db, "students"), orderBy("name", "asc")), (snap) => 
   applyFiltersAndFillSelect();
 });
 
-/* --- ADMIN: ANNOUNCEMENTS --- */
+/* --- ANNOUNCEMENTS --- */
 const annForm = document.getElementById("announcement-form");
 const annList = document.getElementById("announcement-list");
 
@@ -197,13 +197,13 @@ if (annList) {
   });
 }
 
-/* --- MISSIONS: HOMEWORK --- */
+/* --- HOMEWORK (FIXED: DELETE + PAGINATION) --- */
 const hwForm = document.getElementById("homework-form");
 const hwList = document.getElementById("homework-list");
 const hwToggleBtn = document.getElementById("teacher-hw-toggle");
 const hwCountLabel = document.getElementById("teacher-hw-count");
 let teacherHomeworkAll = [];
-let hwVisibleCount = 3;
+let hwVisibleCount = 6; 
 
 if (hwForm) {
   hwForm.addEventListener("submit", async (e) => {
@@ -211,7 +211,7 @@ if (hwForm) {
     const title = document.getElementById("homework-title").value.trim();
     const desc = document.getElementById("homework-description").value.trim();
     
-    // RESTORED: Loop for 5 Links
+    // Loop for 5 Links
     const links = [];
     for(let i=1; i<=5; i++) {
         const name = document.getElementById(`homework-name-${i}`).value.trim();
@@ -222,8 +222,7 @@ if (hwForm) {
     const levelVal = document.getElementById("homework-level").value;
     const subjectVal = document.getElementById("homework-subject").value;
 
-    if (!title || links.length === 0) return;
-    
+    if (!title) return;
     const levels = levelVal ? [levelVal] : [];
     const subjects = subjectVal ? [subjectVal] : [];
 
@@ -240,7 +239,6 @@ if (hwList) {
   });
 }
 
-// UPDATED: Now uses openMission() for links!
 function renderTeacherHomework() {
   if (!hwList) return;
   hwList.innerHTML = "";
@@ -256,49 +254,55 @@ function renderTeacherHomework() {
   const itemsToShow = teacherHomeworkAll.slice(0, hwVisibleCount);
 
   itemsToShow.forEach((d) => {
-    // MISSION 3 FIX IS HERE:
     const rawLinks = d.links || [];
     const linksHtml = rawLinks.map((item) => {
         const url = item.url || "#";
         const name = item.name || "Resource"; 
-        // Using openMission instead of blank target
         return `<li><button class="btn-link" onclick="openMission('${url}')">🔗 ${name}</button></li>`;
     }).join("");
 
     const postedStr = fmtDateDayMonthYear(d.postedAt);
-    const dueStr = d.dueAt ? fmtDateDayMonthYear(d.dueAt) : "";
 
     const card = document.createElement("div");
-    card.className = "ev-card-bubble";
+    card.className = "ev-card-bubble"; 
     card.innerHTML = `
-      <h4>${d.title || "Untitled"}</h4>
+      <div style="display:flex; justify-content:space-between; align-items:start;">
+         <h4 style="margin:0;">${d.title || "Untitled"}</h4>
+         <button class="btn btn-ghost btn-small" style="color:#ff6b6b; padding:2px 6px;" onclick="deleteHomework('${d.id}')">🗑️</button>
+      </div>
+      
       ${d.description ? `<p>${d.description}</p>` : ""}
+      
       ${linksHtml ? `<ul class="ev-link-list">${linksHtml}</ul>` : '<p class="helper-text">No links.</p>'}
-      <p class="helper-text">
-        Levels: ${(d.levels || []).join(", ") || "All"} • Subjects: ${(d.subjects || []).join(", ") || "All"} • Posted: ${postedStr}
+      
+      <p class="helper-text" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.5rem;">
+        Target: ${(d.levels||[]).join(", ")||"All"} • ${(d.subjects||[]).join(", ")||"All"}<br>
+        Posted: ${postedStr}
       </p>
     `;
     hwList.appendChild(card);
   });
 
   if (hwToggleBtn) {
-    if (total > hwVisibleCount) {
-      hwToggleBtn.style.display = "inline-block";
-      hwToggleBtn.textContent = `Show older (+3)`;
-    } else {
-      hwToggleBtn.style.display = "none";
-    }
+    hwToggleBtn.style.display = total > hwVisibleCount ? "inline-block" : "none";
+    hwToggleBtn.onclick = () => {
+        hwVisibleCount += 3;
+        renderTeacherHomework();
+    };
   }
   if (hwCountLabel) {
     hwCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
   }
 }
-if (hwToggleBtn) hwToggleBtn.addEventListener("click", () => {
-  hwVisibleCount += 3;
-  renderTeacherHomework();
-});
 
-/* --- MISSIONS: WRITING GYM --- */
+// DELETE HOMEWORK LOGIC
+window.deleteHomework = async function(id) {
+  if(confirm("Are you sure you want to delete this homework?")) {
+    await deleteDoc(doc(db, "homework", id));
+  }
+};
+
+/* --- WRITING GYM --- */
 const gymCreateForm = document.getElementById("gym-create-form");
 const gymListContainer = document.getElementById("drill-list-container");
 const gymInboxContainer = document.getElementById("gym-inbox-container");
@@ -377,7 +381,7 @@ window.saveFeedback = async (subId) => {
   alert("Sent!");
 };
 
-/* --- SELF TRAINING (RESTORED) --- */
+/* --- SELF TRAINING --- */
 const trainingForm = document.getElementById("training-links-form");
 if (trainingForm) {
   getDoc(doc(db, "settings", "training_links")).then(snap => {
@@ -411,7 +415,7 @@ if (trainingForm) {
   });
 }
 
-/* --- COMMS LINK (RESTORED) --- */
+/* --- CHAT --- */
 const chatStudentList = document.getElementById("chat-student-list");
 const chatThread = document.getElementById("chat-thread");
 const chatForm = document.getElementById("teacher-chat-form");
@@ -435,9 +439,7 @@ if (chatStudentList) {
         document.getElementById("teacher-chat-student-id").value = docSnap.id;
         document.querySelectorAll(".chat-student-item").forEach(b => b.classList.remove("active"));
         item.classList.add("active");
-        
         updateDoc(doc(db,"students",docSnap.id), {hasUnread:false});
-        
         if(chatThreadUnsub) chatThreadUnsub();
         const q = query(collection(db, "chats", docSnap.id, "messages"), orderBy("createdAt", "asc"));
         chatThreadUnsub = onSnapshot(q, (msgSnap) => {
