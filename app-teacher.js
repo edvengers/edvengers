@@ -1,4 +1,4 @@
-// app-teacher.js (MASTER PHASE 1)
+// app-teacher.js (MASTER PHASE 2)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -12,6 +12,7 @@ import {
   setDoc,
   getDoc,
   increment,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
   getStorage,
@@ -53,7 +54,6 @@ function fmtDateLabel(ts) {
   if (diffDays === -1) return "Yesterday";
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
-// DATE FIX
 function fmtDateDayMonthYear(ts) {
   if (!ts) return "-";
   const d = new Date(ts);
@@ -64,9 +64,7 @@ function fmtDateDayMonthYear(ts) {
   });
 }
 
-// !!! PASSWORD SET !!!
 const TEACHER_PASSWORD = "kalb25";
-
 const loginSection = document.getElementById("teacher-login-section");
 const dashSection = document.getElementById("teacher-dashboard-section");
 const loginForm = document.getElementById("teacher-login-form");
@@ -102,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("edvengerTeacherLoggedIn");
@@ -169,7 +166,6 @@ function renderStudentRow() {
   }
   const current = student.stars || 0;
   const pendingText = stagedDelta !== 0 ? ` (pending: ${stagedDelta > 0 ? "+" : ""}${stagedDelta})` : "";
-
   const row = document.createElement("div");
   row.className = "student-row ev-card-bubble";
   row.dataset.id = student.id;
@@ -198,7 +194,6 @@ function applyFiltersAndFillSelect() {
   let list = [...studentsCache];
   if (levelFilter) list = list.filter((s) => s.level === levelFilter);
   if (subjectFilter) list = list.filter((s) => (s.subjects || []).includes(subjectFilter));
-
   studentsSelect.innerHTML = '<option value="">-- Select student --</option>';
   list.forEach((s) => {
     const opt = document.createElement("option");
@@ -212,7 +207,6 @@ function applyFiltersAndFillSelect() {
   }
   renderStudentRow();
 }
-
 if (filterLevelInput) filterLevelInput.addEventListener("change", applyFiltersAndFillSelect);
 if (filterSubjectInput) filterSubjectInput.addEventListener("change", applyFiltersAndFillSelect);
 if (studentsSelect) {
@@ -222,7 +216,6 @@ if (studentsSelect) {
     renderStudentRow();
   });
 }
-
 if (studentsList) {
   studentsList.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-action]");
@@ -231,7 +224,6 @@ if (studentsList) {
     const student = findStudentById(selectedStudentId);
     if (!student) return;
     const current = student.stars || 0;
-
     if (action === "add1") stagedDelta += 1;
     else if (action === "add5") stagedDelta += 5;
     else if (action === "resetStars") stagedDelta = -current;
@@ -243,7 +235,6 @@ if (studentsList) {
     renderStudentRow();
   });
 }
-
 if (updatePointsBtn) {
   updatePointsBtn.addEventListener("click", async () => {
     if (!selectedStudentId) return;
@@ -257,7 +248,6 @@ if (updatePointsBtn) {
     }
   });
 }
-
 const studentsQuery = query(collection(db, "students"), orderBy("name", "asc"));
 onSnapshot(studentsQuery, (snap) => {
   studentsCache = [];
@@ -283,11 +273,9 @@ if (annForm) {
     const levelVal = document.getElementById("announcement-level").value;
     const subjectVal = document.getElementById("announcement-subject").value;
     const isPinned = document.getElementById("announcement-pinned")?.checked || false;
-
     if (!title || !message) return;
     const levels = levelVal ? [levelVal] : [];
     const subjects = subjectVal ? [subjectVal] : [];
-
     try {
       await addDoc(collection(db, "announcements"), {
         title, message, levels, subjects, isPinned, createdAt: Date.now(),
@@ -299,7 +287,6 @@ if (annForm) {
     }
   });
 }
-
 if (annList) {
   const qAnn = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
   onSnapshot(qAnn, (snap) => {
@@ -308,17 +295,14 @@ if (annList) {
     renderTeacherAnnouncements();
   });
 }
-
 function renderTeacherAnnouncements() {
   if (!annList) return;
   annList.innerHTML = "";
-  
   teacherAnnouncementsAll.sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
       return b.createdAt - a.createdAt;
   });
-
   const total = teacherAnnouncementsAll.length;
   if (!total) {
     annList.innerHTML = '<p class="helper-text">No announcements yet.</p>';
@@ -326,17 +310,13 @@ function renderTeacherAnnouncements() {
     if (annCountLabel) annCountLabel.textContent = "";
     return;
   }
-  
   const itemsToShow = teacherAnnouncementsAll.slice(0, annVisibleCount);
-
   itemsToShow.forEach((d) => {
     const pinIcon = d.isPinned ? "📌 " : "";
     const dateStr = fmtDateDayMonthYear(d.createdAt);
-    
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     if(d.isPinned) card.style.border = "1px solid var(--ev-accent)";
-
     card.innerHTML = `
       <h4>${pinIcon}${d.title || "Untitled"}</h4>
       <p>${d.message || ""}</p>
@@ -346,7 +326,6 @@ function renderTeacherAnnouncements() {
     `;
     annList.appendChild(card);
   });
-
   if (annToggleBtn) {
     if (total > annVisibleCount) {
       annToggleBtn.style.display = "inline-block";
@@ -364,6 +343,113 @@ if (annToggleBtn) annToggleBtn.addEventListener("click", () => {
   renderTeacherAnnouncements();
 });
 
+/* WRITING GYM: CREATE & LIST (PHASE 2) */
+const gymCreateForm = document.getElementById("gym-create-form");
+const gymListContainer = document.getElementById("drill-list-container");
+
+if (gymCreateForm) {
+  gymCreateForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const statusEl = document.getElementById("drill-status");
+    statusEl.textContent = "Deploying...";
+
+    const title = document.getElementById("drill-title").value.trim();
+    const level = document.getElementById("drill-level").value;
+    const instructions = document.getElementById("drill-instructions").value.trim();
+    const powerWordsStr = document.getElementById("drill-powerwords").value.trim();
+    const aiPrompt = document.getElementById("drill-ai-prompt").value.trim();
+    const file = document.getElementById("drill-image").files[0] || null;
+
+    if (!title || !level) return;
+
+    // Parse Power Words (Comma separated)
+    const powerWords = powerWordsStr ? powerWordsStr.split(",").map(s => s.trim()).filter(s => s) : [];
+
+    try {
+      let imageUrl = null;
+      if (file) {
+        statusEl.textContent = "Uploading image...";
+        const path = `drill-images/${Date.now()}_${file.name}`;
+        const ref = storageRef(storage, path);
+        await uploadBytes(ref, file);
+        imageUrl = await getDownloadURL(ref);
+      }
+
+      statusEl.textContent = "Saving mission...";
+      await addDoc(collection(db, "writing_drills"), {
+        title,
+        level,
+        instructions,
+        powerWords,
+        aiPrompt,
+        imageUrl,
+        createdAt: Date.now()
+      });
+
+      gymCreateForm.reset();
+      statusEl.textContent = "Mission Deployed! 🚀";
+      setTimeout(() => statusEl.textContent = "", 2000);
+
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = "Deployment Failed.";
+    }
+  });
+}
+
+// List Active Drills
+if (gymListContainer) {
+  const qDrills = query(collection(db, "writing_drills"), orderBy("createdAt", "desc"));
+  onSnapshot(qDrills, (snap) => {
+    gymListContainer.innerHTML = "";
+    if (snap.empty) {
+      gymListContainer.innerHTML = '<p class="helper-text">No active missions.</p>';
+      return;
+    }
+
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      const dateStr = fmtDateDayMonthYear(d.createdAt);
+      
+      const card = document.createElement("div");
+      card.className = "ev-card-bubble drill-card";
+      
+      let imageHtml = "";
+      if (d.imageUrl) {
+        imageHtml = `<img src="${d.imageUrl}" style="max-height:80px; border-radius:6px; margin-bottom:0.5rem;" />`;
+      }
+
+      const pwHtml = (d.powerWords || []).map(w => `<span class="power-word-tag">${w}</span>`).join("");
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+           <h4 style="margin:0; color:#fff;">${d.title}</h4>
+           <button class="btn btn-ghost btn-small" style="color:#ff6b6b; padding:2px 6px;" onclick="deleteDrill('${docSnap.id}')">🗑️</button>
+        </div>
+        <div class="drill-meta">Level: ${d.level} • Posted: ${dateStr}</div>
+        <div style="display:flex; gap:1rem; align-items:start;">
+           ${imageHtml}
+           <div style="flex:1;">
+             <p style="font-size:0.9rem; margin-bottom:0.4rem;">${d.instructions}</p>
+             <div style="margin-bottom:0.5rem;">${pwHtml}</div>
+             <details>
+               <summary style="font-size:0.8rem; cursor:pointer; color:var(--ev-muted);">Show AI Prompt</summary>
+               <div class="ai-prompt-preview">${d.aiPrompt}</div>
+             </details>
+           </div>
+        </div>
+      `;
+      gymListContainer.appendChild(card);
+    });
+  });
+}
+
+window.deleteDrill = async function(id) {
+  if(confirm("Terminate this mission? Students won't see it anymore.")) {
+    await deleteDoc(doc(db, "writing_drills", id));
+  }
+};
+
 /* HOMEWORK */
 const hwForm = document.getElementById("homework-form");
 const hwList = document.getElementById("homework-list");
@@ -377,7 +463,6 @@ if (hwForm) {
     e.preventDefault();
     const title = document.getElementById("homework-title").value.trim();
     const description = document.getElementById("homework-description").value.trim();
-    
     const links = [];
     for (let i = 1; i <= 5; i++) {
       const urlInput = document.getElementById(`homework-link-${i}`);
@@ -389,18 +474,15 @@ if (hwForm) {
         });
       }
     }
-
     const levelVal = document.getElementById("homework-level").value;
     const subjectVal = document.getElementById("homework-subject").value;
     const postedDate = document.getElementById("homework-posted").value;
     const dueDate = document.getElementById("homework-due").value;
-
     if (!title) return;
     const levels = levelVal ? [levelVal] : [];
     const subjects = subjectVal ? [subjectVal] : [];
     const postedAt = postedDate ? new Date(postedDate).getTime() : Date.now();
     const dueAt = dueDate ? new Date(dueDate).getTime() : null;
-
     try {
       await addDoc(collection(db, "homework"), {
         title, description, links, levels, subjects, postedAt, dueAt,
@@ -412,7 +494,6 @@ if (hwForm) {
     }
   });
 }
-
 if (hwList) {
   const qHw = query(collection(db, "homework"), orderBy("postedAt", "desc"));
   onSnapshot(qHw, (snap) => {
@@ -421,7 +502,6 @@ if (hwList) {
     renderTeacherHomework();
   });
 }
-
 function renderTeacherHomework() {
   if (!hwList) return;
   hwList.innerHTML = "";
@@ -432,9 +512,7 @@ function renderTeacherHomework() {
     if (hwCountLabel) hwCountLabel.textContent = "";
     return;
   }
-  
   const itemsToShow = teacherHomeworkAll.slice(0, hwVisibleCount);
-
   itemsToShow.forEach((d) => {
     const rawLinks = d.links || [];
     const linksHtml = rawLinks.map((item) => {
@@ -442,10 +520,8 @@ function renderTeacherHomework() {
         const name = item.name || "Resource"; 
         return `<li><a href="${url}" target="_blank">${name}</a></li>`;
     }).join("");
-
     const postedStr = fmtDateDayMonthYear(d.postedAt);
     const dueStr = d.dueAt ? fmtDateDayMonthYear(d.dueAt) : "";
-
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     card.innerHTML = `
@@ -459,7 +535,6 @@ function renderTeacherHomework() {
     `;
     hwList.appendChild(card);
   });
-
   if (hwToggleBtn) {
     if (total > hwVisibleCount) {
       hwToggleBtn.style.display = "inline-block";
@@ -494,16 +569,13 @@ if (chatStudentList) {
     const students = [];
     chatStudentList.innerHTML = "";
     snap.forEach((docSnap) => students.push({ id: docSnap.id, ...docSnap.data() }));
-
     students.forEach((s) => {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "chat-student-item";
       item.dataset.id = s.id;
       if (s.id === chatStudentId) item.classList.add("active");
-
       const unreadDot = s.hasUnread ? `<span class="unread-badge">!</span>` : "";
-
       item.innerHTML = `
         <div class="chat-student-name-row">
            <span class="chat-student-name">${s.name}</span>
@@ -511,7 +583,6 @@ if (chatStudentList) {
         </div>
         <div class="chat-student-meta">Level: ${s.level || "-"}</div>
       `;
-      
       item.addEventListener("click", async () => {
         openChatForStudent(s.id, s.name);
         if (s.hasUnread) {
@@ -522,7 +593,6 @@ if (chatStudentList) {
     });
   });
 }
-
 function openChatForStudent(id, name) {
   chatStudentId = id;
   if (chatStudentIdHidden) chatStudentIdHidden.value = id;
@@ -532,10 +602,8 @@ function openChatForStudent(id, name) {
     });
   }
   if (chatThreadUnsub) chatThreadUnsub();
-
   const msgsRef = collection(db, "chats", id, "messages");
   const q = query(msgsRef, orderBy("createdAt", "asc"));
-
   chatThreadUnsub = onSnapshot(q, (snap) => {
     if (!chatThread) return;
     chatThread.innerHTML = "";
@@ -569,7 +637,6 @@ function openChatForStudent(id, name) {
     chatThread.scrollTop = chatThread.scrollHeight;
   });
 }
-
 if (chatForm) {
   chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -580,7 +647,6 @@ if (chatForm) {
     const text = chatInput.value.trim();
     const file = chatImage.files[0] || null;
     if (!text && !file) return;
-
     try {
       if (chatStatus) chatStatus.textContent = "Sending...";
       let imageUrl = null;
@@ -609,10 +675,9 @@ if (chatForm) {
   });
 }
 
-/* SELF TRAINING LINKS LOGIC */
+/* SELF TRAINING LINKS */
 const trainingForm = document.getElementById("training-links-form");
 if (trainingForm) {
-  // 1. Load existing links on startup
   const docRef = doc(db, "settings", "training_links");
   getDoc(docRef).then((snap) => {
     if (snap.exists()) {
@@ -623,15 +688,12 @@ if (trainingForm) {
       if(document.getElementById("link-p6-math")) document.getElementById("link-p6-math").value = data.p6_math || "";
     }
   });
-
-  // 2. Save links on submit
   trainingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const p5_eng = document.getElementById("link-p5-english").value.trim();
     const p5_math = document.getElementById("link-p5-math").value.trim();
     const p6_eng = document.getElementById("link-p6-english").value.trim();
     const p6_math = document.getElementById("link-p6-math").value.trim();
-
     try {
       await setDoc(doc(db, "settings", "training_links"), {
         p5_eng, p5_math, p6_eng, p6_math, updatedAt: Date.now()
@@ -646,22 +708,14 @@ if (trainingForm) {
 
 /* TAB SYSTEM LOGIC */
 window.switchTab = function(tabName) {
-  // 1. Deactivate all buttons and tabs
   document.querySelectorAll(".ev-tab-btn").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".ev-tab-content").forEach(content => content.classList.remove("active"));
-
-  // 2. Activate selected
   const targetBtn = document.querySelector(`button[onclick="switchTab('${tabName}')"]`);
   const targetContent = document.getElementById(`tab-${tabName}`);
-
   if (targetBtn) targetBtn.classList.add("active");
   if (targetContent) targetContent.classList.add("active");
-
-  // Save preference
   localStorage.setItem("evTeacherTab", tabName);
 };
-
-// Restore last tab on load
 document.addEventListener("DOMContentLoaded", () => {
   const lastTab = localStorage.getItem("evTeacherTab");
   if (lastTab) switchTab(lastTab);

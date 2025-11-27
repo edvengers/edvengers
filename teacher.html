@@ -195,9 +195,65 @@
           </div>
           <div id="tab-missions" class="ev-tab-content">
             
-            <section class="dashboard-card" style="border: 2px dashed var(--ev-muted); opacity:0.7;">
-              <div class="card-header">🏋️ The Writing Gym (Coming Soon)</div>
-              <p class="helper-text">Drill Creator & Marking Inbox will go here.</p>
+            <section class="dashboard-card">
+              <div class="card-header">🏋️ The Writing Gym</div>
+              <p class="card-subtitle">Deploy new writing missions (Picture Comps/Drills).</p>
+              
+              <details class="ev-collapsible">
+                <summary style="background:var(--ev-bg-alt); padding:0.75rem; border-radius:8px; cursor:pointer; border:1px solid var(--ev-border-soft);">
+                  <strong>➕ Create New Drill</strong>
+                </summary>
+                <form id="gym-create-form" style="margin-top:1rem; padding:1rem; border:1px solid var(--ev-border-soft); border-radius:8px;">
+                  
+                  <div class="dashboard-grid">
+                    <div class="form-field">
+                      <label>Mission Title</label>
+                      <input id="drill-title" type="text" placeholder="e.g. P5 Picture Comp - The Storm" required />
+                    </div>
+                    <div class="form-field">
+                      <label>Target Level</label>
+                      <select id="drill-level" class="input" required>
+                        <option value="P3">P3</option>
+                        <option value="P4">P4</option>
+                        <option value="P5">P5</option>
+                        <option value="P6">P6</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label>Stimulus Image (Optional)</label>
+                    <input type="file" id="drill-image" accept="image/*" />
+                    <p class="helper-text">If uploaded, this image will be shown side-by-side with the writing pad.</p>
+                  </div>
+                  <div class="form-field">
+                    <label>Instructions for Student</label>
+                    <textarea id="drill-instructions" rows="2" placeholder="Write a story based on this picture..." required></textarea>
+                  </div>
+
+                  <div class="form-field">
+                    <label>⚡ Power Words (Gamification)</label>
+                    <input id="drill-powerwords" type="text" placeholder="e.g. Agony, Regret, Shattered, Chaos (Comma separated)" />
+                    <p class="helper-text">Students get +5 XP instantly when they use these words.</p>
+                  </div>
+
+                  <div class="form-field">
+                    <label>🤖 Hidden AI Prompt (For Your Marking)</label>
+                    <textarea id="drill-ai-prompt" rows="3" placeholder="e.g. Act as a PSLE marker. Check if they used the Power Words correctly. If they listed events like a robot, tell them to use Show Not Tell." required></textarea>
+                    <p class="helper-text">This will be copied to your clipboard when you mark the essay.</p>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary" style="width:100%;">Deploy Mission</button>
+                  <p id="drill-status" class="helper-text"></p>
+                </form>
+              </details>
+
+              <div style="margin-top:2rem;">
+                 <h4>Active Missions</h4>
+                 <div id="drill-list-container">
+                   <p class="helper-text">Loading missions...</p>
+                 </div>
+              </div>
             </section>
 
             <section class="dashboard-card">
