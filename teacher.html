@@ -205,6 +205,15 @@
     <footer class="ev-footer">
       <div class="ev-container"><p>© <span id="year"></span> Edvengers.</p></div>
     </footer>
+<div id="mission-overlay" class="mission-overlay hidden">
+      <div class="mission-header">
+        <span class="mission-title">⚡ Resource View</span>
+        <button class="btn btn-ghost btn-small" onclick="closeMission()">❌ Close</button>
+      </div>
+      <div class="mission-frame-container">
+        <iframe id="mission-frame" src="" frameborder="0"></iframe>
+      </div>
+    </div>
     <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
     <script src="app-teacher.js" type="module"></script>
   </body>

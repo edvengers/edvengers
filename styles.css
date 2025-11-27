@@ -277,15 +277,18 @@ html, body { margin: 0; padding: 0; }
   border-radius: 999px; background: rgba(15, 23, 42, 0.95); color: var(--ev-muted);
   font-size: 0.75rem; letter-spacing: 0.03em; text-transform: uppercase;
 }
+/* FORCED CHAT IMAGE FIX */
+.chat-bubble img, 
 .chat-image img {
-  max-width: 100% !important; 
-  max-height: 200px; /* Limit height */
-  width: auto; 
-  height: auto;
-  border-radius: 8px; 
-  display: block; 
+  max-width: 200px !important; /* Hard limit width */
+  max-height: 200px !important; /* Hard limit height */
+  width: auto !important;
+  height: auto !important;
+  border-radius: 8px;
+  display: block;
   margin-top: 0.5rem;
   object-fit: contain;
+  cursor: pointer; /* Suggests click to zoom later */
 }
 
 /* ========== SCROLLBARS ========== */

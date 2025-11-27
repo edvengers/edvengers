@@ -1,4 +1,4 @@
-// app-teacher.js (MASTER RESTORED & FIXED)
+// app-teacher.js (MASTER: POPUPS + RESTORED FILTERS)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, setDoc, getDoc, increment, deleteDoc
@@ -19,6 +19,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// --- OVERLAY HELPERS (MISSION 3 ADDITION) ---
+window.openMission = function(url) {
+  const overlay = document.getElementById("mission-overlay");
+  const frame = document.getElementById("mission-frame");
+  if(overlay && frame) {
+    frame.src = url;
+    overlay.classList.remove("hidden");
+  }
+};
+window.closeMission = function() {
+  const overlay = document.getElementById("mission-overlay");
+  const frame = document.getElementById("mission-frame");
+  if(overlay) overlay.classList.add("hidden");
+  if(frame) frame.src = "";
+};
 
 // HELPERS
 function fmtDateDayMonthYear(ts) { if (!ts) return "-"; return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }); }
@@ -184,6 +200,10 @@ if (annList) {
 /* --- MISSIONS: HOMEWORK --- */
 const hwForm = document.getElementById("homework-form");
 const hwList = document.getElementById("homework-list");
+const hwToggleBtn = document.getElementById("teacher-hw-toggle");
+const hwCountLabel = document.getElementById("teacher-hw-count");
+let teacherHomeworkAll = [];
+let hwVisibleCount = 3;
 
 if (hwForm) {
   hwForm.addEventListener("submit", async (e) => {
@@ -214,23 +234,71 @@ if (hwForm) {
 
 if (hwList) {
   onSnapshot(query(collection(db, "homework"), orderBy("postedAt", "desc")), (snap) => {
-    hwList.innerHTML = "";
-    snap.forEach((docSnap) => {
-      const d = docSnap.data();
-      // RESTORED: Show links in teacher view
-      const linkHtml = (d.links||[]).map(l => `<li><a href="${l.url}" target="_blank">${l.name}</a></li>`).join("");
-      const card = document.createElement("div");
-      card.className = "ev-card-bubble";
-      card.innerHTML = `<h4>${d.title}</h4><p>${d.description||""}</p>
-        <ul class="ev-link-list">${linkHtml}</ul>
-        <p class="helper-text">Target: ${(d.levels||[]).join(", ")||"All"} • ${(d.subjects||[]).join(", ")||"All"}</p>`;
-      hwList.appendChild(card);
-    });
+    teacherHomeworkAll = [];
+    snap.forEach((docSnap) => teacherHomeworkAll.push({ id: docSnap.id, ...docSnap.data() }));
+    renderTeacherHomework();
   });
 }
 
+// UPDATED: Now uses openMission() for links!
+function renderTeacherHomework() {
+  if (!hwList) return;
+  hwList.innerHTML = "";
+  const total = teacherHomeworkAll.length;
+  
+  if (!total) {
+    hwList.innerHTML = '<p class="helper-text">No homework assigned yet.</p>';
+    if (hwToggleBtn) hwToggleBtn.style.display = "none";
+    if (hwCountLabel) hwCountLabel.textContent = "";
+    return;
+  }
+  
+  const itemsToShow = teacherHomeworkAll.slice(0, hwVisibleCount);
+
+  itemsToShow.forEach((d) => {
+    // MISSION 3 FIX IS HERE:
+    const rawLinks = d.links || [];
+    const linksHtml = rawLinks.map((item) => {
+        const url = item.url || "#";
+        const name = item.name || "Resource"; 
+        // Using openMission instead of blank target
+        return `<li><button class="btn-link" onclick="openMission('${url}')">🔗 ${name}</button></li>`;
+    }).join("");
+
+    const postedStr = fmtDateDayMonthYear(d.postedAt);
+    const dueStr = d.dueAt ? fmtDateDayMonthYear(d.dueAt) : "";
+
+    const card = document.createElement("div");
+    card.className = "ev-card-bubble";
+    card.innerHTML = `
+      <h4>${d.title || "Untitled"}</h4>
+      ${d.description ? `<p>${d.description}</p>` : ""}
+      ${linksHtml ? `<ul class="ev-link-list">${linksHtml}</ul>` : '<p class="helper-text">No links.</p>'}
+      <p class="helper-text">
+        Levels: ${(d.levels || []).join(", ") || "All"} • Subjects: ${(d.subjects || []).join(", ") || "All"} • Posted: ${postedStr}
+      </p>
+    `;
+    hwList.appendChild(card);
+  });
+
+  if (hwToggleBtn) {
+    if (total > hwVisibleCount) {
+      hwToggleBtn.style.display = "inline-block";
+      hwToggleBtn.textContent = `Show older (+3)`;
+    } else {
+      hwToggleBtn.style.display = "none";
+    }
+  }
+  if (hwCountLabel) {
+    hwCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
+  }
+}
+if (hwToggleBtn) hwToggleBtn.addEventListener("click", () => {
+  hwVisibleCount += 3;
+  renderTeacherHomework();
+});
+
 /* --- MISSIONS: WRITING GYM --- */
-// (Keep existing code from previous file - abbreviated here for space, but ensure you include the Gym Create & Inbox Logic)
 const gymCreateForm = document.getElementById("gym-create-form");
 const gymListContainer = document.getElementById("drill-list-container");
 const gymInboxContainer = document.getElementById("gym-inbox-container");
@@ -309,7 +377,7 @@ window.saveFeedback = async (subId) => {
   alert("Sent!");
 };
 
-/* --- SELF TRAINING (RESTORED P3-P6) --- */
+/* --- SELF TRAINING (RESTORED) --- */
 const trainingForm = document.getElementById("training-links-form");
 if (trainingForm) {
   getDoc(doc(db, "settings", "training_links")).then(snap => {
@@ -343,7 +411,7 @@ if (trainingForm) {
   });
 }
 
-/* --- COMMS LINK (RESTORED CHAT LISTENER) --- */
+/* --- COMMS LINK (RESTORED) --- */
 const chatStudentList = document.getElementById("chat-student-list");
 const chatThread = document.getElementById("chat-thread");
 const chatForm = document.getElementById("teacher-chat-form");
@@ -351,7 +419,6 @@ let chatStudentId = null;
 let chatThreadUnsub = null;
 
 if (chatStudentList) {
-  // RESTORED: Sidebar Generation
   onSnapshot(query(collection(db, "students"), orderBy("name", "asc")), (snap) => {
     chatStudentList.innerHTML = "";
     snap.forEach((docSnap) => {
