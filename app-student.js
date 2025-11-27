@@ -1,4 +1,4 @@
-// app-student.js (MASTER STABLE VERSION)
+// app-student.js (MASTER STABLE VERSION - FIXED)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, increment, where
@@ -49,9 +49,11 @@ function playSound(key) {
 // --- UTILS ---
 function slugify(name) { return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, ""); }
 function fmtTime(ts) { if(!ts) return ""; return new Date(ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+function fmtDateLabel(ts) { if(!ts) return ""; return new Date(ts).toLocaleDateString(undefined, {day:"2-digit", month:"short"}); }
 function fmtDateDayMonthYear(ts) { if(!ts) return "-"; return new Date(ts).toLocaleDateString("en-GB", {day:"2-digit", month:"2-digit", year:"2-digit"}); }
 
 let currentStudent = null;
+let chatUnsub = null; // <--- THIS WAS THE MISSING LINE!
 
 // --- GLOBAL HELPERS (Must be on window) ---
 window.openMission = function(url) {
@@ -110,7 +112,7 @@ function switchToHub(student) {
 function initAttendance() {
   const attBtn = document.getElementById("btn-attendance");
   if (attBtn) {
-    // Remove old listeners by cloning (optional safety)
+    // Remove old listeners by cloning
     const newBtn = attBtn.cloneNode(true);
     attBtn.parentNode.replaceChild(newBtn, attBtn);
     
@@ -137,7 +139,6 @@ function initAttendance() {
 }
 
 // --- MODULE: ANNOUNCEMENTS & HOMEWORK ---
-// Global vars for pagination
 let allAnnouncementsForStudent = [];
 let allHomeworkForStudent = [];
 let annVisibleCount = 3; 
@@ -191,7 +192,6 @@ function renderStudentAnnouncements() {
     if(!container) return; 
     container.innerHTML=""; 
     
-    // Sort pinned
     allAnnouncementsForStudent.sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
@@ -240,8 +240,10 @@ function initChat(student) {
     const form = document.getElementById("chat-form");
     if(!thread || !form) return;
     
-    const q = query(collection(db, "chats", student.id, "messages"), orderBy("createdAt", "asc"));
+    // Clear old listener if re-logging
     if (chatUnsub) chatUnsub();
+
+    const q = query(collection(db, "chats", student.id, "messages"), orderBy("createdAt", "asc"));
     chatUnsub = onSnapshot(q, (snap) => {
         thread.innerHTML="";
         snap.forEach(doc => {
