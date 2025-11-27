@@ -1,4 +1,4 @@
-// app-student.js (MASTER FIXED FEEDBACK LOOP)
+// app-student.js (MASTER EMERGENCY RESTORE)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, increment, where
@@ -22,6 +22,7 @@ const storage = getStorage(app);
 
 // --- CONFIG & AUDIO ---
 const AVATAR_PATH = "images/avatars/";
+// !!! CHECK IF YOUR FILES ARE .png or .jpg !!!
 const AVAILABLE_AVATARS = [
   "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
   "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
@@ -281,7 +282,7 @@ async function awardInstantXP(amount) {
   
   // POPUP VISUAL
   const popup = document.createElement("div");
-  popup.textContent = `+${amount} HP`;
+  popup.textContent = `+${amount} Hero Points`;
   popup.style.cssText = "position:fixed; top:15%; left:50%; transform:translateX(-50%); background:#1fe6a8; color:#000; font-weight:bold; padding:0.5rem 1rem; border-radius:20px; z-index:10001; animation:floatUp 1s forwards;";
   document.body.appendChild(popup);
   setTimeout(() => popup.remove(), 1000);
@@ -298,10 +299,6 @@ async function submitDrill() {
   const overlay = document.getElementById("gym-overlay");
   
   try {
-    // Logic: If revising, update existing. If new, create new.
-    // For MVP, we simply overwrite or create new. Let's create new to keep history, or update.
-    // Teacher's inbox sorts by created desc, so updating 'createdAt' bumps it to top.
-    
     let subRef;
     if (currentSubmission) {
       // UPDATE EXISTING
@@ -340,12 +337,7 @@ async function submitDrill() {
 }
 
 // --- STANDARD LOGIC (Announcements, Homework, Chat) ---
-// (Announcements & Homework Logic kept standard)
-// ... [Rest of standard initChat, initAnnouncements, etc. is identical to previous version]
-// ... [I've condensed them here for safety, but make sure to keep the standard functions from previous file if copy-pasting manually]
-
 function initAnnouncementsAndHomework(student) {
-  // ... (Same as previous file)
   const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
   onSnapshot(annQuery, (snap) => {
     if (!annContainer) return;
@@ -423,8 +415,6 @@ function initChat(student) {
 }
 
 function initSelfTraining(student) {
-    // Keep exact logic from previous files
-    // ... (This function remains unchanged from previous Master Phase 3)
     const container = document.getElementById("training-buttons-container");
     getDoc(doc(db, "settings", "training_links")).then(snap => {
         if(!snap.exists()) { container.innerHTML="<p class='helper-text'>No training configured.</p>"; return; }
