@@ -618,3 +618,23 @@ input:focus, textarea:focus, select:focus {
   .gym-left-panel { width: 100%; height: 200px; padding: 1rem; }
   .gym-right-panel { flex: 1; }
 }
+
+/* FEEDBACK BOX (REVISION MODE) */
+.gym-feedback-box {
+  background: #f59e0b; /* Amber/Yellow */
+  color: #000;
+  padding: 1rem;
+  border-bottom: 1px solid #b45309;
+  font-family: monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: slideDown 0.3s ease;
+}
+.gym-feedback-box.hidden { display: none; }
+.gym-feedback-title { font-weight: 900; text-transform: uppercase; margin-bottom: 0.25rem; display: block; }
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

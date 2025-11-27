@@ -97,7 +97,7 @@
             
             <div class="card" style="border: 2px solid var(--ev-accent); background: rgba(31, 230, 168, 0.05);">
               <div class="card-header">🏋️ The Writing Gym</div>
-              <p class="helper-text">Complete drills to earn major XP.</p>
+              <p class="helper-text">Complete drills to earn Hero Points.</p>
               <div id="gym-active-mission-container" style="margin-top:1rem;">
                 <p class="helper-text">Scanning for missions...</p>
               </div>
@@ -105,7 +105,7 @@
 
             <div class="card">
               <div class="card-header">Self Training</div>
-              <p class="helper-text">Sharpen skills (Blooket).</p>
+              <p class="helper-text">Sharpen your skills with mini-games.</p>
               <div id="training-buttons-container" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
                 <p class="helper-text">Loading...</p>
               </div>
@@ -191,14 +191,22 @@
         </div>
 
       <div class="gym-layout">
+        
         <div class="gym-left-panel">
           <div style="color:var(--ev-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Briefing</div>
           <p id="gym-instructions" style="color:#fff; line-height:1.6; margin-bottom:1.5rem;"></p>
           <img id="gym-stimulus-image" class="gym-image hidden" />
         </div>
+
         <div class="gym-right-panel">
+          <div id="gym-feedback-box" class="gym-feedback-box hidden">
+            <span class="gym-feedback-title">⚠️ MISSION DEBRIEF (TEACHER INTEL):</span>
+            <span id="gym-feedback-text"></span>
+          </div>
+          
           <textarea id="gym-editor" class="gym-editor" placeholder="Begin your mission here..."></textarea>
         </div>
+
       </div>
 
       <div class="gym-footer">
