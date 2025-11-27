@@ -55,6 +55,7 @@
           </div>
 
           <div id="tab-admin" class="ev-tab-content active">
+            
             <section class="dashboard-card">
               <div class="card">
                 <h2>Students &amp; Hero Points</h2>
@@ -62,7 +63,19 @@
                   <div class="form-row">
                     <div class="form-group">
                       <label>Filter Level</label>
-                      <select id="filter-level" class="input"><option value="">All</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select>
+                      <select id="filter-level" class="input">
+                        <option value="">All Levels</option>
+                        <option value="P3">P3</option><option value="P4">P4</option>
+                        <option value="P5">P5</option><option value="P6">P6</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Filter Subject</label>
+                      <select id="filter-subject" class="input">
+                        <option value="">All Subjects</option>
+                        <option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option>
+                        <option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option>
+                      </select>
                     </div>
                     <div class="form-group">
                       <label>Select Student</label>
@@ -84,16 +97,32 @@
                 </form>
               </div>
             </section>
+
             <section class="dashboard-card">
               <div class="card-header">Announcements</div>
               <form id="announcement-form">
                 <input id="announcement-title" type="text" placeholder="Title" required />
                 <textarea id="announcement-message" rows="2" placeholder="Message" required></textarea>
                 <div style="margin:0.5rem 0;"><label><input type="checkbox" id="announcement-pinned" /> Pin to top 📌</label></div>
-                <div class="form-field">
-                  <select id="announcement-level" class="input"><option value="">All Levels</option><option value="P5">P5</option><option value="P6">P6</option></select>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Level</label>
+                    <select id="announcement-level" class="input">
+                      <option value="">All Levels</option>
+                      <option value="P3">P3</option><option value="P4">P4</option>
+                      <option value="P5">P5</option><option value="P6">P6</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Subject</label>
+                    <select id="announcement-subject" class="input">
+                      <option value="">All Subjects</option>
+                      <option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option>
+                      <option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option>
+                    </select>
+                  </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Post</button>
+                <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Post</button>
               </form>
               <div id="announcement-list" style="margin-top:1rem;"></div>
             </section>
@@ -111,7 +140,7 @@
                 <form id="gym-create-form" style="padding:1rem; border:1px solid var(--ev-border-soft); margin-top:0.5rem;">
                   <div class="dashboard-grid">
                     <div class="form-field"><label>Title</label><input id="drill-title" type="text" required /></div>
-                    <div class="form-field"><label>Level</label><select id="drill-level" class="input"><option value="P5">P5</option><option value="P6">P6</option></select></div>
+                    <div class="form-field"><label>Level (English Only)</label><select id="drill-level" class="input"><option value="P5">P5</option><option value="P6">P6</option></select></div>
                   </div>
                   <div class="form-field"><label>Image</label><input type="file" id="drill-image" accept="image/*" /></div>
                   <div class="form-field"><label>Instructions</label><textarea id="drill-instructions" rows="2" required></textarea></div>
@@ -136,13 +165,29 @@
             </section>
 
             <section class="dashboard-card">
-              <div class="card-header">Homework &amp; Training</div>
+              <div class="card-header">Homework &amp; Links</div>
               <form id="homework-form">
                 <input id="homework-title" type="text" placeholder="Title" required />
                 <textarea id="homework-description" rows="2"></textarea>
                 <input id="homework-link-1" type="url" placeholder="Main Link URL" required />
-                <select id="homework-level" class="input"><option value="">All Levels</option><option value="P5">P5</option><option value="P6">P6</option></select>
-                <button type="submit" class="btn btn-primary">Add Homework</button>
+                <div class="form-row" style="margin-top:0.5rem;">
+                  <div class="form-group">
+                    <label>Level</label>
+                    <select id="homework-level" class="input">
+                      <option value="">All Levels</option>
+                      <option value="P5">P5</option><option value="P6">P6</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Subject</label>
+                    <select id="homework-subject" class="input">
+                      <option value="">All Subjects</option>
+                      <option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option>
+                      <option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Add Homework</button>
               </form>
               <div id="homework-list" style="margin-top:1rem;"></div>
               
