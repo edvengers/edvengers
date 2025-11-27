@@ -1,4 +1,4 @@
-// app-student.js (MASTER EMERGENCY RESTORE)
+// app-student.js (DEBUG MODE)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, increment, where
@@ -22,31 +22,37 @@ const storage = getStorage(app);
 
 // --- CONFIG & AUDIO ---
 const AVATAR_PATH = "images/avatars/";
-// !!! CHECK IF YOUR FILES ARE .png or .jpg !!!
+// CHECK: Are your files .png or .jpg?
 const AVAILABLE_AVATARS = [
-  "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
-  "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
+  "hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", 
+  "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"
 ];
 const AUDIO_PATH = "audio/";
-const SFX = {
-  hero_theme: new Audio(AUDIO_PATH + "hero_theme.mp3"), 
-  ding: new Audio(AUDIO_PATH + "ding.mp3"),             
-  success: new Audio(AUDIO_PATH + "success.mp3"),       
-  click: new Audio(AUDIO_PATH + "click.mp3")            
-};
+
+// Safe Audio Loader
+const SFX = {};
+try {
+  SFX.hero_theme = new Audio(AUDIO_PATH + "hero_theme.mp3");
+  SFX.ding = new Audio(AUDIO_PATH + "ding.mp3");
+  SFX.success = new Audio(AUDIO_PATH + "success.mp3");
+  SFX.click = new Audio(AUDIO_PATH + "click.mp3");
+} catch (e) {
+  console.error("Audio files missing or path wrong", e);
+}
+
 function playSound(key) {
-  const sound = SFX[key];
-  if (sound) { sound.currentTime = 0; sound.play().catch(e => {}); }
+  try {
+    const sound = SFX[key];
+    if (sound) { sound.currentTime = 0; sound.play().catch(e => console.log("Audio play blocked", e)); }
+  } catch(e) { console.log("Audio error", e); }
 }
 
 // --- UTILS ---
 function slugify(name) { return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, ""); }
 function fmtTime(ts) { if(!ts) return ""; return new Date(ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
-function fmtDateLabel(ts) { if(!ts) return ""; return new Date(ts).toLocaleDateString(undefined, {day:"2-digit", month:"short"}); }
 function fmtDateDayMonthYear(ts) { if(!ts) return "-"; return new Date(ts).toLocaleDateString("en-GB", {day:"2-digit", month:"2-digit", year:"2-digit"}); }
 
 let currentStudent = null;
-let chatUnsub = null;
 
 // --- GLOBAL HELPERS ---
 window.openMission = function(url) {
@@ -58,13 +64,24 @@ window.closeMission = function() {
   document.getElementById("mission-frame").src = "";
 };
 
-// --- LOGIN ---
+// --- LOGIN LOGIC (DEBUG) ---
 async function loginStudent(name, password) {
   const id = slugify(name);
+  console.log("Attempting login for ID:", id); // Look in Console
+  
   const snap = await getDoc(doc(db, "students", id));
-  if (!snap.exists()) throw new Error("Account not found.");
+  
+  if (!snap.exists()) {
+    alert(`DEBUG ERROR: Student ID '${id}' not found in database.\n\nDid you create the student in the Teacher Dashboard?`);
+    throw new Error("Account not found.");
+  }
+  
   const data = snap.data();
-  if (data.password !== password) throw new Error("Incorrect password.");
+  if (data.password !== password) {
+    alert("DEBUG ERROR: Incorrect Password.");
+    throw new Error("Incorrect password.");
+  }
+  
   return { id, ...data };
 }
 
@@ -79,7 +96,10 @@ function switchToHub(student) {
   document.getElementById("student-name-display").textContent = student.name;
   document.getElementById("profile-name").textContent = student.name;
   
-  if (student.avatar) document.getElementById("my-avatar").src = AVATAR_PATH + student.avatar;
+  if (student.avatar) {
+    const av = document.getElementById("my-avatar");
+    if(av) av.src = AVATAR_PATH + student.avatar;
+  }
 
   // Real-time Profile Listener
   onSnapshot(doc(db, "students", student.id), (snap) => {
@@ -104,7 +124,7 @@ function initAttendance() {
     attBtn.addEventListener("click", async () => {
       if (!currentStudent) return;
       if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100 });
-      playSound("hero_theme"); // EPIC SONG
+      playSound("hero_theme"); 
       
       const hero = document.getElementById("flying-hero");
       hero.classList.remove("hidden");
@@ -123,9 +143,9 @@ function initAttendance() {
   }
 }
 
-// --- WRITING GYM (FIXED LOGIC) ---
+// --- WRITING GYM ---
 let currentActiveDrill = null;
-let currentSubmission = null; // Stores existing work
+let currentSubmission = null;
 let currentPowerWords = [];
 let powerWordsFound = new Set();
 
@@ -156,7 +176,7 @@ async function initWritingGym(student) {
     );
 
     onSnapshot(subQ, (subSnap) => {
-      container.innerHTML = ""; // Clear again to avoid duplicates
+      container.innerHTML = ""; 
       let existingSub = null;
       if (!subSnap.empty) existingSub = { id: subSnap.docs[0].id, ...subSnap.docs[0].data() };
 
@@ -165,17 +185,17 @@ async function initWritingGym(student) {
       btn.style.padding = "1.2rem";
 
       if (!existingSub) {
-        // STATE: NEW MISSION
+        // NEW MISSION
         btn.className = "btn btn-primary";
         btn.innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;">
              <span style="font-size:1.2rem; font-weight:900; letter-spacing:1px; text-transform:uppercase;">ENTER SIMULATION</span>
              <span style="font-size:0.9rem; opacity:0.9; font-weight:400; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:4px;">Mission: ${activeDrill.title}</span>
           </div>`;
-        btn.onclick = () => openFocusMode(activeDrill, null); // Null = No prev work
+        btn.onclick = () => openFocusMode(activeDrill, null); 
 
       } else if (existingSub.status === "pending") {
-        // STATE: PENDING REVIEW
+        // PENDING REVIEW
         btn.className = "btn btn-ghost";
         btn.disabled = true;
         btn.style.opacity = "0.7";
@@ -186,14 +206,14 @@ async function initWritingGym(student) {
           </div>`;
 
       } else if (existingSub.status === "graded") {
-        // STATE: FEEDBACK READY
-        btn.className = "btn btn-secondary"; // Purple button for Intel
+        // FEEDBACK READY
+        btn.className = "btn btn-secondary"; 
         btn.innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;">
              <span style="font-size:1.2rem; font-weight:900; letter-spacing:1px;">📬 MISSION DEBRIEF</span>
              <span style="font-size:0.9rem; font-weight:400;">Feedback Received! Tap to View.</span>
           </div>`;
-        btn.onclick = () => openFocusMode(activeDrill, existingSub); // Pass submission data
+        btn.onclick = () => openFocusMode(activeDrill, existingSub); 
       }
 
       container.appendChild(btn);
@@ -203,7 +223,7 @@ async function initWritingGym(student) {
 
 function openFocusMode(drill, submission) {
   currentActiveDrill = drill;
-  currentSubmission = submission; // Save this
+  currentSubmission = submission;
   currentPowerWords = drill.powerWords || [];
   powerWordsFound.clear();
 
@@ -241,20 +261,18 @@ function openFocusMode(drill, submission) {
 
   // STATE: FRESH vs REVISION
   if (submission && submission.status === "graded") {
-    // REVISION MODE
-    editor.value = submission.text; // Pre-fill draft
+    editor.value = submission.text;
     feedbackBox.classList.remove("hidden");
     feedbackText.textContent = submission.feedback || "Good effort. See comments.";
     submitBtn.textContent = "Submit Revision (V2)";
-    playSound("click"); // Gentle open sound
+    playSound("click");
   } else {
-    // NEW MODE
     editor.value = ""; 
     feedbackBox.classList.add("hidden");
     submitBtn.textContent = "Submit Mission";
   }
 
-  // GAMIFICATION LOGIC
+  // GAMIFICATION
   editor.oninput = () => {
     const text = editor.value;
     wordCountEl.textContent = `Words: ${text.trim().split(/\s+/).filter(w=>w.length>0).length}`;
@@ -266,8 +284,8 @@ function openFocusMode(drill, submission) {
         powerWordsFound.add(lowerTarget);
         const tag = belt.querySelector(`span[data-word="${lowerTarget}"]`);
         if (tag) tag.classList.add("activated");
-        playSound("ding"); // DING!
-        awardInstantXP(5); // +5 Points for Word
+        playSound("ding");
+        awardInstantXP(5);
       }
     });
   };
@@ -280,7 +298,6 @@ async function awardInstantXP(amount) {
   if (!currentStudent) return;
   await updateDoc(doc(db, "students", currentStudent.id), { stars: increment(amount) });
   
-  // POPUP VISUAL
   const popup = document.createElement("div");
   popup.textContent = `+${amount} Hero Points`;
   popup.style.cssText = "position:fixed; top:15%; left:50%; transform:translateX(-50%); background:#1fe6a8; color:#000; font-weight:bold; padding:0.5rem 1rem; border-radius:20px; z-index:10001; animation:floatUp 1s forwards;";
@@ -301,16 +318,14 @@ async function submitDrill() {
   try {
     let subRef;
     if (currentSubmission) {
-      // UPDATE EXISTING
       subRef = doc(db, "writing_submissions", currentSubmission.id);
       await setDoc(subRef, {
         text: text,
         powerWordsUsed: Array.from(powerWordsFound),
-        createdAt: Date.now(), // Bump to top of teacher inbox
-        status: "pending" // Needs remarking
+        createdAt: Date.now(),
+        status: "pending" 
       }, { merge: true });
     } else {
-      // CREATE NEW
       await addDoc(collection(db, "writing_submissions"), {
         studentId: currentStudent.id,
         studentName: currentStudent.name,
@@ -323,8 +338,8 @@ async function submitDrill() {
       });
     }
 
-    playSound("success"); // VICTORY SOUND
-    awardInstantXP(20);   // +20 COMPLETION BONUS
+    playSound("success");
+    awardInstantXP(20);
     if(typeof confetti === 'function') confetti({ particleCount: 200, spread: 120 });
     
     alert("Mission Accomplished! +20 Hero Points earned.");
@@ -336,7 +351,7 @@ async function submitDrill() {
   }
 }
 
-// --- STANDARD LOGIC (Announcements, Homework, Chat) ---
+// --- STANDARD LOGIC ---
 function initAnnouncementsAndHomework(student) {
   const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
   onSnapshot(annQuery, (snap) => {
@@ -416,6 +431,7 @@ function initChat(student) {
 
 function initSelfTraining(student) {
     const container = document.getElementById("training-buttons-container");
+    if(!container) return;
     getDoc(doc(db, "settings", "training_links")).then(snap => {
         if(!snap.exists()) { container.innerHTML="<p class='helper-text'>No training configured.</p>"; return; }
         const links = snap.data();
@@ -442,12 +458,15 @@ function initSelfTraining(student) {
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("student-login-form");
     if(loginForm) {
-        loginForm.onsubmit = async (e) => {
+        loginForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             try {
                 const u = await loginStudent(document.getElementById("login-name").value, document.getElementById("login-password").value);
                 switchToHub(u);
-            } catch(err) { alert(err.message); }
-        };
+            } catch(err) { 
+                console.error(err); 
+                // Alert already handled in loginStudent for specific errors
+            }
+        });
     }
 });
