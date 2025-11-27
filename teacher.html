@@ -49,74 +49,31 @@
 
       <section id="teacher-dashboard-section" style="display:none;">
         <div class="ev-container" style="padding:2.5rem 0 3.5rem;">
+          
           <div class="dashboard-top-row">
             <h1>Teacher Dashboard</h1>
             <button id="teacher-logout-btn" class="btn btn-ghost">Log out</button>
           </div>
-          <p class="ev-helper-text">
-            Manage students, Hero Points, announcements, homework, and Q&A chat here.
-          </p>
+          <p class="ev-helper-text">Welcome back, Commander.</p>
 
-          <section class="dashboard-card">
-            <div class="card">
-              <h2>Students &amp; Hero Points</h2>
-              <p class="helper-text">
-                Filter by level and subject, select a student, then stage Hero Points changes.
-                Click <strong>Update Points</strong> to save.
-              </p>
-              <form id="students-form">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="filter-level">Level</label>
-                    <select id="filter-level" class="input">
-                      <option value="">All levels</option>
-                      <option value="P3">P3</option>
-                      <option value="P4">P4</option>
-                      <option value="P5">P5</option>
-                      <option value="P6">P6</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="filter-subject">Subject</label>
-                    <select id="filter-subject" class="input">
-                      <option value="">All subjects</option>
-                      <option value="P3 English">P3 English</option>
-                      <option value="P3 Math">P3 Math</option>
-                      <option value="P4 English">P4 English</option>
-                      <option value="P4 Math">P4 Math</option>
-                      <option value="P5 English">P5 English</option>
-                      <option value="P5 Math">P5 Math</option>
-                      <option value="P6 English">P6 English</option>
-                      <option value="P6 Math">P6 Math</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="student-select">Existing student</label>
-                    <select id="student-select" class="input">
-                      <option value="">-- Select student --</option>
-                    </select>
-                  </div>
-                </div>
-                <div id="students-list" class="students-list">
-                  <p class="helper-text">Select a student above to see Hero Points.</p>
-                </div>
-                <div style="margin-top: 0.75rem;">
-                  <button type="button" id="update-points-btn" class="btn">Update Points</button>
-                </div>
-                <details class="ev-collapsible" style="margin-top: 1.5rem;">
-                  <summary>Edit / create student profile (optional)</summary>
-                  <p class="helper-text" style="margin-top: 0.75rem;">
-                    Use this only when you need to add a new student or change level / subjects.
-                  </p>
+          <div class="ev-tab-nav">
+            <button class="ev-tab-btn active" onclick="switchTab('admin')">🏛️ Admin HQ</button>
+            <button class="ev-tab-btn" onclick="switchTab('missions')">🚀 Missions Control</button>
+            <button class="ev-tab-btn" onclick="switchTab('comms')">💬 Comms Link</button>
+          </div>
+
+          <div id="tab-admin" class="ev-tab-content active">
+            
+            <section class="dashboard-card">
+              <div class="card">
+                <h2>Students &amp; Hero Points</h2>
+                <p class="helper-text">Filter by level/subject, select student, update points.</p>
+                <form id="students-form">
                   <div class="form-row">
                     <div class="form-group">
-                      <label for="student-name">Student name</label>
-                      <input id="student-name" type="text" class="input" placeholder="e.g. Ethan Tan" />
-                    </div>
-                    <div class="form-group">
-                      <label for="student-level">Level</label>
-                      <select id="student-level" class="input">
-                        <option value="">-- Select level --</option>
+                      <label>Level</label>
+                      <select id="filter-level" class="input">
+                        <option value="">All levels</option>
                         <option value="P3">P3</option>
                         <option value="P4">P4</option>
                         <option value="P5">P5</option>
@@ -124,8 +81,9 @@
                       </select>
                     </div>
                     <div class="form-group">
-                      <label for="student-subjects">Subjects (Ctrl/Cmd for multiple)</label>
-                      <select id="student-subjects" class="input" multiple>
+                      <label>Subject</label>
+                      <select id="filter-subject" class="input">
+                        <option value="">All subjects</option>
                         <option value="P3 English">P3 English</option>
                         <option value="P3 Math">P3 Math</option>
                         <option value="P4 English">P4 English</option>
@@ -136,17 +94,178 @@
                         <option value="P6 Math">P6 Math</option>
                       </select>
                     </div>
+                    <div class="form-group">
+                      <label>Existing student</label>
+                      <select id="student-select" class="input">
+                        <option value="">-- Select student --</option>
+                      </select>
+                    </div>
                   </div>
-                  <button type="submit" class="btn" style="margin-top: 0.75rem;">Save / Update Student</button>
-                </details>
-              </form>
-            </div>
-          </section>
+                  <div id="students-list" class="students-list">
+                    <p class="helper-text">Select a student above to see Hero Points.</p>
+                  </div>
+                  <div style="margin-top: 0.75rem;">
+                    <button type="button" id="update-points-btn" class="btn">Update Points</button>
+                  </div>
 
-          <section class="dashboard-card">
-            <div class="card">
-              <div class="card-header">Self Training Links</div>
-              <p class="helper-text">Set the Blooket/Quiz links here.</p>
+                  <details class="ev-collapsible" style="margin-top: 1.5rem;">
+                    <summary>Edit / create student profile</summary>
+                    <div class="form-row" style="margin-top:1rem;">
+                      <div class="form-group">
+                        <label>Name</label>
+                        <input id="student-name" type="text" class="input" placeholder="e.g. Ethan Tan" />
+                      </div>
+                      <div class="form-group">
+                        <label>Level</label>
+                        <select id="student-level" class="input">
+                          <option value="">-- Select --</option>
+                          <option value="P3">P3</option>
+                          <option value="P4">P4</option>
+                          <option value="P5">P5</option>
+                          <option value="P6">P6</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Subjects (Ctrl+Click multiple)</label>
+                        <select id="student-subjects" class="input" multiple>
+                          <option value="P3 English">P3 English</option>
+                          <option value="P3 Math">P3 Math</option>
+                          <option value="P4 English">P4 English</option>
+                          <option value="P4 Math">P4 Math</option>
+                          <option value="P5 English">P5 English</option>
+                          <option value="P5 Math">P5 Math</option>
+                          <option value="P6 English">P6 English</option>
+                          <option value="P6 Math">P6 Math</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn" style="margin-top: 0.75rem;">Save / Update Student</button>
+                  </details>
+                </form>
+              </div>
+            </section>
+
+            <section class="dashboard-card">
+              <div class="card-header">Announcements</div>
+              <p class="card-subtitle">Broadcast messages to the Hub.</p>
+              <form id="announcement-form">
+                <div class="form-field">
+                  <label>Title</label>
+                  <input id="announcement-title" type="text" placeholder="e.g. P6 Math Reminder" required />
+                </div>
+                <div class="form-field">
+                  <label>Message</label>
+                  <textarea id="announcement-message" rows="3" placeholder="Details..." required></textarea>
+                </div>
+                <div class="form-field" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                  <input type="checkbox" id="announcement-pinned" style="width:auto; margin:0; cursor:pointer;" />
+                  <label for="announcement-pinned" style="margin:0; cursor:pointer; font-weight:600; color:var(--ev-accent);">
+                    Pin to top 📌
+                  </label>
+                </div>
+                <div class="form-field">
+                  <label>Level Filter</label>
+                  <select id="announcement-level" class="input">
+                    <option value="">All levels</option>
+                    <option value="P3">P3</option>
+                    <option value="P4">P4</option>
+                    <option value="P5">P5</option>
+                    <option value="P6">P6</option>
+                  </select>
+                  <label>Subject Filter</label>
+                  <select id="announcement-subject" class="input">
+                    <option value="">All subjects</option>
+                    <option value="P3 English">P3 English</option>
+                    <option value="P3 Math">P3 Math</option>
+                    <option value="P5 English">P5 English</option>
+                    <option value="P5 Math">P5 Math</option>
+                    <option value="P6 English">P6 English</option>
+                    <option value="P6 Math">P6 Math</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Post Announcement</button>
+              </form>
+              <div id="announcement-list" style="margin-top:1rem;"></div>
+              <div class="teacher-section-footer">
+                <button id="teacher-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older</button>
+                <span id="teacher-ann-count" class="helper-text"></span>
+              </div>
+            </section>
+
+          </div>
+          <div id="tab-missions" class="ev-tab-content">
+            
+            <section class="dashboard-card" style="border: 2px dashed var(--ev-muted); opacity:0.7;">
+              <div class="card-header">🏋️ The Writing Gym (Coming Soon)</div>
+              <p class="helper-text">Drill Creator & Marking Inbox will go here.</p>
+            </section>
+
+            <section class="dashboard-card">
+              <div class="card-header">Homework Assignments</div>
+              <form id="homework-form">
+                <div class="form-field">
+                  <label>Title</label>
+                  <input id="homework-title" type="text" placeholder="e.g. Week 2 Practice" required />
+                </div>
+                <div class="form-field">
+                  <label>Description</label>
+                  <textarea id="homework-description" rows="2"></textarea>
+                </div>
+                <div class="form-field">
+                  <label>Links (Name — URL)</label>
+                  <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                    <input id="homework-name-1" type="text" placeholder="Link 1 Name" style="width:40%;" />
+                    <input id="homework-link-1" type="url" placeholder="https://..." style="flex:1;" required />
+                  </div>
+                  <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                    <input id="homework-name-2" type="text" placeholder="Link 2 Name" style="width:40%;" />
+                    <input id="homework-link-2" type="url" placeholder="https://..." style="flex:1;" />
+                  </div>
+                </div>
+                <div class="dashboard-grid">
+                  <div class="form-field">
+                    <label>Level</label>
+                    <select id="homework-level" class="input">
+                      <option value="">All levels</option>
+                      <option value="P3">P3</option>
+                      <option value="P4">P4</option>
+                      <option value="P5">P5</option>
+                      <option value="P6">P6</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Subject</label>
+                    <select id="homework-subject" class="input">
+                      <option value="">All subjects</option>
+                      <option value="P5 English">P5 English</option>
+                      <option value="P5 Math">P5 Math</option>
+                      <option value="P6 English">P6 English</option>
+                      <option value="P6 Math">P6 Math</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="dashboard-grid">
+                  <div class="form-field">
+                    <label>Posted Date</label>
+                    <input id="homework-posted" type="date" />
+                  </div>
+                  <div class="form-field">
+                    <label>Due Date</label>
+                    <input id="homework-due" type="date" />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Homework</button>
+              </form>
+              <div id="homework-list" style="margin-top:1rem;"></div>
+              <div class="teacher-section-footer">
+                <button id="teacher-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older</button>
+                <span id="teacher-hw-count" class="helper-text"></span>
+              </div>
+            </section>
+
+            <section class="dashboard-card">
+              <div class="card-header">Self Training Config</div>
+              <p class="card-subtitle">Manage Blooket / Quiz Links.</p>
               <form id="training-links-form">
                 <div class="dashboard-grid">
                   <div class="form-field">
@@ -162,171 +281,37 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save Links</button>
               </form>
-            </div>
-          </section>
-<section class="dashboard-card">
-            <div class="card-header">Announcements &amp; Homework</div>
-            <p class="card-subtitle">Target announcements and homework by level and subject.</p>
+            </section>
 
-            <div class="card" style="margin-bottom: 1.5rem;">
-              <div class="card-header">Announcements</div>
-              <form id="announcement-form">
-                <div class="form-field">
-                  <label for="announcement-title">Title</label>
-                  <input id="announcement-title" type="text" placeholder="e.g. P6 Math – Week 3 Reminder" required />
-                </div>
-                <div class="form-field">
-                  <label for="announcement-message">Message</label>
-                  <textarea id="announcement-message" rows="3" placeholder="Key reminder, lesson focus, etc." required></textarea>
-                </div>
-                <div class="form-field" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
-                  <input type="checkbox" id="announcement-pinned" style="width:auto; margin:0; cursor:pointer;" />
-                  <label for="announcement-pinned" style="margin:0; cursor:pointer; font-weight:600; color:var(--ev-accent);">
-                    Pin this announcement to top 📌
-                  </label>
-                </div>
-                <div class="form-field">
-                  <label for="announcement-level">Level</label>
-                  <select id="announcement-level" class="input">
-                    <option value="">All levels</option>
-                    <option value="P3">P3</option>
-                    <option value="P4">P4</option>
-                    <option value="P5">P5</option>
-                    <option value="P6">P6</option>
-                  </select>
-                  <label for="announcement-subject">Subject</label>
-                  <select id="announcement-subject" class="input">
-                    <option value="">All subjects</option>
-                    <option value="P3 English">P3 English</option>
-                    <option value="P3 Math">P3 Math</option>
-                    <option value="P4 English">P4 English</option>
-                    <option value="P4 Math">P4 Math</option>
-                    <option value="P5 English">P5 English</option>
-                    <option value="P5 Math">P5 Math</option>
-                    <option value="P6 English">P6 English</option>
-                    <option value="P6 Math">P6 Math</option>
-                  </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Post Announcement</button>
-              </form>
-              <div id="announcement-list" style="margin-top:1rem;"></div>
-              <div class="teacher-section-footer">
-                <button id="teacher-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older announcements</button>
-                <span id="teacher-ann-count" class="helper-text"></span>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">Homework</div>
-              <form id="homework-form">
-                <div class="form-field">
-                  <label for="homework-title">Title</label>
-                  <input id="homework-title" type="text" placeholder="e.g. P5 English – Week 2 Practice" required />
-                </div>
-                <div class="form-field">
-                  <label for="homework-description">Description (optional)</label>
-                  <textarea id="homework-description" rows="3" placeholder="Short description / instructions"></textarea>
-                </div>
-                <div class="form-field">
-                  <label>Homework Links &amp; Names</label>
-                  <p class="helper-text" style="margin-bottom:0.5rem;">Name (e.g. "Worksheet A") — URL (e.g. Google Drive link)</p>
-                  <div class="link-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <input id="homework-name-1" type="text" placeholder="Link 1 Name" style="width:40%;" />
-                    <input id="homework-link-1" type="url" placeholder="https://..." style="flex:1;" required />
-                  </div>
-                  <div class="link-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <input id="homework-name-2" type="text" placeholder="Link 2 Name" style="width:40%;" />
-                    <input id="homework-link-2" type="url" placeholder="https://..." style="flex:1;" />
-                  </div>
-                  <div class="link-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <input id="homework-name-3" type="text" placeholder="Link 3 Name" style="width:40%;" />
-                    <input id="homework-link-3" type="url" placeholder="https://..." style="flex:1;" />
-                  </div>
-                  <div class="link-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <input id="homework-name-4" type="text" placeholder="Link 4 Name" style="width:40%;" />
-                    <input id="homework-link-4" type="url" placeholder="https://..." style="flex:1;" />
-                  </div>
-                  <div class="link-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <input id="homework-name-5" type="text" placeholder="Link 5 Name" style="width:40%;" />
-                    <input id="homework-link-5" type="url" placeholder="https://..." style="flex:1;" />
-                  </div>
-                </div>
-                <div class="dashboard-grid">
-                  <div class="form-field">
-                    <label for="homework-level">Level</label>
-                    <select id="homework-level" class="input">
-                      <option value="">All levels</option>
-                      <option value="P3">P3</option>
-                      <option value="P4">P4</option>
-                      <option value="P5">P5</option>
-                      <option value="P6">P6</option>
-                    </select>
-                    <label for="homework-subject">Subject</label>
-                    <select id="homework-subject" class="input">
-                      <option value="">All subjects</option>
-                      <option value="P3 English">P3 English</option>
-                      <option value="P3 Math">P3 Math</option>
-                      <option value="P4 English">P4 English</option>
-                      <option value="P4 Math">P4 Math</option>
-                      <option value="P5 English">P5 English</option>
-                      <option value="P5 Math">P5 Math</option>
-                      <option value="P6 English">P6 English</option>
-                      <option value="P6 Math">P6 Math</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="dashboard-grid">
-                  <div class="form-field">
-                    <label for="homework-posted">Posted date</label>
-                    <input id="homework-posted" type="date" />
-                  </div>
-                  <div class="form-field">
-                    <label for="homework-due">Due date</label>
-                    <input id="homework-due" type="date" />
-                  </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Add Homework</button>
-              </form>
-              <div id="homework-list" style="margin-top:1rem;"></div>
-              <div class="teacher-section-footer">
-                <button id="teacher-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older homework</button>
-                <span id="teacher-hw-count" class="helper-text"></span>
-              </div>
-            </div>
-          </section>
-
-          <section class="dashboard-card">
-            <div class="card-header">Student Chat</div>
-            <p class="card-subtitle">
-              Reply to student questions. Click a student to open their chat, then send text or attach a photo.
-            </p>
-            <div class="chat-layout">
-              <aside class="chat-sidebar" id="chat-student-list"></aside>
-              <section class="chat-main">
-                <div id="chat-thread" class="chat-window"></div>
-                <form id="teacher-chat-form" class="chat-form">
-                  <input type="hidden" id="teacher-chat-student-id" />
-                  <div class="chat-row-inputs">
-                    <label class="chat-label">
-                      <span>Your message</span>
-                      <textarea id="teacher-chat-input" rows="2" placeholder="Type your reply..."></textarea>
-                    </label>
-                    <div class="chat-attachments">
-                      <label class="file-label">
-                        📎 Photo
-                        <input type="file" id="teacher-chat-image" accept="image/*" />
+          </div>
+          <div id="tab-comms" class="ev-tab-content">
+            <section class="dashboard-card" style="height: 80vh;">
+              <div class="card-header">Student Chat</div>
+              <p class="card-subtitle">Direct line to heroes.</p>
+              <div class="chat-layout" style="height: 100%;">
+                <aside class="chat-sidebar" id="chat-student-list" style="max-height: 100%;"></aside>
+                <section class="chat-main" style="display:flex; flex-direction:column; height: 100%;">
+                  <div id="chat-thread" class="chat-window" style="flex:1; max-height:none;"></div>
+                  <form id="teacher-chat-form" class="chat-form">
+                    <input type="hidden" id="teacher-chat-student-id" />
+                    <div class="chat-row-inputs">
+                      <label class="chat-label">
+                        <textarea id="teacher-chat-input" rows="2" placeholder="Reply..."></textarea>
                       </label>
+                      <div class="chat-attachments">
+                        <label class="file-label">📎 <input type="file" id="teacher-chat-image" accept="image/*" /></label>
+                      </div>
                     </div>
-                  </div>
-                  <p id="teacher-chat-status" class="helper-text"></p>
-                  <div class="chat-actions">
-                    <button type="submit" class="btn btn-primary">Send reply</button>
-                  </div>
-                </form>
-              </section>
-            </div>
-          </section>
-        </div>
+                    <p id="teacher-chat-status" class="helper-text"></p>
+                    <div class="chat-actions">
+                      <button type="submit" class="btn btn-primary">Send</button>
+                    </div>
+                  </form>
+                </section>
+              </div>
+            </section>
+          </div>
+          </div>
       </section>
     </main>
 
@@ -339,6 +324,6 @@
     <script>
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>
-    <script src="app-teacher.js?v=3" type="module"></script>
+    <script src="app-teacher.js" type="module"></script>
   </body>
 </html>

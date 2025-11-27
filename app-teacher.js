@@ -1,4 +1,4 @@
-// app-teacher.js
+// app-teacher.js (MASTER PHASE 1)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -10,7 +10,7 @@ import {
   updateDoc,
   doc,
   setDoc,
-  getDoc, // Added this
+  getDoc,
   increment,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
@@ -53,18 +53,17 @@ function fmtDateLabel(ts) {
   if (diffDays === -1) return "Yesterday";
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
-// --- PASTE THIS NEW FUNCTION HERE ---
+// DATE FIX
 function fmtDateDayMonthYear(ts) {
   if (!ts) return "-";
   const d = new Date(ts);
-  // Forces dd/mm/yy format (e.g. 26/11/25)
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
   });
 }
-// ------------------------------------
+
 // !!! PASSWORD SET !!!
 const TEACHER_PASSWORD = "kalb25";
 
@@ -332,10 +331,8 @@ function renderTeacherAnnouncements() {
 
   itemsToShow.forEach((d) => {
     const pinIcon = d.isPinned ? "📌 " : "";
-    
-    // UPDATED: Using dd/mm/yy format
     const dateStr = fmtDateDayMonthYear(d.createdAt);
-
+    
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     if(d.isPinned) card.style.border = "1px solid var(--ev-accent)";
@@ -446,7 +443,6 @@ function renderTeacherHomework() {
         return `<li><a href="${url}" target="_blank">${name}</a></li>`;
     }).join("");
 
-    // UPDATED: Using dd/mm/yy format for Posted and Due dates
     const postedStr = fmtDateDayMonthYear(d.postedAt);
     const dueStr = d.dueAt ? fmtDateDayMonthYear(d.dueAt) : "";
 
@@ -647,3 +643,26 @@ if (trainingForm) {
     }
   });
 }
+
+/* TAB SYSTEM LOGIC */
+window.switchTab = function(tabName) {
+  // 1. Deactivate all buttons and tabs
+  document.querySelectorAll(".ev-tab-btn").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".ev-tab-content").forEach(content => content.classList.remove("active"));
+
+  // 2. Activate selected
+  const targetBtn = document.querySelector(`button[onclick="switchTab('${tabName}')"]`);
+  const targetContent = document.getElementById(`tab-${tabName}`);
+
+  if (targetBtn) targetBtn.classList.add("active");
+  if (targetContent) targetContent.classList.add("active");
+
+  // Save preference
+  localStorage.setItem("evTeacherTab", tabName);
+};
+
+// Restore last tab on load
+document.addEventListener("DOMContentLoaded", () => {
+  const lastTab = localStorage.getItem("evTeacherTab");
+  if (lastTab) switchTab(lastTab);
+});
