@@ -626,13 +626,18 @@ input:focus, textarea:focus, select:focus {
   padding: 1rem;
   border-bottom: 1px solid #b45309;
   font-family: monospace;
-  font-size: 0.95rem;
+  
+  /* --- FIXES START HERE --- */
+  font-size: 0.85rem;       /* Reduced font size slightly */
+  white-space: pre-wrap;    /* CRITICAL: Preserves your line breaks */
+  overflow-y: auto;         /* Adds scrollbar if feedback is huge */
+  max-height: 40vh;         /* Prevents it from taking up the whole screen */
+  /* ------------------------ */
+
   line-height: 1.5;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   animation: slideDown 0.3s ease;
 }
-.gym-feedback-box.hidden { display: none; }
-.gym-feedback-title { font-weight: 900; text-transform: uppercase; margin-bottom: 0.25rem; display: block; }
 
 @keyframes slideDown {
   from { transform: translateY(-20px); opacity: 0; }
