@@ -15,9 +15,7 @@
           <span class="ev-logo-text">Edvengers</span>
         </div>
         <nav class="ev-nav-links">
-          <a href="index.html" class="btn btn-ghost btn-back">
-            ← Back to Main Site
-          </a>
+          <a href="index.html" class="btn btn-ghost btn-back">← Back to Main Site</a>
         </nav>
       </div>
     </header>
@@ -26,21 +24,16 @@
       <section id="teacher-login-section">
         <div class="ev-container" style="padding:2.5rem 0 3rem;">
           <h1>Teacher Login</h1>
-          <p class="ev-helper-text">
-            Internal dashboard for Edvengers teachers.
-          </p>
           <div class="dashboard-card">
             <form id="teacher-login-form">
               <div class="form-field">
-                <label for="teacher-username">Username</label>
+                <label>Username</label>
                 <input id="teacher-username" type="text" placeholder="e.g. andy" required />
               </div>
               <div class="form-field">
-                <label for="teacher-password">Password</label>
+                <label>Password</label>
                 <input id="teacher-password" type="password" required />
               </div>
-              <p class="helper-text">For now, this uses a simple shared password you control.</p>
-              <p id="teacher-login-error" class="helper-text" style="color:#ff6b6b; display:none;"></p>
               <button type="submit" class="btn btn-primary">Enter Dashboard</button>
             </form>
           </div>
@@ -54,7 +47,6 @@
             <h1>Teacher Dashboard</h1>
             <button id="teacher-logout-btn" class="btn btn-ghost">Log out</button>
           </div>
-          <p class="ev-helper-text">Welcome back, Commander.</p>
 
           <div class="ev-tab-nav">
             <button class="ev-tab-btn active" onclick="switchTab('admin')">🏛️ Admin HQ</button>
@@ -63,323 +55,134 @@
           </div>
 
           <div id="tab-admin" class="ev-tab-content active">
-            
             <section class="dashboard-card">
               <div class="card">
                 <h2>Students &amp; Hero Points</h2>
-                <p class="helper-text">Filter by level/subject, select student, update points.</p>
                 <form id="students-form">
                   <div class="form-row">
                     <div class="form-group">
-                      <label>Level</label>
-                      <select id="filter-level" class="input">
-                        <option value="">All levels</option>
-                        <option value="P3">P3</option>
-                        <option value="P4">P4</option>
-                        <option value="P5">P5</option>
-                        <option value="P6">P6</option>
-                      </select>
+                      <label>Filter Level</label>
+                      <select id="filter-level" class="input"><option value="">All</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select>
                     </div>
                     <div class="form-group">
-                      <label>Subject</label>
-                      <select id="filter-subject" class="input">
-                        <option value="">All subjects</option>
-                        <option value="P3 English">P3 English</option>
-                        <option value="P3 Math">P3 Math</option>
-                        <option value="P4 English">P4 English</option>
-                        <option value="P4 Math">P4 Math</option>
-                        <option value="P5 English">P5 English</option>
-                        <option value="P5 Math">P5 Math</option>
-                        <option value="P6 English">P6 English</option>
-                        <option value="P6 Math">P6 Math</option>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label>Existing student</label>
-                      <select id="student-select" class="input">
-                        <option value="">-- Select student --</option>
-                      </select>
+                      <label>Select Student</label>
+                      <select id="student-select" class="input"><option value="">-- Select --</option></select>
                     </div>
                   </div>
-                  <div id="students-list" class="students-list">
-                    <p class="helper-text">Select a student above to see Hero Points.</p>
-                  </div>
-                  <div style="margin-top: 0.75rem;">
-                    <button type="button" id="update-points-btn" class="btn">Update Points</button>
-                  </div>
-
-                  <details class="ev-collapsible" style="margin-top: 1.5rem;">
-                    <summary>Edit / create student profile</summary>
+                  <div id="students-list" class="students-list"></div>
+                  <button type="button" id="update-points-btn" class="btn" style="margin-top:0.5rem;">Update Points</button>
+                  
+                  <details class="ev-collapsible" style="margin-top: 1rem;">
+                    <summary>Add/Edit Student</summary>
                     <div class="form-row" style="margin-top:1rem;">
-                      <div class="form-group">
-                        <label>Name</label>
-                        <input id="student-name" type="text" class="input" placeholder="e.g. Ethan Tan" />
-                      </div>
-                      <div class="form-group">
-                        <label>Level</label>
-                        <select id="student-level" class="input">
-                          <option value="">-- Select --</option>
-                          <option value="P3">P3</option>
-                          <option value="P4">P4</option>
-                          <option value="P5">P5</option>
-                          <option value="P6">P6</option>
-                        </select>
-                      </div>
-                      <div class="form-group">
-                        <label>Subjects (Ctrl+Click multiple)</label>
-                        <select id="student-subjects" class="input" multiple>
-                          <option value="P3 English">P3 English</option>
-                          <option value="P3 Math">P3 Math</option>
-                          <option value="P4 English">P4 English</option>
-                          <option value="P4 Math">P4 Math</option>
-                          <option value="P5 English">P5 English</option>
-                          <option value="P5 Math">P5 Math</option>
-                          <option value="P6 English">P6 English</option>
-                          <option value="P6 Math">P6 Math</option>
-                        </select>
-                      </div>
+                      <div class="form-group"><label>Name</label><input id="student-name" type="text" class="input" /></div>
+                      <div class="form-group"><label>Level</label><select id="student-level" class="input"><option value="P5">P5</option><option value="P6">P6</option></select></div>
+                      <div class="form-group"><label>Subjects</label><select id="student-subjects" class="input" multiple><option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option><option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option></select></div>
                     </div>
-                    <button type="submit" class="btn" style="margin-top: 0.75rem;">Save / Update Student</button>
+                    <button type="submit" class="btn">Save Student</button>
                   </details>
                 </form>
               </div>
             </section>
-
             <section class="dashboard-card">
               <div class="card-header">Announcements</div>
-              <p class="card-subtitle">Broadcast messages to the Hub.</p>
               <form id="announcement-form">
+                <input id="announcement-title" type="text" placeholder="Title" required />
+                <textarea id="announcement-message" rows="2" placeholder="Message" required></textarea>
+                <div style="margin:0.5rem 0;"><label><input type="checkbox" id="announcement-pinned" /> Pin to top 📌</label></div>
                 <div class="form-field">
-                  <label>Title</label>
-                  <input id="announcement-title" type="text" placeholder="e.g. P6 Math Reminder" required />
+                  <select id="announcement-level" class="input"><option value="">All Levels</option><option value="P5">P5</option><option value="P6">P6</option></select>
                 </div>
-                <div class="form-field">
-                  <label>Message</label>
-                  <textarea id="announcement-message" rows="3" placeholder="Details..." required></textarea>
-                </div>
-                <div class="form-field" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
-                  <input type="checkbox" id="announcement-pinned" style="width:auto; margin:0; cursor:pointer;" />
-                  <label for="announcement-pinned" style="margin:0; cursor:pointer; font-weight:600; color:var(--ev-accent);">
-                    Pin to top 📌
-                  </label>
-                </div>
-                <div class="form-field">
-                  <label>Level Filter</label>
-                  <select id="announcement-level" class="input">
-                    <option value="">All levels</option>
-                    <option value="P3">P3</option>
-                    <option value="P4">P4</option>
-                    <option value="P5">P5</option>
-                    <option value="P6">P6</option>
-                  </select>
-                  <label>Subject Filter</label>
-                  <select id="announcement-subject" class="input">
-                    <option value="">All subjects</option>
-                    <option value="P3 English">P3 English</option>
-                    <option value="P3 Math">P3 Math</option>
-                    <option value="P5 English">P5 English</option>
-                    <option value="P5 Math">P5 Math</option>
-                    <option value="P6 English">P6 English</option>
-                    <option value="P6 Math">P6 Math</option>
-                  </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Post Announcement</button>
+                <button type="submit" class="btn btn-primary">Post</button>
               </form>
               <div id="announcement-list" style="margin-top:1rem;"></div>
-              <div class="teacher-section-footer">
-                <button id="teacher-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older</button>
-                <span id="teacher-ann-count" class="helper-text"></span>
-              </div>
             </section>
-
           </div>
+
           <div id="tab-missions" class="ev-tab-content">
             
             <section class="dashboard-card">
               <div class="card-header">🏋️ The Writing Gym</div>
-              <p class="card-subtitle">Deploy new writing missions (Picture Comps/Drills).</p>
               
               <details class="ev-collapsible">
                 <summary style="background:var(--ev-bg-alt); padding:0.75rem; border-radius:8px; cursor:pointer; border:1px solid var(--ev-border-soft);">
                   <strong>➕ Create New Drill</strong>
                 </summary>
-                <form id="gym-create-form" style="margin-top:1rem; padding:1rem; border:1px solid var(--ev-border-soft); border-radius:8px;">
-                  
+                <form id="gym-create-form" style="padding:1rem; border:1px solid var(--ev-border-soft); margin-top:0.5rem;">
                   <div class="dashboard-grid">
-                    <div class="form-field">
-                      <label>Mission Title</label>
-                      <input id="drill-title" type="text" placeholder="e.g. P5 Picture Comp - The Storm" required />
-                    </div>
-                    <div class="form-field">
-                      <label>Target Level</label>
-                      <select id="drill-level" class="input" required>
-                        <option value="P3">P3</option>
-                        <option value="P4">P4</option>
-                        <option value="P5">P5</option>
-                        <option value="P6">P6</option>
-                      </select>
-                    </div>
+                    <div class="form-field"><label>Title</label><input id="drill-title" type="text" required /></div>
+                    <div class="form-field"><label>Level</label><select id="drill-level" class="input"><option value="P5">P5</option><option value="P6">P6</option></select></div>
                   </div>
-
-                  <div class="form-field">
-                    <label>Stimulus Image (Optional)</label>
-                    <input type="file" id="drill-image" accept="image/*" />
-                    <p class="helper-text">If uploaded, this image will be shown side-by-side with the writing pad.</p>
-                  </div>
-                  <div class="form-field">
-                    <label>Instructions for Student</label>
-                    <textarea id="drill-instructions" rows="2" placeholder="Write a story based on this picture..." required></textarea>
-                  </div>
-
-                  <div class="form-field">
-                    <label>⚡ Power Words (Gamification)</label>
-                    <input id="drill-powerwords" type="text" placeholder="e.g. Agony, Regret, Shattered, Chaos (Comma separated)" />
-                    <p class="helper-text">Students get +5 XP instantly when they use these words.</p>
-                  </div>
-
-                  <div class="form-field">
-                    <label>🤖 Hidden AI Prompt (For Your Marking)</label>
-                    <textarea id="drill-ai-prompt" rows="3" placeholder="e.g. Act as a PSLE marker. Check if they used the Power Words correctly. If they listed events like a robot, tell them to use Show Not Tell." required></textarea>
-                    <p class="helper-text">This will be copied to your clipboard when you mark the essay.</p>
-                  </div>
-
+                  <div class="form-field"><label>Image</label><input type="file" id="drill-image" accept="image/*" /></div>
+                  <div class="form-field"><label>Instructions</label><textarea id="drill-instructions" rows="2" required></textarea></div>
+                  <div class="form-field"><label>Power Words</label><input id="drill-powerwords" type="text" placeholder="Agony, Chaos..." /></div>
+                  <div class="form-field"><label>🤖 Hidden AI Prompt</label><textarea id="drill-ai-prompt" rows="2" placeholder="Act as a PSLE marker..." required></textarea></div>
                   <button type="submit" class="btn btn-primary" style="width:100%;">Deploy Mission</button>
                   <p id="drill-status" class="helper-text"></p>
                 </form>
               </details>
 
               <div style="margin-top:2rem;">
+                <h4>Submission Inbox</h4>
+                <div id="gym-inbox-container" style="display:flex; flex-direction:column; gap:0.8rem;">
+                   <p class="helper-text">Waiting for intel...</p>
+                </div>
+              </div>
+
+              <div style="margin-top:2rem;">
                  <h4>Active Missions</h4>
-                 <div id="drill-list-container">
-                   <p class="helper-text">Loading missions...</p>
-                 </div>
+                 <div id="drill-list-container"></div>
               </div>
             </section>
 
             <section class="dashboard-card">
-              <div class="card-header">Homework Assignments</div>
+              <div class="card-header">Homework &amp; Training</div>
               <form id="homework-form">
-                <div class="form-field">
-                  <label>Title</label>
-                  <input id="homework-title" type="text" placeholder="e.g. Week 2 Practice" required />
-                </div>
-                <div class="form-field">
-                  <label>Description</label>
-                  <textarea id="homework-description" rows="2"></textarea>
-                </div>
-                <div class="form-field">
-                  <label>Links (Name — URL)</label>
-                  <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                    <input id="homework-name-1" type="text" placeholder="Link 1 Name" style="width:40%;" />
-                    <input id="homework-link-1" type="url" placeholder="https://..." style="flex:1;" required />
-                  </div>
-                  <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                    <input id="homework-name-2" type="text" placeholder="Link 2 Name" style="width:40%;" />
-                    <input id="homework-link-2" type="url" placeholder="https://..." style="flex:1;" />
-                  </div>
-                </div>
-                <div class="dashboard-grid">
-                  <div class="form-field">
-                    <label>Level</label>
-                    <select id="homework-level" class="input">
-                      <option value="">All levels</option>
-                      <option value="P3">P3</option>
-                      <option value="P4">P4</option>
-                      <option value="P5">P5</option>
-                      <option value="P6">P6</option>
-                    </select>
-                  </div>
-                  <div class="form-field">
-                    <label>Subject</label>
-                    <select id="homework-subject" class="input">
-                      <option value="">All subjects</option>
-                      <option value="P5 English">P5 English</option>
-                      <option value="P5 Math">P5 Math</option>
-                      <option value="P6 English">P6 English</option>
-                      <option value="P6 Math">P6 Math</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="dashboard-grid">
-                  <div class="form-field">
-                    <label>Posted Date</label>
-                    <input id="homework-posted" type="date" />
-                  </div>
-                  <div class="form-field">
-                    <label>Due Date</label>
-                    <input id="homework-due" type="date" />
-                  </div>
-                </div>
+                <input id="homework-title" type="text" placeholder="Title" required />
+                <textarea id="homework-description" rows="2"></textarea>
+                <input id="homework-link-1" type="url" placeholder="Main Link URL" required />
+                <select id="homework-level" class="input"><option value="">All Levels</option><option value="P5">P5</option><option value="P6">P6</option></select>
                 <button type="submit" class="btn btn-primary">Add Homework</button>
               </form>
               <div id="homework-list" style="margin-top:1rem;"></div>
-              <div class="teacher-section-footer">
-                <button id="teacher-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display: none;">Show older</button>
-                <span id="teacher-hw-count" class="helper-text"></span>
-              </div>
-            </section>
-
-            <section class="dashboard-card">
-              <div class="card-header">Self Training Config</div>
-              <p class="card-subtitle">Manage Blooket / Quiz Links.</p>
+              
+              <hr style="border-color:var(--ev-border-soft); margin:1.5rem 0;">
+              
+              <h4>Blooket Links (Self Training)</h4>
               <form id="training-links-form">
                 <div class="dashboard-grid">
-                  <div class="form-field">
-                    <label>P5 Links</label>
-                    <input id="link-p5-english" type="url" placeholder="P5 English URL" />
-                    <input id="link-p5-math" type="url" placeholder="P5 Math URL" />
-                  </div>
-                  <div class="form-field">
-                    <label>P6 Links</label>
-                    <input id="link-p6-english" type="url" placeholder="P6 English URL" />
-                    <input id="link-p6-math" type="url" placeholder="P6 Math URL" />
-                  </div>
+                  <div class="form-field"><label>P5 Eng</label><input id="link-p5-english" type="url" /></div>
+                  <div class="form-field"><label>P5 Math</label><input id="link-p5-math" type="url" /></div>
                 </div>
-                <button type="submit" class="btn btn-primary">Save Links</button>
+                <button type="submit" class="btn">Save Links</button>
               </form>
             </section>
-
           </div>
+
           <div id="tab-comms" class="ev-tab-content">
             <section class="dashboard-card" style="height: 80vh;">
-              <div class="card-header">Student Chat</div>
-              <p class="card-subtitle">Direct line to heroes.</p>
               <div class="chat-layout" style="height: 100%;">
-                <aside class="chat-sidebar" id="chat-student-list" style="max-height: 100%;"></aside>
-                <section class="chat-main" style="display:flex; flex-direction:column; height: 100%;">
-                  <div id="chat-thread" class="chat-window" style="flex:1; max-height:none;"></div>
+                <aside class="chat-sidebar" id="chat-student-list"></aside>
+                <section class="chat-main">
+                  <div id="chat-thread" class="chat-window" style="height:100%;"></div>
                   <form id="teacher-chat-form" class="chat-form">
                     <input type="hidden" id="teacher-chat-student-id" />
-                    <div class="chat-row-inputs">
-                      <label class="chat-label">
-                        <textarea id="teacher-chat-input" rows="2" placeholder="Reply..."></textarea>
-                      </label>
-                      <div class="chat-attachments">
-                        <label class="file-label">📎 <input type="file" id="teacher-chat-image" accept="image/*" /></label>
-                      </div>
-                    </div>
-                    <p id="teacher-chat-status" class="helper-text"></p>
-                    <div class="chat-actions">
-                      <button type="submit" class="btn btn-primary">Send</button>
-                    </div>
+                    <textarea id="teacher-chat-input" rows="1" placeholder="Reply..."></textarea>
+                    <button type="submit" class="btn btn-primary">Send</button>
                   </form>
                 </section>
               </div>
             </section>
           </div>
-          </div>
+
+        </div>
       </section>
     </main>
 
     <footer class="ev-footer">
-      <div class="ev-container">
-        <p>© <span id="year"></span> Edvengers Teacher Dashboard.</p>
-      </div>
+      <div class="ev-container"><p>© <span id="year"></span> Edvengers.</p></div>
     </footer>
-
-    <script>
-      document.getElementById("year").textContent = new Date().getFullYear();
-    </script>
+    <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
     <script src="app-teacher.js" type="module"></script>
   </body>
 </html>
