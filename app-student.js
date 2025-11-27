@@ -493,8 +493,16 @@ async function initWritingGym(student) {
       const btn = document.createElement("button");
       btn.className = "btn btn-primary";
       btn.style.width = "100%";
-      btn.style.padding = "1rem";
-      btn.innerHTML = `<strong>ENTER SIMULATION</strong><br><span style="font-size:0.85rem; opacity:0.8;">Mission: ${activeDrill.title}</span>`;
+      btn.style.padding = "1.2rem"; // Added more padding for height
+      
+      // UPDATED: Using a flex-column div to force stacking
+      btn.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;">
+           <span style="font-size:1.2rem; font-weight:900; letter-spacing:1px; text-transform:uppercase;">ENTER SIMULATION</span>
+           <span style="font-size:0.9rem; opacity:0.9; font-weight:400; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:4px;">Mission: ${activeDrill.title}</span>
+        </div>
+      `;
+      
       btn.onclick = () => openFocusMode(activeDrill);
       container.appendChild(btn);
     } else {
