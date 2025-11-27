@@ -5,15 +5,8 @@
     <title>Edvengers Student Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Edvengers">
-    <link rel="apple-touch-icon" href="images/app-icon.png">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#020617">
-    <link rel="manifest" href="manifest.json">
-
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   </head>
 
@@ -25,9 +18,7 @@
           <span class="ev-logo-text">Edvengers</span>
         </div>
         <nav class="ev-nav-links">
-          <a href="index.html" class="btn btn-ghost btn-back">
-            ← Back to Main Site
-          </a>
+          <a href="index.html" class="btn btn-ghost btn-back">← Back to Main Site</a>
         </nav>
       </div>
     </header>
@@ -36,22 +27,18 @@
       <section id="student-login-section">
         <div class="ev-container" style="padding: 2.5rem 0 3rem;">
           <h1>Student Login</h1>
-          <p class="ev-helper-text">
-            Welcome, Edvenger! Log in to see your classes, homework, Hero Points and chat.
-          </p>
+          <p class="ev-helper-text">Welcome, Edvenger! Log in to access your HQ.</p>
           <div class="dashboard-card">
             <form id="student-login-form">
               <div class="form-field">
-                <label for="login-name">Student Name / ID</label>
+                <label for="login-name">Student Name</label>
                 <input id="login-name" type="text" placeholder="e.g. Ethan Tan" required />
               </div>
               <div class="form-field">
-                <label for="login-password">Portal Password</label>
-                <input id="login-password" type="password" placeholder="Ask your teacher" required />
+                <label for="login-password">Password</label>
+                <input id="login-password" type="password" required />
               </div>
-              <p class="helper-text">
-                First time login? Use the default password: <strong>heroes2026</strong>
-              </p>
+              <p class="helper-text">Default password: <strong>heroes2026</strong></p>
               <p id="login-error" class="helper-text" style="color:#ff6b6b; display:none;"></p>
               <button type="submit" class="btn btn-primary">Enter Student Hub</button>
             </form>
@@ -62,9 +49,7 @@
       <section id="student-password-section" style="display:none;">
         <div class="ev-container" style="padding: 2.5rem 0 3rem;">
           <h1>One Last Step!</h1>
-          <p class="ev-helper-text">
-            Since this is your first time (or you just reset), please create a <strong>secret password</strong>.
-          </p>
+          <p class="ev-helper-text">Please set your secret password.</p>
           <div class="dashboard-card">
             <form id="change-password-form">
               <div class="form-field">
@@ -80,47 +65,47 @@
       <section id="student-hub-section" style="display:none;">
         <div class="ev-container" style="padding:2.5rem 0 3.5rem;">
           <h1>Hi <span id="student-name-display">hero</span>, welcome to your Student Hub!</h1>
-          <p class="ev-helper-text">
-            Join lessons, check announcements, see homework and chat with your teachers.
-          </p>
-
+          
           <div class="dashboard-grid">
             <div class="card">
               <div class="card-header">Your Details</div>
               <div class="profile-header">
                 <div class="profile-avatar-wrapper">
-                  <img id="my-avatar" src="images/avatars/hero-1.png" alt="Hero Avatar" class="current-avatar" />
+                  <img id="my-avatar" src="" alt="Avatar" class="current-avatar" />
                   <br>
                   <button id="btn-change-avatar" class="btn-change-avatar">Change</button>
                 </div>
                 <div class="profile-info">
-                  <p>Name: <strong id="profile-name">Loading...</strong></p>
-                  <p>Level: <strong id="profile-level">-</strong></p>
-                  <p>Subjects: <strong id="profile-subjects">-</strong></p>
+                  <p>Name: <strong id="profile-name"></strong></p>
+                  <p>Level: <strong id="profile-level"></strong></p>
+                  <p>Subjects: <strong id="profile-subjects"></strong></p>
                   <p>Hero Points: <strong id="hero-stars-count">0</strong></p>
                 </div>
               </div>
-              <p class="helper-text" style="margin-top:1rem;">Hero Points are awarded for effort, participation and improvement.</p>
-            </div>
-
-            <div class="card">
-              <div class="card-header">Join Live Lesson</div>
-              <p>Tap the button a few minutes before your class. Use your real name in Zoom.</p>
-              <a href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1" target="_blank" class="btn btn-primary">
-                Join Zoom Lesson
-              </a>
-              <p class="helper-text">Prepare your notebook, pen and worksheets before joining.</p>
             </div>
 
             <div class="card">
               <div class="card-header">Attendance</div>
-              <p class="helper-text">Class starting? Report in for duty!</p>
+              <p class="helper-text">Class starting? Report in!</p>
               <button id="btn-attendance" class="btn btn-primary" style="width:100%">🙋‍♂️ I'm Here!</button>
-              <p id="attendance-status" class="helper-text" style="font-size:0.75rem; min-height:1rem;"></p>
+              
+              <div style="margin-top:1.5rem;">
+                <p class="helper-text">Join live lesson:</p>
+                <a href="https://us06web.zoom.us/j/9900999009?pwd=4p3nEzSTnskpvfcIdaQrgRm7yfhrng.1" target="_blank" class="btn btn-ghost" style="width:100%;">Zoom Room</a>
+              </div>
             </div>
-<div class="card">
+            
+            <div class="card" style="border: 2px solid var(--ev-accent); background: rgba(31, 230, 168, 0.05);">
+              <div class="card-header">🏋️ The Writing Gym</div>
+              <p class="helper-text">Complete drills to earn major XP.</p>
+              <div id="gym-active-mission-container" style="margin-top:1rem;">
+                <p class="helper-text">Scanning for missions...</p>
+              </div>
+            </div>
+
+            <div class="card">
               <div class="card-header">Self Training</div>
-              <p class="helper-text">Sharpen your skills between missions.</p>
+              <p class="helper-text">Sharpen skills (Blooket).</p>
               <div id="training-buttons-container" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
                 <p class="helper-text">Loading...</p>
               </div>
@@ -129,39 +114,32 @@
 
           <div class="card" style="margin-top: 1rem;">
             <div class="card-header">Announcements</div>
-            <p class="helper-text">Important updates from your teachers. Newest first.</p>
             <div id="student-announcements"></div>
             <div class="student-section-footer">
-              <button id="student-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display:none;">Show older announcements</button>
+              <button id="student-ann-toggle" type="button" class="btn btn-ghost btn-small" style="display:none;">Show older</button>
               <span id="student-ann-count" class="helper-text"></span>
             </div>
           </div>
 
           <div class="card">
             <div class="card-header">Homework &amp; Links</div>
-            <p class="helper-text">Homework for your level & subjects. Newest first.</p>
             <div id="student-homework-list"></div>
             <div class="student-section-footer">
-              <button id="student-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display:none;">Show older homework</button>
+              <button id="student-hw-toggle" type="button" class="btn btn-ghost btn-small" style="display:none;">Show older</button>
               <span id="student-hw-count" class="helper-text"></span>
             </div>
           </div>
 
           <section class="dashboard-card">
-            <div class="card-header">Chat with Your Teacher</div>
-            <p class="card-subtitle">Ask questions about homework or lessons. You can also send a photo of your work if needed.</p>
+            <div class="card-header">Chat with Teacher</div>
             <div id="chat-window" class="chat-window"></div>
             <form id="chat-form" class="chat-form">
               <div class="chat-row-inputs">
                 <label class="chat-label">
-                  <span>Your message</span>
-                  <textarea id="chat-input" rows="2" placeholder="Type your message..."></textarea>
+                  <textarea id="chat-input" rows="2" placeholder="Message..."></textarea>
                 </label>
                 <div class="chat-attachments">
-                  <label class="file-label">
-                    📎 Photo
-                    <input type="file" id="chat-image" accept="image/*" />
-                  </label>
+                  <label class="file-label">📎 <input type="file" id="chat-image" accept="image/*" /></label>
                 </div>
               </div>
               <p id="chat-status" class="helper-text"></p>
@@ -180,7 +158,17 @@
       </div>
     </footer>
 
-<div id="avatar-overlay" class="mission-overlay hidden">
+    <div id="mission-overlay" class="mission-overlay hidden">
+      <div class="mission-header">
+        <span class="mission-title">⚡ Resource View</span>
+        <button class="btn btn-ghost btn-small" onclick="closeMission()">❌ Close</button>
+      </div>
+      <div class="mission-frame-container">
+        <iframe id="mission-frame" src="" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <div id="avatar-overlay" class="mission-overlay hidden">
       <div class="mission-header">
         <span class="mission-title">🦸‍♂️ Choose Identity</span>
         <button class="btn btn-ghost btn-small" id="close-avatar-btn">❌ Cancel</button>
@@ -188,19 +176,34 @@
       <div class="mission-frame-container" style="background: var(--ev-bg); overflow-y: auto;">
         <div class="ev-container" style="padding-top: 2rem;">
           <h2 style="text-align:center;">Select Your Hero</h2>
-          <div id="avatar-grid" class="avatar-grid">
-            </div>
+          <div id="avatar-grid" class="avatar-grid"></div>
         </div>
       </div>
     </div>
 
-    <div id="mission-overlay" class="mission-overlay hidden">
-      <div class="mission-header">
-        <span class="mission-title">⚡ Current Mission</span>
-        <button class="btn btn-ghost btn-small" onclick="closeMission()">❌ Return to HQ</button>
+    <div id="gym-overlay" class="gym-overlay hidden">
+      <div class="gym-header">
+        <span id="gym-mission-title" class="gym-header-title">Mission Title</span>
+        <button class="btn btn-ghost btn-small" id="gym-exit-btn">❌ Return to HQ</button>
       </div>
-      <div class="mission-frame-container">
-        <iframe id="mission-frame" src="" frameborder="0"></iframe>
+      
+      <div class="gym-gadget-belt" id="gym-gadget-belt">
+        </div>
+
+      <div class="gym-layout">
+        <div class="gym-left-panel">
+          <div style="color:var(--ev-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Briefing</div>
+          <p id="gym-instructions" style="color:#fff; line-height:1.6; margin-bottom:1.5rem;"></p>
+          <img id="gym-stimulus-image" class="gym-image hidden" />
+        </div>
+        <div class="gym-right-panel">
+          <textarea id="gym-editor" class="gym-editor" placeholder="Begin your mission here..."></textarea>
+        </div>
+      </div>
+
+      <div class="gym-footer">
+        <span id="gym-word-count" class="word-count">Words: 0</span>
+        <button id="gym-submit-btn" class="btn btn-primary">Submit Mission</button>
       </div>
     </div>
 

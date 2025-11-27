@@ -1,4 +1,4 @@
-// app-student.js (MASTER VERSION)
+// app-student.js (MASTER PHASE 3)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
@@ -10,6 +10,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  increment // Needed for XP
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
   getStorage,
@@ -31,28 +32,26 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- AVATAR CONFIG ---
+// --- CONFIG & AUDIO ---
 const AVATAR_PATH = "images/avatars/";
-// --- AUDIO SYSTEM ---
+const AVAILABLE_AVATARS = [
+  "hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", 
+  "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"
+];
 const AUDIO_PATH = "audio/";
 const SFX = {
   powerup: new Audio(AUDIO_PATH + "powerup.mp3"),
   click: new Audio(AUDIO_PATH + "click.mp3")
 };
-
-// Helper to play sound safely
 function playSound(key) {
   const sound = SFX[key];
   if (sound) {
-    sound.currentTime = 0; // Reset so it can play rapidly
-    sound.play().catch(err => console.log("Browser blocked audio:", err));
+    sound.currentTime = 0; 
+    sound.play().catch(err => console.log("Audio blocked", err));
   }
 }
-const AVAILABLE_AVATARS = [
-  "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
-  "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
-];
 
+// --- UTILS ---
 function slugify(name) {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 }
@@ -73,15 +72,10 @@ function fmtDateLabel(ts) {
   if (diffDays === -1) return "Yesterday";
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
-// DATE FORMATTER FIX
 function fmtDateDayMonthYear(ts) {
   if (!ts) return "-";
   const d = new Date(ts);
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-  });
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
 let currentStudent = null;
@@ -99,6 +93,7 @@ let allHomeworkForStudent = [];
 let annVisibleCount = 3; 
 let hwVisibleCount = 3;
 
+// --- GLOBAL HELPERS ---
 window.openMission = function(url) {
   const overlay = document.getElementById("mission-overlay");
   const frame = document.getElementById("mission-frame");
@@ -107,37 +102,26 @@ window.openMission = function(url) {
     overlay.classList.remove("hidden");
   }
 };
-
 window.closeMission = function() {
   const overlay = document.getElementById("mission-overlay");
   const frame = document.getElementById("mission-frame");
   if (overlay && frame) {
     overlay.classList.add("hidden");
     frame.src = ""; 
-    if(typeof confetti === 'function') {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    }
   }
 };
 
+// --- LOGIN ---
 async function loginStudent(name, password) {
   const trimmedName = name.trim();
   const trimmedPwd = password.trim();
   if (!trimmedName || !trimmedPwd) throw new Error("Missing fields.");
-
   const id = slugify(trimmedName);
   const ref = doc(db, "students", id);
   const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    throw new Error("Account not found. Please ask Teacher Andy to create your account first.");
-  }
-
+  if (!snap.exists()) throw new Error("Account not found.");
   const data = snap.data();
-  if (!data.password || data.password !== trimmedPwd) {
-    throw new Error("Incorrect password.");
-  }
-
+  if (!data.password || data.password !== trimmedPwd) throw new Error("Incorrect password.");
   return { id, ...data };
 }
 
@@ -165,7 +149,6 @@ function switchToHub(student) {
   if (profileSubjects) profileSubjects.textContent = (student.subjects && student.subjects.join(", ")) || "-";
   if (starsEl) starsEl.textContent = student.stars || 0;
 
-  // LOAD AVATAR IF EXISTS
   if (student.avatar) {
     const avatarEl = document.getElementById("my-avatar");
     if(avatarEl) avatarEl.src = AVATAR_PATH + student.avatar;
@@ -183,18 +166,18 @@ function switchToHub(student) {
   initAnnouncementsAndHomework(student);
   initChat(student);
   initAttendance(); 
-  initSelfTraining(student); // Self Training
+  initSelfTraining(student); 
+  initWritingGym(student); // NEW PHASE 3
 }
 
+// --- ATTENDANCE ---
 function initAttendance() {
     const attBtn = document.getElementById("btn-attendance");
     if (attBtn) {
       attBtn.addEventListener("click", async () => {
         if (!currentStudent) return;
-        
-        if(typeof confetti === 'function') {
-            confetti({ particleCount: 150, spread: 100 });
-        }
+        if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100 });
+        playSound("powerup");
         
         const hero = document.getElementById("flying-hero");
         if (hero) {
@@ -205,11 +188,8 @@ function initAttendance() {
             hero.classList.add("hidden");
           }, 2600);
         }
-    
         attBtn.disabled = true;
         attBtn.textContent = "Marked Present! ✅";
-// PLAY SUPERHERO SOUND
-        playSound("powerup");
         
         const msgsRef = collection(db, "chats", currentStudent.id, "messages");
         await addDoc(msgsRef, {
@@ -218,7 +198,6 @@ function initAttendance() {
           createdAt: Date.now(),
           isSystem: true
         });
-        
         const studentRef = doc(db, "students", currentStudent.id);
         await setDoc(studentRef, { hasUnread: true }, { merge: true });
         
@@ -230,6 +209,7 @@ function initAttendance() {
     }
 }
 
+// --- ANNOUNCEMENTS & HOMEWORK ---
 function initAnnouncementsAndHomework(student) {
   const level = student.level;
   const subjects = student.subjects || [];
@@ -270,13 +250,11 @@ function initAnnouncementsAndHomework(student) {
 function renderStudentAnnouncements() {
   if (!annContainer) return;
   annContainer.innerHTML = "";
-
   allAnnouncementsForStudent.sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     return b.createdAt - a.createdAt;
   });
-
   const total = allAnnouncementsForStudent.length;
   if (!total) {
     annContainer.innerHTML = '<p class="helper-text">No announcements yet.</p>';
@@ -284,14 +262,11 @@ function renderStudentAnnouncements() {
     if (annCountLabel) annCountLabel.textContent = "";
     return;
   }
-
   const itemsToShow = allAnnouncementsForStudent.slice(0, annVisibleCount);
-
   itemsToShow.forEach((d) => {
     const pinIcon = d.isPinned ? "📌 " : "";
     const pinClass = d.isPinned ? "pinned-item" : "";
-    const dateStr = fmtDateDayMonthYear(d.createdAt); // Date Fix
-    
+    const dateStr = fmtDateDayMonthYear(d.createdAt);
     const card = document.createElement("div");
     card.className = `ev-card-bubble ${pinClass}`;
     card.innerHTML = `
@@ -301,7 +276,6 @@ function renderStudentAnnouncements() {
     `;
     annContainer.appendChild(card);
   });
-
   if (annToggleBtn) {
     if (total > annVisibleCount) {
       annToggleBtn.style.display = "inline-block";
@@ -310,9 +284,7 @@ function renderStudentAnnouncements() {
       annToggleBtn.style.display = "none";
     }
   }
-  if (annCountLabel) {
-    annCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
-  }
+  if (annCountLabel) annCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
 }
 
 function renderStudentHomework() {
@@ -325,18 +297,14 @@ function renderStudentHomework() {
     if (hwCountLabel) hwCountLabel.textContent = "";
     return;
   }
-
   const itemsToShow = allHomeworkForStudent.slice(0, hwVisibleCount);
-
   itemsToShow.forEach((d) => {
     const linksHtml = (d.links || []).map((item) => {
         const url = item.url || item; 
         const name = item.name || "Resource";
         return `<li><button class="btn-link" style="background:var(--ev-accent); border:none; border-radius:99px; padding:0.35rem 0.8rem; font-weight:700; cursor:pointer;" onclick="openMission('${url}')">🔗 ${name}</button></li>`;
     }).join("");
-
-    const dateStr = fmtDateDayMonthYear(d.postedAt); // Date Fix
-
+    const dateStr = fmtDateDayMonthYear(d.postedAt);
     const card = document.createElement("div");
     card.className = "ev-card-bubble";
     card.innerHTML = `
@@ -347,7 +315,6 @@ function renderStudentHomework() {
     `;
     hwContainer.appendChild(card);
   });
-
   if (hwToggleBtn) {
     if (total > hwVisibleCount) {
       hwToggleBtn.style.display = "inline-block";
@@ -356,32 +323,21 @@ function renderStudentHomework() {
       hwToggleBtn.style.display = "none";
     }
   }
-  if (hwCountLabel) {
-    hwCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
-  }
+  if (hwCountLabel) hwCountLabel.textContent = `Showing ${itemsToShow.length} of ${total}`;
 }
+if (annToggleBtn) annToggleBtn.addEventListener("click", () => { annVisibleCount += 3; renderStudentAnnouncements(); });
+if (hwToggleBtn) hwToggleBtn.addEventListener("click", () => { hwVisibleCount += 3; renderStudentHomework(); });
 
-if (annToggleBtn) annToggleBtn.addEventListener("click", () => {
-    annVisibleCount += 3;
-    renderStudentAnnouncements();
-});
-if (hwToggleBtn) hwToggleBtn.addEventListener("click", () => {
-    hwVisibleCount += 3;
-    renderStudentHomework();
-});
-
+// --- CHAT ---
 function initChat(student) {
   const threadEl = document.getElementById("chat-window");
   const form = document.getElementById("chat-form");
   const input = document.getElementById("chat-input");
   const imageInput = document.getElementById("chat-image");
   const statusEl = document.getElementById("chat-status");
-
   if (!threadEl || !form || !input) return;
-
   const msgsRef = collection(db, "chats", student.id, "messages");
   const q = query(msgsRef, orderBy("createdAt", "asc"));
-
   if (chatUnsub) chatUnsub();
   chatUnsub = onSnapshot(q, (snap) => {
     threadEl.innerHTML = "";
@@ -391,7 +347,6 @@ function initChat(student) {
       const created = m.createdAt || Date.now();
       const dateObj = new Date(created);
       const dateKey = dateObj.toDateString();
-
       if (dateKey !== lastDateKey) {
         lastDateKey = dateKey;
         const divider = document.createElement("div");
@@ -399,7 +354,6 @@ function initChat(student) {
         divider.textContent = fmtDateLabel(created);
         threadEl.appendChild(divider);
       }
-
       const isStudentMsg = m.sender === "student";
       const row = document.createElement("div");
       row.className = "chat-row " + (isStudentMsg ? "chat-row-right" : "chat-row-left");
@@ -416,13 +370,11 @@ function initChat(student) {
     });
     threadEl.scrollTop = threadEl.scrollHeight;
   });
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = input.value.trim();
     const file = imageInput.files[0] || null;
     if (!text && !file) return;
-
     try {
       if (statusEl) statusEl.textContent = "Sending...";
       let imageUrl = null;
@@ -432,17 +384,14 @@ function initChat(student) {
         await uploadBytes(ref, file);
         imageUrl = await getDownloadURL(ref);
       }
-      
       await addDoc(msgsRef, {
         sender: "student",
         text,
         imageUrl,
         createdAt: Date.now(),
       });
-
       const studentRef = doc(db, "students", student.id);
       await setDoc(studentRef, { hasUnread: true }, { merge: true });
-
       input.value = "";
       imageInput.value = "";
       if (statusEl) {
@@ -456,26 +405,20 @@ function initChat(student) {
   });
 }
 
-// --- SELF TRAINING LOGIC (NEW TAB FIX) ---
+// --- SELF TRAINING ---
 async function initSelfTraining(student) {
   const container = document.getElementById("training-buttons-container");
   if (!container) return;
-
-  // 1. Fetch links
   const docRef = doc(db, "settings", "training_links");
   const snap = await getDoc(docRef);
-  
   if (!snap.exists()) {
     container.innerHTML = '<p class="helper-text">No training configured yet.</p>';
     return;
   }
-  
   const links = snap.data();
   const level = student.level || ""; 
   const subjects = student.subjects || []; 
-
   container.innerHTML = ""; 
-
   let buttonsConfig = [];
   if (level === "P5") {
     buttonsConfig = [
@@ -491,21 +434,19 @@ async function initSelfTraining(student) {
     container.innerHTML = '<p class="helper-text">Training modules coming soon for your level!</p>';
     return;
   }
-
   let hasButtons = false;
   buttonsConfig.forEach(cfg => {
     if (!cfg.url) return;
     hasButtons = true;
     const isUnlocked = subjects.includes(cfg.subjectReq);
     const btn = document.createElement("button");
-    
     if (isUnlocked) {
       btn.className = "btn btn-primary";
       btn.style.width = "100%";
       btn.textContent = "⚔️ " + cfg.label;
       btn.onclick = () => {
+         playSound("click");
          if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-playSound("click");
          window.open(cfg.url, '_blank');
       };
     } else {
@@ -520,16 +461,187 @@ playSound("click");
     }
     container.appendChild(btn);
   });
-
   if (!hasButtons) container.innerHTML = '<p class="helper-text">No training links active currently.</p>';
 }
 
-// --- MAIN EVENT LISTENER (LOGIN + AVATAR) ---
+// --- WRITING GYM: STUDENT FOCUS MODE (PHASE 3) ---
+let currentActiveDrill = null;
+let currentPowerWords = [];
+let powerWordsFound = new Set();
+
+async function initWritingGym(student) {
+  const container = document.getElementById("gym-active-mission-container");
+  if (!container) return;
+
+  // Listen for drills matching student level
+  const q = query(collection(db, "writing_drills"), orderBy("createdAt", "desc"));
+  onSnapshot(q, (snap) => {
+    container.innerHTML = "";
+    let activeDrill = null;
+
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      // Only show drills matching level (e.g. P5)
+      if (d.level === student.level && !activeDrill) {
+        activeDrill = { id: docSnap.id, ...d };
+      }
+    });
+
+    if (activeDrill) {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-primary";
+      btn.style.width = "100%";
+      btn.style.padding = "1rem";
+      btn.innerHTML = `<strong>ENTER SIMULATION</strong><br><span style="font-size:0.85rem; opacity:0.8;">Mission: ${activeDrill.title}</span>`;
+      btn.onclick = () => openFocusMode(activeDrill);
+      container.appendChild(btn);
+    } else {
+      container.innerHTML = '<p class="helper-text">No active missions for your level.</p>';
+    }
+  });
+}
+
+function openFocusMode(drill) {
+  currentActiveDrill = drill;
+  currentPowerWords = drill.powerWords || [];
+  powerWordsFound.clear();
+
+  const overlay = document.getElementById("gym-overlay");
+  const titleEl = document.getElementById("gym-mission-title");
+  const instrEl = document.getElementById("gym-instructions");
+  const imgEl = document.getElementById("gym-stimulus-image");
+  const editor = document.getElementById("gym-editor");
+  const belt = document.getElementById("gym-gadget-belt");
+  const wordCountEl = document.getElementById("gym-word-count");
+
+  // Reset UI
+  overlay.classList.remove("hidden");
+  titleEl.textContent = drill.title;
+  instrEl.textContent = drill.instructions;
+  editor.value = "";
+  wordCountEl.textContent = "Words: 0";
+  wordCountEl.classList.remove("goal-met");
+
+  if (drill.imageUrl) {
+    imgEl.src = drill.imageUrl;
+    imgEl.classList.remove("hidden");
+  } else {
+    imgEl.classList.add("hidden");
+  }
+
+  // Render Power Words Belt
+  belt.innerHTML = "";
+  currentPowerWords.forEach(word => {
+    const tag = document.createElement("span");
+    tag.className = "gym-power-word";
+    tag.textContent = word;
+    tag.dataset.word = word.toLowerCase(); // for easy finding
+    belt.appendChild(tag);
+  });
+
+  // Editor Logic (Gamification)
+  editor.oninput = () => {
+    const text = editor.value;
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    wordCountEl.textContent = `Words: ${words}`;
+    
+    // Check Power Words
+    currentPowerWords.forEach(target => {
+      const lowerText = text.toLowerCase();
+      const lowerTarget = target.toLowerCase();
+      // Check if word exists and wasn't found before
+      if (lowerText.includes(lowerTarget) && !powerWordsFound.has(lowerTarget)) {
+        powerWordsFound.add(lowerTarget);
+        
+        // VISUAL FX
+        const tag = belt.querySelector(`span[data-word="${lowerTarget}"]`);
+        if (tag) tag.classList.add("activated");
+
+        // AUDIO FX
+        playSound("powerup"); // Ding!
+
+        // INSTANT REWARD
+        awardInstantXP(5);
+      }
+    });
+  };
+
+  document.getElementById("gym-exit-btn").onclick = () => {
+    if(confirm("Exit Mission? Unsaved text will be lost.")) {
+      overlay.classList.add("hidden");
+    }
+  };
+
+  document.getElementById("gym-submit-btn").onclick = () => preFlightCheck();
+}
+
+async function awardInstantXP(amount) {
+  if (!currentStudent) return;
+  const ref = doc(db, "students", currentStudent.id);
+  await updateDoc(ref, { stars: increment(amount) });
+  
+  // Create a floating popup (Simple DOM manip)
+  const popup = document.createElement("div");
+  popup.textContent = `+${amount} XP`;
+  popup.style.position = "fixed";
+  popup.style.top = "15%";
+  popup.style.left = "50%";
+  popup.style.transform = "translateX(-50%)";
+  popup.style.background = "#1fe6a8";
+  popup.style.color = "#000";
+  popup.style.fontWeight = "bold";
+  popup.style.padding = "0.5rem 1rem";
+  popup.style.borderRadius = "20px";
+  popup.style.zIndex = "10001";
+  popup.style.animation = "floatUp 1s forwards";
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1000);
+}
+
+function preFlightCheck() {
+  // Simple check for now. In Phase 4 we can make this a modal.
+  const checklist = confirm("SYSTEM DIAGNOSTIC:\n\n[ ] Checked Spelling?\n[ ] Checked Punctuation?\n[ ] Used Power Words?\n\nReady to Launch?");
+  
+  if (checklist) {
+    submitDrill();
+  }
+}
+
+async function submitDrill() {
+  const editor = document.getElementById("gym-editor");
+  const text = editor.value.trim();
+  if (!text) return alert("Mission log is empty!");
+
+  const overlay = document.getElementById("gym-overlay");
+  
+  try {
+    await addDoc(collection(db, "writing_submissions"), {
+      studentId: currentStudent.id,
+      studentName: currentStudent.name,
+      drillId: currentActiveDrill.id,
+      drillTitle: currentActiveDrill.title,
+      text: text,
+      powerWordsUsed: Array.from(powerWordsFound),
+      createdAt: Date.now(),
+      status: "pending" // Teacher will mark this
+    });
+
+    playSound("powerup");
+    if(typeof confetti === 'function') confetti({ particleCount: 200, spread: 120 });
+    
+    alert("Mission Accomplished! Data sent to HQ.");
+    overlay.classList.add("hidden");
+
+  } catch (err) {
+    console.error(err);
+    alert("Transmission Failed. Check connection.");
+  }
+}
+
+// --- INIT (Login & Avatar) ---
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Login Logic
   const loginForm = document.getElementById("student-login-form");
   const loginError = document.getElementById("login-error");
-
   const showError = (msg) => {
     if (loginError) {
       loginError.textContent = msg;
@@ -538,20 +650,17 @@ document.addEventListener("DOMContentLoaded", () => {
       alert(msg);
     }
   };
-
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (loginError) loginError.style.display = "none";
       const name = document.getElementById("login-name").value;
       const pwd = document.getElementById("login-password").value;
-
       try {
         const student = await loginStudent(name, pwd);
         if (student.password === "heroes2026") {
           document.getElementById("student-login-section").style.display = "none";
           document.getElementById("student-password-section").style.display = "block";
-          
           const pwdForm = document.getElementById("change-password-form");
           pwdForm.onsubmit = async (evt) => {
             evt.preventDefault();
@@ -568,18 +677,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (err) {
         console.error(err);
-        showError(err.message || "Login failed. Please try again.");
+        showError(err.message || "Login failed.");
       }
     });
   }
 
-  // 2. Avatar Logic
+  // Avatar Modal
   const avatarBtn = document.getElementById("btn-change-avatar");
   const avatarOverlay = document.getElementById("avatar-overlay");
   const closeAvatarBtn = document.getElementById("close-avatar-btn");
   const avatarGrid = document.getElementById("avatar-grid");
   const myAvatarImg = document.getElementById("my-avatar");
-
   if (avatarBtn && avatarOverlay) {
     avatarBtn.addEventListener("click", () => {
       renderAvatarGrid();
@@ -589,7 +697,6 @@ document.addEventListener("DOMContentLoaded", () => {
       avatarOverlay.classList.add("hidden");
     });
   }
-
   function renderAvatarGrid() {
     avatarGrid.innerHTML = "";
     AVAILABLE_AVATARS.forEach(filename => {
@@ -600,17 +707,15 @@ document.addEventListener("DOMContentLoaded", () => {
       avatarGrid.appendChild(img);
     });
   }
-
   async function selectAvatar(filename) {
     if (!currentStudent) return;
     if (myAvatarImg) myAvatarImg.src = AVATAR_PATH + filename;
     if (avatarOverlay) avatarOverlay.classList.add("hidden");
-
+    playSound("click");
     try {
       const ref = doc(db, "students", currentStudent.id);
       await setDoc(ref, { avatar: filename }, { merge: true });
       if(typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 } });
-playSound("click");
     } catch (err) {
       console.error("Error saving avatar:", err);
     }
