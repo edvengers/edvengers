@@ -1,4 +1,4 @@
-// app-student.js (MASTER STABLE VERSION - FIXED)
+// app-student.js (MASTER: IMAGE UPLOAD FIXED)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, increment, where
@@ -22,7 +22,6 @@ const storage = getStorage(app);
 
 // --- CONFIG & AUDIO ---
 const AVATAR_PATH = "images/avatars/";
-// CHECK: Ensure these match your actual filenames (.png vs .jpg)
 const AVAILABLE_AVATARS = [
   "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
   "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
@@ -35,13 +34,12 @@ const SFX = {
   click: new Audio(AUDIO_PATH + "click.mp3")            
 };
 
-// Safe Audio Player
 function playSound(key) {
   try {
     const sound = SFX[key];
     if (sound) { 
       sound.currentTime = 0; 
-      sound.play().catch(e => console.log("Audio blocked (interaction needed first)")); 
+      sound.play().catch(e => {}); // Silent fail if blocked
     }
   } catch(e) { console.log("Audio error:", e); }
 }
@@ -53,9 +51,9 @@ function fmtDateLabel(ts) { if(!ts) return ""; return new Date(ts).toLocaleDateS
 function fmtDateDayMonthYear(ts) { if(!ts) return "-"; return new Date(ts).toLocaleDateString("en-GB", {day:"2-digit", month:"2-digit", year:"2-digit"}); }
 
 let currentStudent = null;
-let chatUnsub = null; // <--- THIS WAS THE MISSING LINE!
+let chatUnsub = null;
 
-// --- GLOBAL HELPERS (Must be on window) ---
+// --- GLOBAL HELPERS ---
 window.openMission = function(url) {
   document.getElementById("mission-frame").src = url;
   document.getElementById("mission-overlay").classList.remove("hidden");
@@ -65,11 +63,11 @@ window.closeMission = function() {
   document.getElementById("mission-frame").src = "";
 };
 
-// --- LOGIN LOGIC ---
+// --- LOGIN ---
 async function loginStudent(name, password) {
   const id = slugify(name);
   const snap = await getDoc(doc(db, "students", id));
-  if (!snap.exists()) throw new Error("Account not found. Please check spelling.");
+  if (!snap.exists()) throw new Error("Account not found. Check spelling.");
   const data = snap.data();
   if (data.password !== password) throw new Error("Incorrect password.");
   return { id, ...data };
@@ -91,7 +89,7 @@ function switchToHub(student) {
     if(av) av.src = AVATAR_PATH + student.avatar;
   }
 
-  // Real-time Profile Listener
+  // Real-time Profile
   onSnapshot(doc(db, "students", student.id), (snap) => {
     const data = snap.data();
     if (!data) return;
@@ -100,7 +98,7 @@ function switchToHub(student) {
     document.getElementById("profile-subjects").textContent = (data.subjects || []).join(", ");
   });
 
-  // Initialize Modules
+  // Init Modules
   initAnnouncementsAndHomework(student);
   initChat(student);
   initAttendance(); 
@@ -108,18 +106,17 @@ function switchToHub(student) {
   initWritingGym(student); 
 }
 
-// --- MODULE: ATTENDANCE ---
+// --- ATTENDANCE ---
 function initAttendance() {
   const attBtn = document.getElementById("btn-attendance");
   if (attBtn) {
-    // Remove old listeners by cloning
     const newBtn = attBtn.cloneNode(true);
     attBtn.parentNode.replaceChild(newBtn, attBtn);
     
     newBtn.addEventListener("click", async () => {
       if (!currentStudent) return;
       if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100 });
-      playSound("hero_theme"); // EPIC SONG
+      playSound("hero_theme"); 
       
       const hero = document.getElementById("flying-hero");
       hero.classList.remove("hidden");
@@ -138,7 +135,7 @@ function initAttendance() {
   }
 }
 
-// --- MODULE: ANNOUNCEMENTS & HOMEWORK ---
+// --- ANNOUNCEMENTS & HOMEWORK ---
 let allAnnouncementsForStudent = [];
 let allHomeworkForStudent = [];
 let annVisibleCount = 3; 
@@ -150,11 +147,10 @@ function initAnnouncementsAndHomework(student) {
   const hwContainer = document.getElementById("student-homework-list");
   const hwToggleBtn = document.getElementById("student-hw-toggle");
 
-  // Setup Toggle Listeners
   if(annToggleBtn) annToggleBtn.onclick = () => { annVisibleCount += 3; renderStudentAnnouncements(); };
   if(hwToggleBtn) hwToggleBtn.onclick = () => { hwVisibleCount += 3; renderStudentHomework(); };
 
-  // Fetch Announcements
+  // Announcements
   const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
   onSnapshot(annQuery, (snap) => {
     if (!annContainer) return;
@@ -169,7 +165,7 @@ function initAnnouncementsAndHomework(student) {
     renderStudentAnnouncements();
   });
 
-  // Fetch Homework
+  // Homework
   const hwQuery = query(collection(db, "homework"), orderBy("postedAt", "desc"));
   onSnapshot(hwQuery, (snap) => {
     if (!hwContainer) return;
@@ -234,13 +230,12 @@ function renderStudentHomework() {
     if(countLabel) countLabel.textContent = `Showing ${items.length} of ${allHomeworkForStudent.length}`;
 }
 
-// --- MODULE: CHAT ---
+// --- MODULE: CHAT (IMAGE UPLOAD FIXED) ---
 function initChat(student) {
     const thread = document.getElementById("chat-window");
     const form = document.getElementById("chat-form");
     if(!thread || !form) return;
     
-    // Clear old listener if re-logging
     if (chatUnsub) chatUnsub();
 
     const q = query(collection(db, "chats", student.id, "messages"), orderBy("createdAt", "asc"));
@@ -257,18 +252,51 @@ function initChat(student) {
         thread.scrollTop = thread.scrollHeight;
     });
 
-    // Remove old listeners (cloning hack)
+    // Remove old listeners
     const newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
 
     newForm.onsubmit = async (e) => {
         e.preventDefault();
         const input = document.getElementById("chat-input");
+        const fileInput = document.getElementById("chat-image");
+        const statusEl = document.getElementById("chat-status");
+        
         const txt = input.value.trim();
-        if(txt) {
-            await addDoc(collection(db, "chats", student.id, "messages"), {sender:"student", text:txt, createdAt:Date.now()});
+        const file = fileInput.files[0];
+
+        if (!txt && !file) return;
+
+        try {
+            if(statusEl) statusEl.textContent = "Sending...";
+            
+            let imageUrl = null;
+            if (file) {
+                const path = `chat-images/${student.id}/${Date.now()}_${file.name}`;
+                const ref = storageRef(storage, path);
+                await uploadBytes(ref, file);
+                imageUrl = await getDownloadURL(ref);
+            }
+
+            await addDoc(collection(db, "chats", student.id, "messages"), {
+                sender: "student", 
+                text: txt, 
+                imageUrl: imageUrl, 
+                createdAt: Date.now()
+            });
+            
             input.value = "";
+            fileInput.value = ""; // Clear file input
             await setDoc(doc(db, "students", student.id), {hasUnread:true}, {merge:true});
+            
+            if(statusEl) {
+                statusEl.textContent = "Sent!";
+                setTimeout(() => statusEl.textContent="", 1500);
+            }
+
+        } catch (err) {
+            console.error(err);
+            if(statusEl) statusEl.textContent = "Error sending.";
         }
     };
 }
@@ -276,6 +304,7 @@ function initChat(student) {
 // --- MODULE: SELF TRAINING ---
 function initSelfTraining(student) {
     const container = document.getElementById("training-buttons-container");
+    if(!container) return;
     getDoc(doc(db, "settings", "training_links")).then(snap => {
         if(!snap.exists()) { container.innerHTML="<p class='helper-text'>No training configured.</p>"; return; }
         const links = snap.data();
