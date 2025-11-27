@@ -278,8 +278,14 @@ html, body { margin: 0; padding: 0; }
   font-size: 0.75rem; letter-spacing: 0.03em; text-transform: uppercase;
 }
 .chat-image img {
-  max-width: 100% !important; height: auto !important;
-  border-radius: 8px; display: block;
+  max-width: 100% !important; 
+  max-height: 200px; /* Limit height */
+  width: auto; 
+  height: auto;
+  border-radius: 8px; 
+  display: block; 
+  margin-top: 0.5rem;
+  object-fit: contain;
 }
 
 /* ========== SCROLLBARS ========== */

@@ -1,4 +1,4 @@
-// app-teacher.js (MASTER RESTORED)
+// app-teacher.js (MASTER RESTORED & FIXED)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, setDoc, getDoc, increment, deleteDoc
@@ -21,12 +21,9 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // HELPERS
-function fmtDateDayMonthYear(ts) {
-  if (!ts) return "-";
-  const d = new Date(ts);
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" });
-}
+function fmtDateDayMonthYear(ts) { if (!ts) return "-"; return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }); }
 function slugify(name) { return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, ""); }
+function fmtTime(ts) { if (!ts) return ""; return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
 
 // AUTH
 const TEACHER_PASSWORD = "kalb25";
@@ -72,8 +69,8 @@ const studentsForm = document.getElementById("students-form");
 const studentsList = document.getElementById("students-list");
 const studentsSelect = document.getElementById("student-select");
 const filterLevelInput = document.getElementById("filter-level");
-const filterSubjectInput = document.getElementById("filter-subject"); // RESTORED
-const updatePointsBtn = document.getElementById("update-points-btn");
+const filterSubjectInput = document.getElementById("filter-subject");
+const updatePointsBtn = document.getElementById("btn-update-points");
 
 let studentsCache = [];
 let selectedStudentId = null; 
@@ -99,11 +96,6 @@ function renderStudentRow() {
     <div class="student-main">
       <div><strong>${student.name}</strong></div>
       <div class="helper-text">Level: ${student.level || "-"} • HP: <strong>${current}</strong>${pendingText}</div>
-    </div>
-    <div class="student-actions">
-      <button class="btn btn-small" data-action="add1">+1</button>
-      <button class="btn btn-small" data-action="add5">+5</button>
-      <button class="btn btn-ghost btn-small" data-action="resetStars">Reset</button>
     </div>`;
   studentsList.appendChild(row);
 }
@@ -111,11 +103,11 @@ function renderStudentRow() {
 function applyFiltersAndFillSelect() {
   if (!studentsSelect) return;
   const levelFilter = (filterLevelInput?.value || "").trim();
-  const subjectFilter = (filterSubjectInput?.value || "").trim(); // RESTORED
+  const subjectFilter = (filterSubjectInput?.value || "").trim();
   
   let list = [...studentsCache];
   if (levelFilter) list = list.filter((s) => s.level === levelFilter);
-  if (subjectFilter) list = list.filter((s) => (s.subjects || []).includes(subjectFilter)); // RESTORED LOGIC
+  if (subjectFilter) list = list.filter((s) => (s.subjects || []).includes(subjectFilter));
 
   studentsSelect.innerHTML = '<option value="">-- Select student --</option>';
   list.forEach((s) => {
@@ -130,29 +122,22 @@ function applyFiltersAndFillSelect() {
 }
 
 if(filterLevelInput) filterLevelInput.onchange = applyFiltersAndFillSelect;
-if(filterSubjectInput) filterSubjectInput.onchange = applyFiltersAndFillSelect; // RESTORED
+if(filterSubjectInput) filterSubjectInput.onchange = applyFiltersAndFillSelect;
 if(studentsSelect) studentsSelect.onchange = () => { selectedStudentId = studentsSelect.value || null; stagedDelta = 0; renderStudentRow(); };
 
-// Action Buttons Logic
-if(studentsList) studentsList.onclick = (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if(!btn || !selectedStudentId) return;
-    const action = btn.dataset.action;
-    const student = studentsCache.find(s => s.id === selectedStudentId);
-    if(!student) return;
-    if(action==="add1") stagedDelta+=1;
-    else if(action==="add5") stagedDelta+=5;
-    else if(action==="resetStars") stagedDelta = -(student.stars||0);
-    renderStudentRow();
-};
+// Point Buttons
+document.getElementById("btn-add-1")?.addEventListener("click", () => { stagedDelta += 1; renderStudentRow(); });
+document.getElementById("btn-add-5")?.addEventListener("click", () => { stagedDelta += 5; renderStudentRow(); });
+document.getElementById("btn-sub-1")?.addEventListener("click", () => { stagedDelta -= 1; renderStudentRow(); });
+document.getElementById("btn-sub-5")?.addEventListener("click", () => { stagedDelta -= 5; renderStudentRow(); });
 
 if(updatePointsBtn) updatePointsBtn.onclick = async () => {
     if(!selectedStudentId || stagedDelta===0) return;
     await updateDoc(doc(db,"students",selectedStudentId), { stars: increment(stagedDelta), updatedAt: Date.now() });
     stagedDelta = 0;
+    renderStudentRow();
 };
 
-// Initial Load
 onSnapshot(query(collection(db, "students"), orderBy("name", "asc")), (snap) => {
   studentsCache = [];
   snap.forEach(d => studentsCache.push({ id:d.id, ...d.data() }));
@@ -170,11 +155,11 @@ if (annForm) {
     const message = document.getElementById("announcement-message").value.trim();
     const isPinned = document.getElementById("announcement-pinned")?.checked || false;
     const levelVal = document.getElementById("announcement-level").value;
-    const subjectVal = document.getElementById("announcement-subject").value; // RESTORED
+    const subjectVal = document.getElementById("announcement-subject").value;
 
     if (!title) return;
     const levels = levelVal ? [levelVal] : [];
-    const subjects = subjectVal ? [subjectVal] : []; // RESTORED
+    const subjects = subjectVal ? [subjectVal] : [];
 
     await addDoc(collection(db, "announcements"), { title, message, isPinned, levels, subjects, createdAt: Date.now() });
     annForm.reset();
@@ -205,15 +190,22 @@ if (hwForm) {
     e.preventDefault();
     const title = document.getElementById("homework-title").value.trim();
     const desc = document.getElementById("homework-description").value.trim();
-    const url = document.getElementById("homework-link-1").value.trim();
-    const levelVal = document.getElementById("homework-level").value;
-    const subjectVal = document.getElementById("homework-subject").value; // RESTORED
+    
+    // RESTORED: Loop for 5 Links
+    const links = [];
+    for(let i=1; i<=5; i++) {
+        const name = document.getElementById(`homework-name-${i}`).value.trim();
+        const url = document.getElementById(`homework-link-${i}`).value.trim();
+        if(url) links.push({ name: name || `Link ${i}`, url: url });
+    }
 
-    if (!title || !url) return;
+    const levelVal = document.getElementById("homework-level").value;
+    const subjectVal = document.getElementById("homework-subject").value;
+
+    if (!title || links.length === 0) return;
     
     const levels = levelVal ? [levelVal] : [];
-    const subjects = subjectVal ? [subjectVal] : []; // RESTORED
-    const links = [{ name: "Resource", url }];
+    const subjects = subjectVal ? [subjectVal] : [];
 
     await addDoc(collection(db, "homework"), { title, description:desc, links, levels, subjects, postedAt: Date.now() });
     hwForm.reset();
@@ -225,15 +217,20 @@ if (hwList) {
     hwList.innerHTML = "";
     snap.forEach((docSnap) => {
       const d = docSnap.data();
+      // RESTORED: Show links in teacher view
+      const linkHtml = (d.links||[]).map(l => `<li><a href="${l.url}" target="_blank">${l.name}</a></li>`).join("");
       const card = document.createElement("div");
       card.className = "ev-card-bubble";
-      card.innerHTML = `<h4>${d.title}</h4><p class="helper-text">Target: ${(d.levels||[]).join(", ")||"All"} • ${(d.subjects||[]).join(", ")||"All"}</p>`;
+      card.innerHTML = `<h4>${d.title}</h4><p>${d.description||""}</p>
+        <ul class="ev-link-list">${linkHtml}</ul>
+        <p class="helper-text">Target: ${(d.levels||[]).join(", ")||"All"} • ${(d.subjects||[]).join(", ")||"All"}</p>`;
       hwList.appendChild(card);
     });
   });
 }
 
-/* --- MISSIONS: WRITING GYM (UNCHANGED) --- */
+/* --- MISSIONS: WRITING GYM --- */
+// (Keep existing code from previous file - abbreviated here for space, but ensure you include the Gym Create & Inbox Logic)
 const gymCreateForm = document.getElementById("gym-create-form");
 const gymListContainer = document.getElementById("drill-list-container");
 const gymInboxContainer = document.getElementById("gym-inbox-container");
@@ -312,26 +309,41 @@ window.saveFeedback = async (subId) => {
   alert("Sent!");
 };
 
-/* --- SELF TRAINING (UNCHANGED) --- */
+/* --- SELF TRAINING (RESTORED P3-P6) --- */
 const trainingForm = document.getElementById("training-links-form");
 if (trainingForm) {
   getDoc(doc(db, "settings", "training_links")).then(snap => {
     if(snap.exists()) {
       const d = snap.data();
+      if(document.getElementById("link-p3-english")) document.getElementById("link-p3-english").value = d.p3_eng||"";
+      if(document.getElementById("link-p3-math")) document.getElementById("link-p3-math").value = d.p3_math||"";
+      if(document.getElementById("link-p4-english")) document.getElementById("link-p4-english").value = d.p4_eng||"";
+      if(document.getElementById("link-p4-math")) document.getElementById("link-p4-math").value = d.p4_math||"";
       if(document.getElementById("link-p5-english")) document.getElementById("link-p5-english").value = d.p5_eng||"";
       if(document.getElementById("link-p5-math")) document.getElementById("link-p5-math").value = d.p5_math||"";
+      if(document.getElementById("link-p6-english")) document.getElementById("link-p6-english").value = d.p6_eng||"";
+      if(document.getElementById("link-p6-math")) document.getElementById("link-p6-math").value = d.p6_math||"";
     }
   });
   trainingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const p5_eng = document.getElementById("link-p5-english").value.trim();
-    const p5_math = document.getElementById("link-p5-math").value.trim();
-    await setDoc(doc(db,"settings","training_links"), { p5_eng, p5_math, updatedAt: Date.now() }, { merge: true });
+    const data = {
+        p3_eng: document.getElementById("link-p3-english").value.trim(),
+        p3_math: document.getElementById("link-p3-math").value.trim(),
+        p4_eng: document.getElementById("link-p4-english").value.trim(),
+        p4_math: document.getElementById("link-p4-math").value.trim(),
+        p5_eng: document.getElementById("link-p5-english").value.trim(),
+        p5_math: document.getElementById("link-p5-math").value.trim(),
+        p6_eng: document.getElementById("link-p6-english").value.trim(),
+        p6_math: document.getElementById("link-p6-math").value.trim(),
+        updatedAt: Date.now()
+    };
+    await setDoc(doc(db,"settings","training_links"), data, { merge: true });
     alert("Saved!");
   });
 }
 
-/* --- COMMS LINK (RESTORED CHAT LIST) --- */
+/* --- COMMS LINK (RESTORED CHAT LISTENER) --- */
 const chatStudentList = document.getElementById("chat-student-list");
 const chatThread = document.getElementById("chat-thread");
 const chatForm = document.getElementById("teacher-chat-form");
@@ -339,7 +351,7 @@ let chatStudentId = null;
 let chatThreadUnsub = null;
 
 if (chatStudentList) {
-  // THIS WAS MISSING IN PREVIOUS VERSION CAUSING BLACK BOX
+  // RESTORED: Sidebar Generation
   onSnapshot(query(collection(db, "students"), orderBy("name", "asc")), (snap) => {
     chatStudentList.innerHTML = "";
     snap.forEach((docSnap) => {
@@ -354,14 +366,11 @@ if (chatStudentList) {
       item.onclick = () => {
         chatStudentId = docSnap.id;
         document.getElementById("teacher-chat-student-id").value = docSnap.id;
-        // Refresh UI highlights
         document.querySelectorAll(".chat-student-item").forEach(b => b.classList.remove("active"));
         item.classList.add("active");
         
-        // Remove unread badge locally
         updateDoc(doc(db,"students",docSnap.id), {hasUnread:false});
         
-        // Load Thread
         if(chatThreadUnsub) chatThreadUnsub();
         const q = query(collection(db, "chats", docSnap.id, "messages"), orderBy("createdAt", "asc"));
         chatThreadUnsub = onSnapshot(q, (msgSnap) => {
@@ -371,7 +380,7 @@ if (chatStudentList) {
                 const cls = msg.sender==="teacher"?"chat-row-right":"chat-row-left";
                 const bub = msg.sender==="teacher"?"chat-bubble-me":"chat-bubble-other";
                 const div = document.createElement("div"); div.className = `chat-row ${cls}`;
-                div.innerHTML = `<div class="chat-bubble ${bub}">${msg.text||""}<div class="chat-time">${fmtTime(msg.createdAt)}</div></div>`;
+                div.innerHTML = `<div class="chat-bubble ${bub}">${msg.text||""}${msg.imageUrl?`<img src="${msg.imageUrl}">`:""}<div class="chat-time">${fmtTime(msg.createdAt)}</div></div>`;
                 chatThread.appendChild(div);
             });
             chatThread.scrollTop = chatThread.scrollHeight;

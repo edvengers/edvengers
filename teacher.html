@@ -26,14 +26,8 @@
           <h1>Teacher Login</h1>
           <div class="dashboard-card">
             <form id="teacher-login-form">
-              <div class="form-field">
-                <label>Username</label>
-                <input id="teacher-username" type="text" placeholder="e.g. andy" required />
-              </div>
-              <div class="form-field">
-                <label>Password</label>
-                <input id="teacher-password" type="password" required />
-              </div>
+              <div class="form-field"><label>Username</label><input id="teacher-username" type="text" required /></div>
+              <div class="form-field"><label>Password</label><input id="teacher-password" type="password" required /></div>
               <button type="submit" class="btn btn-primary">Enter Dashboard</button>
             </form>
           </div>
@@ -55,7 +49,6 @@
           </div>
 
           <div id="tab-admin" class="ev-tab-content active">
-            
             <section class="dashboard-card">
               <div class="card">
                 <h2>Students &amp; Hero Points</h2>
@@ -63,19 +56,11 @@
                   <div class="form-row">
                     <div class="form-group">
                       <label>Filter Level</label>
-                      <select id="filter-level" class="input">
-                        <option value="">All Levels</option>
-                        <option value="P3">P3</option><option value="P4">P4</option>
-                        <option value="P5">P5</option><option value="P6">P6</option>
-                      </select>
+                      <select id="filter-level" class="input"><option value="">All</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select>
                     </div>
                     <div class="form-group">
                       <label>Filter Subject</label>
-                      <select id="filter-subject" class="input">
-                        <option value="">All Subjects</option>
-                        <option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option>
-                        <option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option>
-                      </select>
+                      <select id="filter-subject" class="input"><option value="">All</option><option value="P3 English">P3 English</option><option value="P3 Math">P3 Math</option><option value="P4 English">P4 English</option><option value="P4 Math">P4 Math</option><option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option><option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option></select>
                     </div>
                     <div class="form-group">
                       <label>Select Student</label>
@@ -83,14 +68,21 @@
                     </div>
                   </div>
                   <div id="students-list" class="students-list"></div>
-                  <button type="button" id="update-points-btn" class="btn" style="margin-top:0.5rem;">Update Points</button>
+                  
+                  <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                    <button type="button" id="btn-add-1" class="btn btn-small">+1</button>
+                    <button type="button" id="btn-add-5" class="btn btn-small">+5</button>
+                    <button type="button" id="btn-sub-1" class="btn btn-ghost btn-small">-1</button>
+                    <button type="button" id="btn-sub-5" class="btn btn-ghost btn-small">-5</button>
+                    <button type="button" id="btn-update-points" class="btn btn-primary btn-small">Update</button>
+                  </div>
                   
                   <details class="ev-collapsible" style="margin-top: 1rem;">
                     <summary>Add/Edit Student</summary>
                     <div class="form-row" style="margin-top:1rem;">
                       <div class="form-group"><label>Name</label><input id="student-name" type="text" class="input" /></div>
-                      <div class="form-group"><label>Level</label><select id="student-level" class="input"><option value="P5">P5</option><option value="P6">P6</option></select></div>
-                      <div class="form-group"><label>Subjects</label><select id="student-subjects" class="input" multiple><option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option><option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option></select></div>
+                      <div class="form-group"><label>Level</label><select id="student-level" class="input"><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select></div>
+                      <div class="form-group"><label>Subjects</label><select id="student-subjects" class="input" multiple><option value="P3 English">P3 English</option><option value="P3 Math">P3 Math</option><option value="P4 English">P4 English</option><option value="P4 Math">P4 Math</option><option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option><option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option></select></div>
                     </div>
                     <button type="submit" class="btn">Save Student</button>
                   </details>
@@ -107,19 +99,11 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label>Level</label>
-                    <select id="announcement-level" class="input">
-                      <option value="">All Levels</option>
-                      <option value="P3">P3</option><option value="P4">P4</option>
-                      <option value="P5">P5</option><option value="P6">P6</option>
-                    </select>
+                    <select id="announcement-level" class="input"><option value="">All</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select>
                   </div>
                   <div class="form-group">
                     <label>Subject</label>
-                    <select id="announcement-subject" class="input">
-                      <option value="">All Subjects</option>
-                      <option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option>
-                      <option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option>
-                    </select>
+                    <select id="announcement-subject" class="input"><option value="">All</option><option value="P3 English">P3 English</option><option value="P3 Math">P3 Math</option><option value="P4 English">P4 English</option><option value="P4 Math">P4 Math</option><option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option><option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option></select>
                   </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Post</button>
@@ -129,18 +113,14 @@
           </div>
 
           <div id="tab-missions" class="ev-tab-content">
-            
             <section class="dashboard-card">
               <div class="card-header">🏋️ The Writing Gym</div>
-              
               <details class="ev-collapsible">
-                <summary style="background:var(--ev-bg-alt); padding:0.75rem; border-radius:8px; cursor:pointer; border:1px solid var(--ev-border-soft);">
-                  <strong>➕ Create New Drill</strong>
-                </summary>
+                <summary style="background:var(--ev-bg-alt); padding:0.75rem; border-radius:8px; cursor:pointer; border:1px solid var(--ev-border-soft);"><strong>➕ Create New Drill</strong></summary>
                 <form id="gym-create-form" style="padding:1rem; border:1px solid var(--ev-border-soft); margin-top:0.5rem;">
                   <div class="dashboard-grid">
                     <div class="form-field"><label>Title</label><input id="drill-title" type="text" required /></div>
-                    <div class="form-field"><label>Level (English Only)</label><select id="drill-level" class="input"><option value="P5">P5</option><option value="P6">P6</option></select></div>
+                    <div class="form-field"><label>Level</label><select id="drill-level" class="input"><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select></div>
                   </div>
                   <div class="form-field"><label>Image</label><input type="file" id="drill-image" accept="image/*" /></div>
                   <div class="form-field"><label>Instructions</label><textarea id="drill-instructions" rows="2" required></textarea></div>
@@ -150,41 +130,33 @@
                   <p id="drill-status" class="helper-text"></p>
                 </form>
               </details>
-
-              <div style="margin-top:2rem;">
-                <h4>Submission Inbox</h4>
-                <div id="gym-inbox-container" style="display:flex; flex-direction:column; gap:0.8rem;">
-                   <p class="helper-text">Waiting for intel...</p>
-                </div>
-              </div>
-
-              <div style="margin-top:2rem;">
-                 <h4>Active Missions</h4>
-                 <div id="drill-list-container"></div>
-              </div>
+              <div style="margin-top:2rem;"><h4>Submission Inbox</h4><div id="gym-inbox-container" style="display:flex; flex-direction:column; gap:0.8rem;"><p class="helper-text">Waiting for intel...</p></div></div>
+              <div style="margin-top:2rem;"><h4>Active Missions</h4><div id="drill-list-container"></div></div>
             </section>
 
             <section class="dashboard-card">
               <div class="card-header">Homework &amp; Links</div>
               <form id="homework-form">
-                <input id="homework-title" type="text" placeholder="Title" required />
-                <textarea id="homework-description" rows="2"></textarea>
-                <input id="homework-link-1" type="url" placeholder="Main Link URL" required />
+                <label>Title</label>
+                <input id="homework-title" type="text" placeholder="Week 5 Practice" required />
+                <label>Instructions / Description</label>
+                <textarea id="homework-description" rows="2" placeholder="e.g. Complete by Friday. Use the worksheet provided."></textarea>
+                
+                <label>Links (Name — URL)</label>
+                <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;"><input id="homework-name-1" type="text" placeholder="Name 1" style="width:40%;" /><input id="homework-link-1" type="url" placeholder="URL 1" style="flex:1;" required /></div>
+                <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;"><input id="homework-name-2" type="text" placeholder="Name 2" style="width:40%;" /><input id="homework-link-2" type="url" placeholder="URL 2" style="flex:1;" /></div>
+                <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;"><input id="homework-name-3" type="text" placeholder="Name 3" style="width:40%;" /><input id="homework-link-3" type="url" placeholder="URL 3" style="flex:1;" /></div>
+                <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;"><input id="homework-name-4" type="text" placeholder="Name 4" style="width:40%;" /><input id="homework-link-4" type="url" placeholder="URL 4" style="flex:1;" /></div>
+                <div class="link-row" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;"><input id="homework-name-5" type="text" placeholder="Name 5" style="width:40%;" /><input id="homework-link-5" type="url" placeholder="URL 5" style="flex:1;" /></div>
+
                 <div class="form-row" style="margin-top:0.5rem;">
                   <div class="form-group">
                     <label>Level</label>
-                    <select id="homework-level" class="input">
-                      <option value="">All Levels</option>
-                      <option value="P5">P5</option><option value="P6">P6</option>
-                    </select>
+                    <select id="homework-level" class="input"><option value="">All</option><option value="P3">P3</option><option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option></select>
                   </div>
                   <div class="form-group">
                     <label>Subject</label>
-                    <select id="homework-subject" class="input">
-                      <option value="">All Subjects</option>
-                      <option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option>
-                      <option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option>
-                    </select>
+                    <select id="homework-subject" class="input"><option value="">All</option><option value="P3 English">P3 English</option><option value="P3 Math">P3 Math</option><option value="P4 English">P4 English</option><option value="P4 Math">P4 Math</option><option value="P5 English">P5 English</option><option value="P5 Math">P5 Math</option><option value="P6 English">P6 English</option><option value="P6 Math">P6 Math</option></select>
                   </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Add Homework</button>
@@ -196,8 +168,14 @@
               <h4>Blooket Links (Self Training)</h4>
               <form id="training-links-form">
                 <div class="dashboard-grid">
+                  <div class="form-field"><label>P3 Eng</label><input id="link-p3-english" type="url" /></div>
+                  <div class="form-field"><label>P3 Math</label><input id="link-p3-math" type="url" /></div>
+                  <div class="form-field"><label>P4 Eng</label><input id="link-p4-english" type="url" /></div>
+                  <div class="form-field"><label>P4 Math</label><input id="link-p4-math" type="url" /></div>
                   <div class="form-field"><label>P5 Eng</label><input id="link-p5-english" type="url" /></div>
                   <div class="form-field"><label>P5 Math</label><input id="link-p5-math" type="url" /></div>
+                  <div class="form-field"><label>P6 Eng</label><input id="link-p6-english" type="url" /></div>
+                  <div class="form-field"><label>P6 Math</label><input id="link-p6-math" type="url" /></div>
                 </div>
                 <button type="submit" class="btn">Save Links</button>
               </form>
