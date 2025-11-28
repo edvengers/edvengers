@@ -395,12 +395,18 @@ function openFocusMode(drill, submission) {
   const submitBtn = document.getElementById("gym-submit-btn");
   const feedbackBox = document.getElementById("gym-feedback-box");
   const feedbackText = document.getElementById("gym-feedback-text");
+  
+  // NEW: OCR Elements
+  const ocrInput = document.getElementById("gym-ocr-input");
+  const ocrStatus = document.getElementById("ocr-status");
 
+  // RESET UI
   overlay.classList.remove("hidden");
   titleEl.textContent = drill.title;
   instrEl.textContent = drill.instructions;
   wordCountEl.textContent = "Words: 0";
   belt.innerHTML = "";
+  if(ocrStatus) ocrStatus.textContent = ""; // Clear status
 
   if (drill.imageUrl) { imgEl.src = drill.imageUrl; imgEl.classList.remove("hidden"); } 
   else { imgEl.classList.add("hidden"); }
@@ -423,6 +429,7 @@ function openFocusMode(drill, submission) {
     submitBtn.textContent = "Submit Mission";
   }
 
+  // CORE: GAMIFICATION LOOP
   editor.oninput = () => {
     const text = editor.value;
     wordCountEl.textContent = `Words: ${text.trim().split(/\s+/).filter(w=>w.length>0).length}`;
@@ -438,6 +445,44 @@ function openFocusMode(drill, submission) {
       }
     });
   };
+
+  // NEW: OCR SCANNER LOGIC
+  if(ocrInput) {
+    // Remove old listener hack
+    const newOcr = ocrInput.cloneNode(true);
+    ocrInput.parentNode.replaceChild(newOcr, ocrInput);
+    
+    newOcr.onchange = async () => {
+        const file = newOcr.files[0];
+        if (!file) return;
+
+        ocrStatus.textContent = "Scanning... (Processing Image)";
+        playSound("click");
+
+        try {
+            // Tesseract Worker
+            const worker = await Tesseract.createWorker("eng");
+            const ret = await worker.recognize(file);
+            
+            // Append Text
+            const scannedText = ret.data.text;
+            if(editor.value) editor.value += "\n\n" + scannedText;
+            else editor.value = scannedText;
+            
+            await worker.terminate();
+            ocrStatus.textContent = "Scan Complete!";
+            
+            // TRIGGER GAMIFICATION (Auto-detect power words)
+            editor.oninput(); 
+            playSound("success"); // Success sound for scan
+
+            setTimeout(() => ocrStatus.textContent = "", 3000);
+        } catch (err) {
+            console.error(err);
+            ocrStatus.textContent = "Scan Failed. Use clearer photo.";
+        }
+    };
+  }
 
   document.getElementById("gym-exit-btn").onclick = () => overlay.classList.add("hidden");
   submitBtn.onclick = () => submitDrill();

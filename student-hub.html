@@ -8,6 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#020617">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
   </head>
 
   <body class="portal-body">
@@ -203,6 +204,15 @@
             <span class="gym-feedback-title">⚠️ MISSION DEBRIEF (TEACHER INTEL):</span>
             <span id="gym-feedback-text"></span>
           </div>
+          
+          <div style="padding:0.5rem 1rem; background:#0f172a; border-bottom:1px solid #1e293b; display:flex; gap:1rem; align-items:center;">
+             <label class="btn btn-ghost btn-small" style="cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
+               <span>📸 Scan Paper</span>
+               <input type="file" id="gym-ocr-input" accept="image/*" capture="environment" style="display:none;" />
+             </label>
+             <span id="ocr-status" class="helper-text" style="margin:0; color:var(--ev-accent);"></span>
+          </div>
+
           <textarea id="gym-editor" class="gym-editor" placeholder="Begin your mission here..."></textarea>
         </div>
 
