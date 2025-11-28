@@ -1,4 +1,4 @@
-// app-student.js (MASTER: IMAGE UPLOAD FIXED)
+// app-student.js (MASTER: GEMINI 1.5 FLASH OCR)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, increment, where
@@ -6,6 +6,8 @@ import {
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+// IMPORT GEMINI
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhD_rigOfXWYGcj7ooUggG0H4oVtV9cDI",
@@ -20,11 +22,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- CONFIG & AUDIO ---
+// --- 💎 GEMINI CONFIG ---
+// REPLACE THIS WITH YOUR REAL KEY FROM AISTUDIO.GOOGLE.COM
+const GEMINI_API_KEY = "AIzaSyAfCxwLyL_5K24aWm5a_YDoUDijoHfoRH4"; 
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+// --- ASSETS ---
 const AVATAR_PATH = "images/avatars/";
 const AVAILABLE_AVATARS = [
-  "hero-1.jpg", "hero-2.jpg", "hero-3.jpg", "hero-4.jpg", 
-  "hero-5.jpg", "hero-6.jpg", "hero-7.jpg", "hero-8.jpg"
+  "hero-1.png", "hero-2.png", "hero-3.png", "hero-4.png", 
+  "hero-5.png", "hero-6.png", "hero-7.png", "hero-8.png"
 ];
 const AUDIO_PATH = "audio/";
 const SFX = {
@@ -39,7 +46,7 @@ function playSound(key) {
     const sound = SFX[key];
     if (sound) { 
       sound.currentTime = 0; 
-      sound.play().catch(e => {}); // Silent fail if blocked
+      sound.play().catch(e => console.log("Audio blocked")); 
     }
   } catch(e) { console.log("Audio error:", e); }
 }
@@ -47,8 +54,21 @@ function playSound(key) {
 // --- UTILS ---
 function slugify(name) { return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, ""); }
 function fmtTime(ts) { if(!ts) return ""; return new Date(ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
-function fmtDateLabel(ts) { if(!ts) return ""; return new Date(ts).toLocaleDateString(undefined, {day:"2-digit", month:"short"}); }
 function fmtDateDayMonthYear(ts) { if(!ts) return "-"; return new Date(ts).toLocaleDateString("en-GB", {day:"2-digit", month:"2-digit", year:"2-digit"}); }
+
+// Helper to convert file to Base64 for Gemini
+async function fileToGenerativePart(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.split(',')[1];
+      resolve({
+        inlineData: { data: base64String, mimeType: file.type },
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 let currentStudent = null;
 let chatUnsub = null;
@@ -67,7 +87,7 @@ window.closeMission = function() {
 async function loginStudent(name, password) {
   const id = slugify(name);
   const snap = await getDoc(doc(db, "students", id));
-  if (!snap.exists()) throw new Error("Account not found. Check spelling.");
+  if (!snap.exists()) throw new Error("Account not found.");
   const data = snap.data();
   if (data.password !== password) throw new Error("Incorrect password.");
   return { id, ...data };
@@ -89,7 +109,6 @@ function switchToHub(student) {
     if(av) av.src = AVATAR_PATH + student.avatar;
   }
 
-  // Real-time Profile
   onSnapshot(doc(db, "students", student.id), (snap) => {
     const data = snap.data();
     if (!data) return;
@@ -98,7 +117,6 @@ function switchToHub(student) {
     document.getElementById("profile-subjects").textContent = (data.subjects || []).join(", ");
   });
 
-  // Init Modules
   initAnnouncementsAndHomework(student);
   initChat(student);
   initAttendance(); 
@@ -112,20 +130,14 @@ function initAttendance() {
   if (attBtn) {
     const newBtn = attBtn.cloneNode(true);
     attBtn.parentNode.replaceChild(newBtn, attBtn);
-    
     newBtn.addEventListener("click", async () => {
       if (!currentStudent) return;
       if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100 });
       playSound("hero_theme"); 
-      
       const hero = document.getElementById("flying-hero");
-      hero.classList.remove("hidden");
-      hero.classList.add("fly-across");
+      hero.classList.remove("hidden"); hero.classList.add("fly-across");
       setTimeout(() => { hero.classList.remove("fly-across"); hero.classList.add("hidden"); }, 2600);
-  
-      newBtn.disabled = true;
-      newBtn.textContent = "Marked Present! ✅";
-      
+      newBtn.disabled = true; newBtn.textContent = "Marked Present! ✅";
       await addDoc(collection(db, "chats", currentStudent.id, "messages"), {
         sender: "student", text: "🔴 SYSTEM: Checked In", createdAt: Date.now(), isSystem: true
       });
@@ -135,7 +147,7 @@ function initAttendance() {
   }
 }
 
-// --- ANNOUNCEMENTS & HOMEWORK ---
+// --- STANDARD MODULES ---
 let allAnnouncementsForStudent = [];
 let allHomeworkForStudent = [];
 let annVisibleCount = 3; 
@@ -150,31 +162,23 @@ function initAnnouncementsAndHomework(student) {
   if(annToggleBtn) annToggleBtn.onclick = () => { annVisibleCount += 3; renderStudentAnnouncements(); };
   if(hwToggleBtn) hwToggleBtn.onclick = () => { hwVisibleCount += 3; renderStudentHomework(); };
 
-  // Announcements
-  const annQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
-  onSnapshot(annQuery, (snap) => {
+  onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc")), (snap) => {
     if (!annContainer) return;
     const list = [];
     snap.forEach((docSnap) => {
         const d = docSnap.data();
-        if ((!d.levels || d.levels.length === 0 || d.levels.includes(student.level))) {
-            list.push({id:docSnap.id, ...d});
-        }
+        if ((!d.levels || d.levels.length === 0 || d.levels.includes(student.level))) { list.push({id:docSnap.id, ...d}); }
     });
     allAnnouncementsForStudent = list;
     renderStudentAnnouncements();
   });
 
-  // Homework
-  const hwQuery = query(collection(db, "homework"), orderBy("postedAt", "desc"));
-  onSnapshot(hwQuery, (snap) => {
+  onSnapshot(query(collection(db, "homework"), orderBy("postedAt", "desc")), (snap) => {
     if (!hwContainer) return;
     const list = [];
     snap.forEach((docSnap) => {
         const d = docSnap.data();
-        if ((!d.levels || d.levels.length === 0 || d.levels.includes(student.level))) {
-            list.push({id:docSnap.id, ...d});
-        }
+        if ((!d.levels || d.levels.length === 0 || d.levels.includes(student.level))) { list.push({id:docSnap.id, ...d}); }
     });
     allHomeworkForStudent = list;
     renderStudentHomework();
@@ -185,15 +189,12 @@ function renderStudentAnnouncements() {
     const container = document.getElementById("student-announcements");
     const toggleBtn = document.getElementById("student-ann-toggle");
     const countLabel = document.getElementById("student-ann-count");
-    if(!container) return; 
-    container.innerHTML=""; 
-    
+    if(!container) return; container.innerHTML=""; 
     allAnnouncementsForStudent.sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
         return b.createdAt - a.createdAt;
     });
-
     const items = allAnnouncementsForStudent.slice(0, annVisibleCount);
     items.forEach(d => {
         const pin = d.isPinned ? "📌 " : "";
@@ -202,10 +203,7 @@ function renderStudentAnnouncements() {
         card.innerHTML = `<h4>${pin}${d.title}</h4><p>${d.message}</p><p class="helper-text">Posted: ${fmtDateDayMonthYear(d.createdAt)}</p>`;
         container.appendChild(card);
     });
-
-    if(toggleBtn) {
-        toggleBtn.style.display = allAnnouncementsForStudent.length > annVisibleCount ? "inline-block" : "none";
-    }
+    if(toggleBtn) toggleBtn.style.display = allAnnouncementsForStudent.length > annVisibleCount ? "inline-block" : "none";
     if(countLabel) countLabel.textContent = `Showing ${items.length} of ${allAnnouncementsForStudent.length}`;
 }
 
@@ -213,9 +211,7 @@ function renderStudentHomework() {
     const container = document.getElementById("student-homework-list");
     const toggleBtn = document.getElementById("student-hw-toggle");
     const countLabel = document.getElementById("student-hw-count");
-    if(!container) return; 
-    container.innerHTML="";
-    
+    if(!container) return; container.innerHTML="";
     const items = allHomeworkForStudent.slice(0, hwVisibleCount);
     items.forEach(d => {
         const links = (d.links||[]).map(l => `<li><button class="btn-link" onclick="openMission('${l.url||l}')">🔗 ${l.name||"Link"}</button></li>`).join("");
@@ -223,21 +219,15 @@ function renderStudentHomework() {
         card.innerHTML = `<h4>${d.title}</h4><p>${d.description||""}</p><ul class="ev-link-list">${links}</ul><p class="helper-text">Posted: ${fmtDateDayMonthYear(d.postedAt)}</p>`;
         container.appendChild(card);
     });
-
-    if(toggleBtn) {
-        toggleBtn.style.display = allHomeworkForStudent.length > hwVisibleCount ? "inline-block" : "none";
-    }
+    if(toggleBtn) toggleBtn.style.display = allHomeworkForStudent.length > hwVisibleCount ? "inline-block" : "none";
     if(countLabel) countLabel.textContent = `Showing ${items.length} of ${allHomeworkForStudent.length}`;
 }
 
-// --- MODULE: CHAT (IMAGE UPLOAD FIXED) ---
 function initChat(student) {
     const thread = document.getElementById("chat-window");
     const form = document.getElementById("chat-form");
     if(!thread || !form) return;
-    
     if (chatUnsub) chatUnsub();
-
     const q = query(collection(db, "chats", student.id, "messages"), orderBy("createdAt", "asc"));
     chatUnsub = onSnapshot(q, (snap) => {
         thread.innerHTML="";
@@ -251,25 +241,16 @@ function initChat(student) {
         });
         thread.scrollTop = thread.scrollHeight;
     });
-
-    // Remove old listeners
-    const newForm = form.cloneNode(true);
-    form.parentNode.replaceChild(newForm, form);
-
+    const newForm = form.cloneNode(true); form.parentNode.replaceChild(newForm, form);
     newForm.onsubmit = async (e) => {
         e.preventDefault();
         const input = document.getElementById("chat-input");
         const fileInput = document.getElementById("chat-image");
         const statusEl = document.getElementById("chat-status");
-        
-        const txt = input.value.trim();
-        const file = fileInput.files[0];
-
+        const txt = input.value.trim(); const file = fileInput.files[0];
         if (!txt && !file) return;
-
         try {
             if(statusEl) statusEl.textContent = "Sending...";
-            
             let imageUrl = null;
             if (file) {
                 const path = `chat-images/${student.id}/${Date.now()}_${file.name}`;
@@ -277,39 +258,20 @@ function initChat(student) {
                 await uploadBytes(ref, file);
                 imageUrl = await getDownloadURL(ref);
             }
-
-            await addDoc(collection(db, "chats", student.id, "messages"), {
-                sender: "student", 
-                text: txt, 
-                imageUrl: imageUrl, 
-                createdAt: Date.now()
-            });
-            
-            input.value = "";
-            fileInput.value = ""; // Clear file input
+            await addDoc(collection(db, "chats", student.id, "messages"), { sender: "student", text: txt, imageUrl: imageUrl, createdAt: Date.now() });
+            input.value = ""; fileInput.value = "";
             await setDoc(doc(db, "students", student.id), {hasUnread:true}, {merge:true});
-            
-            if(statusEl) {
-                statusEl.textContent = "Sent!";
-                setTimeout(() => statusEl.textContent="", 1500);
-            }
-
-        } catch (err) {
-            console.error(err);
-            if(statusEl) statusEl.textContent = "Error sending.";
-        }
+            if(statusEl) { statusEl.textContent = "Sent!"; setTimeout(() => statusEl.textContent="", 1500); }
+        } catch (err) { console.error(err); if(statusEl) statusEl.textContent = "Error sending."; }
     };
 }
 
-// --- MODULE: SELF TRAINING ---
 function initSelfTraining(student) {
     const container = document.getElementById("training-buttons-container");
-    if(!container) return;
     getDoc(doc(db, "settings", "training_links")).then(snap => {
         if(!snap.exists()) { container.innerHTML="<p class='helper-text'>No training configured.</p>"; return; }
         const links = snap.data();
         container.innerHTML = "";
-        
         let cfg = [];
         if(student.level==="P5") cfg = [{l:"P5 English Training", u:links.p5_eng, s:"P5 English"}, {l:"P5 Math Training", u:links.p5_math, s:"P5 Math"}];
         else if(student.level==="P6") cfg = [{l:"P6 English Training", u:links.p6_eng, s:"P6 English"}, {l:"P6 Math Training", u:links.p6_math, s:"P6 Math"}];
@@ -329,7 +291,7 @@ function initSelfTraining(student) {
     });
 }
 
-// --- MODULE: WRITING GYM ---
+// --- WRITING GYM ---
 let currentActiveDrill = null;
 let currentSubmission = null;
 let currentPowerWords = [];
@@ -348,10 +310,7 @@ async function initWritingGym(student) {
       if (d.level === student.level && !activeDrill) activeDrill = { id: docSnap.id, ...d };
     });
 
-    if (!activeDrill) {
-      container.innerHTML = '<p class="helper-text">No active missions for your level.</p>';
-      return;
-    }
+    if (!activeDrill) { container.innerHTML = '<p class="helper-text">No active missions.</p>'; return; }
 
     const subQ = query(collection(db, "writing_submissions"), where("studentId", "==", student.id), where("drillId", "==", activeDrill.id));
     onSnapshot(subQ, (subSnap) => {
@@ -395,18 +354,15 @@ function openFocusMode(drill, submission) {
   const submitBtn = document.getElementById("gym-submit-btn");
   const feedbackBox = document.getElementById("gym-feedback-box");
   const feedbackText = document.getElementById("gym-feedback-text");
-  
-  // NEW: OCR Elements
   const ocrInput = document.getElementById("gym-ocr-input");
   const ocrStatus = document.getElementById("ocr-status");
 
-  // RESET UI
   overlay.classList.remove("hidden");
   titleEl.textContent = drill.title;
   instrEl.textContent = drill.instructions;
   wordCountEl.textContent = "Words: 0";
   belt.innerHTML = "";
-  if(ocrStatus) ocrStatus.textContent = ""; // Clear status
+  if(ocrStatus) ocrStatus.textContent = "";
 
   if (drill.imageUrl) { imgEl.src = drill.imageUrl; imgEl.classList.remove("hidden"); } 
   else { imgEl.classList.add("hidden"); }
@@ -429,7 +385,6 @@ function openFocusMode(drill, submission) {
     submitBtn.textContent = "Submit Mission";
   }
 
-  // CORE: GAMIFICATION LOOP
   editor.oninput = () => {
     const text = editor.value;
     wordCountEl.textContent = `Words: ${text.trim().split(/\s+/).filter(w=>w.length>0).length}`;
@@ -446,40 +401,37 @@ function openFocusMode(drill, submission) {
     });
   };
 
-  // NEW: OCR SCANNER LOGIC
+  // --- GEMINI OCR LOGIC ---
   if(ocrInput) {
-    // Remove old listener hack
     const newOcr = ocrInput.cloneNode(true);
     ocrInput.parentNode.replaceChild(newOcr, ocrInput);
     
     newOcr.onchange = async () => {
         const file = newOcr.files[0];
         if (!file) return;
-
-        ocrStatus.textContent = "Scanning... (Processing Image)";
+        ocrStatus.textContent = "🤖 Gemini scanning... (High Accuracy)";
         playSound("click");
 
         try {
-            // Tesseract Worker
-            const worker = await Tesseract.createWorker("eng");
-            const ret = await worker.recognize(file);
+            const imagePart = await fileToGenerativePart(file);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent([
+                "Transcribe this handwritten student essay exactly as it is written. Do not correct grammar. Do not add intro/outro text. Just output the essay text.", 
+                imagePart
+            ]);
+            const response = await result.response;
+            const text = response.text();
             
-            // Append Text
-            const scannedText = ret.data.text;
-            if(editor.value) editor.value += "\n\n" + scannedText;
-            else editor.value = scannedText;
+            if(editor.value) editor.value += "\n\n" + text;
+            else editor.value = text;
             
-            await worker.terminate();
-            ocrStatus.textContent = "Scan Complete!";
-            
-            // TRIGGER GAMIFICATION (Auto-detect power words)
+            ocrStatus.textContent = "Scan Complete! Verify text.";
             editor.oninput(); 
-            playSound("success"); // Success sound for scan
-
+            playSound("success"); 
             setTimeout(() => ocrStatus.textContent = "", 3000);
         } catch (err) {
             console.error(err);
-            ocrStatus.textContent = "Scan Failed. Use clearer photo.";
+            ocrStatus.textContent = "Scan Error. Check API Key.";
         }
     };
   }
@@ -507,39 +459,25 @@ async function submitDrill() {
   if (!checklist) return;
 
   const overlay = document.getElementById("gym-overlay");
-  
   try {
     if (currentSubmission) {
       await setDoc(doc(db, "writing_submissions", currentSubmission.id), {
-        text: text,
-        powerWordsUsed: Array.from(powerWordsFound),
-        createdAt: Date.now(),
-        status: "pending" 
+        text: text, powerWordsUsed: Array.from(powerWordsFound), createdAt: Date.now(), status: "pending" 
       }, { merge: true });
     } else {
       await addDoc(collection(db, "writing_submissions"), {
-        studentId: currentStudent.id,
-        studentName: currentStudent.name,
-        drillId: currentActiveDrill.id,
-        drillTitle: currentActiveDrill.title,
-        text: text,
-        powerWordsUsed: Array.from(powerWordsFound),
-        createdAt: Date.now(),
-        status: "pending"
+        studentId: currentStudent.id, studentName: currentStudent.name,
+        drillId: currentActiveDrill.id, drillTitle: currentActiveDrill.title,
+        text: text, powerWordsUsed: Array.from(powerWordsFound), createdAt: Date.now(), status: "pending"
       });
     }
-    playSound("success");
-    awardInstantXP(20);
+    playSound("success"); awardInstantXP(20);
     if(typeof confetti === 'function') confetti({ particleCount: 200, spread: 120 });
     alert("Mission Accomplished! +20 Hero Points earned.");
     overlay.classList.add("hidden");
-  } catch (err) {
-    console.error(err);
-    alert("Transmission Failed.");
-  }
+  } catch (err) { console.error(err); alert("Transmission Failed."); }
 }
 
-// --- INIT MAIN ---
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("student-login-form");
     if(loginForm) {
@@ -551,14 +489,11 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch(err) { alert(err.message); }
         });
     }
-
-    // Avatar Logic
     const avatarBtn = document.getElementById("btn-change-avatar");
     const avatarOverlay = document.getElementById("avatar-overlay");
     const closeAvatarBtn = document.getElementById("close-avatar-btn");
     const avatarGrid = document.getElementById("avatar-grid");
     const myAvatarImg = document.getElementById("my-avatar");
-
     if (avatarBtn && avatarOverlay) {
         avatarBtn.addEventListener("click", () => {
             avatarGrid.innerHTML = "";
