@@ -414,7 +414,7 @@ function openFocusMode(drill, submission) {
 
         try {
             const imagePart = await fileToGenerativePart(file);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const result = await model.generateContent([
                 "Transcribe this handwritten student essay exactly as it is written. Do not correct grammar. Do not add intro/outro text. Just output the essay text.", 
                 imagePart
